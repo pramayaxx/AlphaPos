@@ -1,0 +1,20 @@
+{
+  "name": "Alpha Mobile POS",
+  "short_name": "AlphaPOS",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "https://picsum.photos/seed/pos/192/192",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://picsum.photos/seed/pos/512/512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

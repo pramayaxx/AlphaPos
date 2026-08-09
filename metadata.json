@@ -1,0 +1,7 @@
+{
+  "name": "Alpha Mobile POS",
+  "description": "A professional, offline-first Point of Sale application for retail shops and exhibitions.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
