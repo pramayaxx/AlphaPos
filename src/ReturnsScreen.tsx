@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { RotateCcw, Search, CheckCircle, Package } from 'lucide-react';
 import { format } from 'date-fns';
-import { api } from './App';
+import { api } from './api';
+import { User } from './db';
 import { type Return, type Bill } from './db';
 
 const ReturnsScreen = () => {

@@ -1,3 +1,4 @@
+import { api } from './api';
 import React, { useState, useEffect } from 'react';
 import { ShieldAlert, Users, TrendingUp, CreditCard, Ban, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
@@ -8,9 +9,9 @@ const SuperAdminScreen = ({ onLogout }: { onLogout: () => void }) => {
 
   const fetchData = async () => {
     try {
-      const t = await (window as any).api.get('/superadmin/tenants');
+      const t = await api.get('/superadmin/tenants');
       setTenants(t);
-      const s = await (window as any).api.get('/superadmin/stats');
+      const s = await api.get('/superadmin/stats');
       setStats(s);
     } catch(err) { console.error(err); }
   };
@@ -20,14 +21,14 @@ const SuperAdminScreen = ({ onLogout }: { onLogout: () => void }) => {
   const changeStatus = async (id: number, status: string) => {
     if (!confirm(`Are you sure you want to change status to ${status}?`)) return;
     try {
-      await (window as any).api.post(`/superadmin/tenants/${id}/status`, { status });
+      await api.post(`/superadmin/tenants/${id}/status`, { status });
       fetchData();
     } catch(err: any) { alert(err.message); }
   };
 
   const changePackage = async (id: number, package_type: string) => {
     try {
-      await (window as any).api.post(`/superadmin/tenants/${id}/package`, { package_type });
+      await api.post(`/superadmin/tenants/${id}/package`, { package_type });
       fetchData();
     } catch(err: any) { alert(err.message); }
   };

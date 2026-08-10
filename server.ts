@@ -1,4 +1,8 @@
 import express from 'express';
+
+import Stripe from 'stripe';
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_123'); // Dummy key if not set
+
 import PDFDocument from 'pdfkit';
 import path from 'path';
 
@@ -56,7 +60,7 @@ app.get('/api/public/bills/:uuid', async (req, res) => {
       discountValue: Number(bill.discount_value),
       subtotal: Number(bill.subtotal),
       discount: Number(bill.discount),
-      grandTotal: Number(bill.grand_total),
+      grandTotal: Number(bill.grand_total || bill.grandTotal),
       isPrinted: bill.is_printed,
       taxAmount: Number(bill.tax_amount) || 0,
       taxRate: Number(bill.tax_rate) || 0,
@@ -167,7 +171,7 @@ app.get('/api/public/bills/:uuid/pdf', async (req, res) => {
     if (bill.tax_amount > 0) {
       doc.text(`Tax: Rs ${bill.tax_amount}`, { align: 'right' });
     }
-    doc.fontSize(12).text(`Total: Rs ${bill.grand_total}`, { align: 'right' });
+    doc.fontSize(12).text(`Total: Rs ${bill.grand_total || bill.grandTotal}`, { align: 'right' });
     
     doc.moveDown();
     doc.fontSize(10).text('Thank you for your business!', { align: 'center' });
@@ -188,13 +192,13 @@ app.get('/api/public/bills/:uuid/pdf', async (req, res) => {
 async function initDb() {
   try {
     
-    try { await sql`ALTER TABLE users ADD COLUMN package_type VARCHAR(50) DEFAULT 'PRO'`; } catch(e) {}
-    try { await sql`ALTER TABLE users ADD COLUMN status VARCHAR(50) DEFAULT 'ACTIVE'`; } catch(e) {}
-    try { await sql`ALTER TABLE users ADD COLUMN next_billing_date TIMESTAMP`; } catch(e) {}
-    try { await sql`ALTER TABLE users ADD COLUMN is_superadmin BOOLEAN DEFAULT false`; } catch(e) {}
+    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN package_type VARCHAR(50) DEFAULT 'PRO'`); } catch(e) {}
+    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN status VARCHAR(50) DEFAULT 'ACTIVE'`); } catch(e) {}
+    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN next_billing_date TIMESTAMP`); } catch(e) {}
+    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN is_superadmin BOOLEAN DEFAULT false`); } catch(e) {}
 
-    try { await sql`ALTER TABLE users ADD COLUMN owner_id INTEGER REFERENCES users(id)`; } catch(e) {}
-    await sql`
+    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN owner_id INTEGER REFERENCES users(id)`); } catch(e) {}
+    await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         email VARCHAR(255) UNIQUE NOT NULL,
@@ -203,9 +207,9 @@ async function initDb() {
         role VARCHAR(50) DEFAULT 'admin',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `;
+    `);
     
-    await sql`
+    await sql.unsafe(`
       
       CREATE TABLE IF NOT EXISTS branches (
         id SERIAL PRIMARY KEY,
@@ -216,7 +220,7 @@ async function initDb() {
 
       CREATE TABLE IF NOT EXISTS product_variants (
         id SERIAL PRIMARY KEY,
-        product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+        product_id UUID REFERENCES products(id) ON DELETE CASCADE,
         name VARCHAR(255) NOT NULL, -- e.g. "Size L, Red"
         sku VARCHAR(255),
         price REAL, -- optional override
@@ -225,7 +229,7 @@ async function initDb() {
 
       CREATE TABLE IF NOT EXISTS product_batches (
         id SERIAL PRIMARY KEY,
-        product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+        product_id UUID REFERENCES products(id) ON DELETE CASCADE,
         batch_number VARCHAR(255),
         expiry_date TIMESTAMP,
         stock_quantity INTEGER DEFAULT 0
@@ -266,7 +270,7 @@ async function initDb() {
 
       CREATE TABLE IF NOT EXISTS kds_orders (
         id SERIAL PRIMARY KEY,
-        bill_id INTEGER REFERENCES bills(id) ON DELETE CASCADE,
+        bill_id UUID REFERENCES bills(id) ON DELETE CASCADE,
         table_id INTEGER REFERENCES restaurant_tables(id),
         status VARCHAR(50) DEFAULT 'PENDING', -- PENDING, PREPARING, READY, SERVED
         notes TEXT,
@@ -287,8 +291,8 @@ async function initDb() {
 
       CREATE TABLE IF NOT EXISTS recipes (
         id SERIAL PRIMARY KEY,
-        product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
-        raw_material_product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+        product_id UUID REFERENCES products(id) ON DELETE CASCADE,
+        raw_material_product_id UUID REFERENCES products(id) ON DELETE CASCADE,
         quantity_needed REAL DEFAULT 1
       );
 
@@ -319,9 +323,9 @@ async function initDb() {
         discount_type VARCHAR(20) DEFAULT 'amount',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `;
+    `);
 
-    await sql`
+    await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS bills (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id INTEGER REFERENCES users(id),
@@ -340,16 +344,16 @@ async function initDb() {
         status VARCHAR(50) DEFAULT 'paid',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `;
+    `);
     
     // Add columns if missing (migration)
-    try { await sql`ALTER TABLE bills ADD COLUMN tax_amount NUMERIC(10, 2) DEFAULT 0`; } catch (e) {}
+    try { await sql.unsafe(`ALTER TABLE bills ADD COLUMN tax_amount NUMERIC(10, 2) DEFAULT 0`); } catch (e) {}
     try { await sql`ALTER TABLE bills ADD COLUMN tax_rate NUMERIC(10, 2) DEFAULT 0`; } catch (e) {}
     try { await sql`ALTER TABLE bills ADD COLUMN customer_id VARCHAR(100)`; } catch (e) {}
     try { await sql`ALTER TABLE bills ADD COLUMN payment_method VARCHAR(50) DEFAULT 'cash'`; } catch (e) {}
     try { await sql`ALTER TABLE bills ADD COLUMN status VARCHAR(50) DEFAULT 'paid'`; } catch (e) {}
 
-    await sql`
+    await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS bill_items (
         id SERIAL PRIMARY KEY,
         bill_id UUID REFERENCES bills(id) ON DELETE CASCADE,
@@ -359,9 +363,9 @@ async function initDb() {
         quantity INTEGER NOT NULL,
         price NUMERIC(10, 2) NOT NULL
       )
-    `;
+    `);
 
-    await sql`
+    await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS shop_settings (
         user_id INTEGER PRIMARY KEY REFERENCES users(id),
         name VARCHAR(255),
@@ -383,12 +387,12 @@ async function initDb() {
         tax_rate NUMERIC(5, 2) DEFAULT 0,
         tax_name VARCHAR(50) DEFAULT 'Tax'
       )
-    `;
+    `);
 
     try { await sql`ALTER TABLE shop_settings ADD COLUMN tax_rate NUMERIC(5, 2) DEFAULT 0`; } catch (e) {}
     try { await sql`ALTER TABLE shop_settings ADD COLUMN tax_name VARCHAR(50) DEFAULT 'Tax'`; } catch (e) {}
 
-    await sql`
+    await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS customers (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
@@ -399,7 +403,7 @@ async function initDb() {
         store_credit REAL DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `;
+    `);
 
     try {
       await sql`ALTER TABLE bills ADD COLUMN IF NOT EXISTS customer_id INTEGER REFERENCES customers(id)`;
@@ -418,7 +422,7 @@ async function initDb() {
     // Add debt to customers
     try { await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS total_debt NUMERIC(10, 2) DEFAULT 0`; } catch (e) {}
 
-    await sql`
+    await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS customer_payments (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
@@ -426,9 +430,9 @@ async function initDb() {
         amount NUMERIC(10, 2),
         date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `;
+    `);
 
-    await sql`
+    await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS expenses (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
@@ -437,9 +441,9 @@ async function initDb() {
         date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         category VARCHAR(100)
       )
-    `;
+    `);
 
-    await sql`
+    await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS suppliers (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
@@ -450,9 +454,9 @@ async function initDb() {
         address TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `;
+    `);
 
-    await sql`
+    await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS purchase_orders (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
@@ -463,9 +467,9 @@ async function initDb() {
         status VARCHAR(50) DEFAULT 'received',
         date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `;
+    `);
 
-    await sql`
+    await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS cash_shifts (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
@@ -479,9 +483,9 @@ async function initDb() {
         notes TEXT,
         status VARCHAR(50) DEFAULT 'open'
       )
-    `;
+    `);
 
-    await sql`
+    await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS coupons (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
@@ -493,9 +497,9 @@ async function initDb() {
         is_active BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `;
+    `);
 
-    await sql`
+    await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS attendance (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
@@ -505,9 +509,9 @@ async function initDb() {
         clock_out TIMESTAMP,
         notes TEXT
       )
-    `;
+    `);
 
-    await sql`
+    await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS stock_adjustments (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
@@ -517,9 +521,9 @@ async function initDb() {
         reason TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `;
+    `);
 
-    await sql`
+    await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS gift_cards (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
@@ -528,9 +532,9 @@ async function initDb() {
         issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         is_active BOOLEAN DEFAULT TRUE
       )
-    `;
+    `);
 
-    await sql`
+    await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS quotes (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
@@ -547,9 +551,9 @@ async function initDb() {
         grand_total NUMERIC(10, 2) NOT NULL,
         status VARCHAR(50) DEFAULT 'pending'
       )
-    `;
+    `);
 
-    await sql`
+    await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS purchase_orders (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
@@ -562,19 +566,19 @@ async function initDb() {
         status VARCHAR(50) DEFAULT 'pending',
         notes TEXT
       )
-    `;
+    `);
 
-    await sql`
+    await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS returns (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
-        bill_id INTEGER REFERENCES bills(id),
+        bill_id UUID REFERENCES bills(id),
         return_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         items JSONB NOT NULL,
         refund_amount NUMERIC(10, 2) NOT NULL,
         reason TEXT
       )
-    `;
+    `);
 
 
 
@@ -584,8 +588,7 @@ async function initDb() {
 
     
     console.log('Database tables verified.');
-    await sql`
-
+    await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS staff (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
@@ -596,7 +599,7 @@ async function initDb() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
-    `;
+    `);
   } catch (err) {
     console.error('Error initializing database:', err);
   }
@@ -893,6 +896,16 @@ app.post('/api/bills', authenticateToken, async (req: any, res) => {
       await sql`
         UPDATE customers
         SET total_debt = COALESCE(total_debt, 0) + ${b.grandTotal}
+        WHERE id = ${b.customerId} AND user_id = ${req.user.tenantId}
+      `;
+    }
+
+    if (b.customerId && (b.pointsEarned || b.pointsRedeemed)) {
+      const earned = b.pointsEarned || 0;
+      const redeemed = b.pointsRedeemed || 0;
+      await sql`
+        UPDATE customers
+        SET loyalty_points = GREATEST(0, COALESCE(loyalty_points, 0) + ${earned} - ${redeemed})
         WHERE id = ${b.customerId} AND user_id = ${req.user.tenantId}
       `;
     }
@@ -1559,6 +1572,62 @@ app.post('/api/settings', authenticateToken, async (req: any, res) => {
   }
 });
 
+
+// --- Invoices Routes ---
+app.get('/api/invoices', authenticateToken, async (req: any, res) => {
+  try {
+    const invoices = await sql`SELECT * FROM invoices WHERE user_id = ${req.user.tenantId} ORDER BY date_time DESC`;
+    res.json(invoices);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- Recipes Routes ---
+app.get('/api/recipes', authenticateToken, async (req: any, res) => {
+  try {
+    const recipes = await sql`SELECT * FROM recipes WHERE user_id = ${req.user.tenantId} ORDER BY id DESC`;
+    res.json(recipes);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/recipes', authenticateToken, async (req: any, res) => {
+  try {
+    const { product_id, raw_material_product_id, quantity } = req.body;
+    const recipe = await sql`
+      INSERT INTO recipes (user_id, product_id, raw_material_product_id, quantity)
+      VALUES (${req.user.tenantId}, ${product_id}, ${raw_material_product_id}, ${quantity})
+      RETURNING *
+    `;
+    res.json(recipe[0]);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- Verify PIN Route ---
+app.post('/api/verify-pin', authenticateToken, async (req: any, res) => {
+  try {
+    const { pin } = req.body;
+    // For simplicity, check if the pin matches the current user or any superadmin/manager
+    const users = await sql`SELECT * FROM users WHERE id = ${req.user.id}`;
+    const user = users[0];
+    
+    // Check against staff table or user table?
+    const staff = await sql`SELECT * FROM staff WHERE user_id = ${req.user.tenantId} AND pin = ${pin}`;
+    
+    if (staff.length > 0) {
+      res.json({ success: true, role: staff[0].role, user: staff[0] });
+    } else {
+      res.status(401).json({ success: false, message: 'Invalid PIN' });
+    }
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 export default app;
 
 
@@ -1569,27 +1638,58 @@ async function startServer() {
     await initDb();
   }
 
-  if (process.env.NODE_ENV !== 'production') {
-    try {
-      const viteName = 'vite';
-      const viteModule = await import(viteName /* @vite-ignore */);
-      const createViteServer = viteModule.createServer;
-      const vite = await createViteServer({
-        server: { middlewareMode: true },
-        appType: 'spa',
-      });
-      app.use(vite.middlewares);
-    } catch (e) {
-      console.warn("Vite not found or failed to load, skipping dev server middleware:", e);
-    }
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  }
+  app.post('/api/bills/:uuid/send-receipt', authenticateToken, async (req: any, res) => {
+  const { uuid } = req.params;
+  const { email, phone } = req.body;
+  try {
+    const billRes = await sql`SELECT * FROM bills WHERE uuid = ${uuid} AND user_id = ${req.user.tenantId}`;
+    if (billRes.length === 0) return res.status(404).json({ error: 'Bill not found' });
+    const bill = billRes[0];
 
+    // Mock Email/SMS Send
+    console.log(`[NOTIFICATION] Sending receipt for Bill ${uuid} to ${email || phone}`);
+    // Example: if using nodemailer
+    // const transporter = nodemailer.createTransport({ ... });
+    // await transporter.sendMail({ to: email, subject: 'Your Receipt', html: '...' });
+
+    res.json({ success: true, message: 'Receipt sent successfully' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/bills/:uuid/create-payment-link', authenticateToken, async (req: any, res) => {
+  const { uuid } = req.params;
+  try {
+    const billRes = await sql`SELECT * FROM bills WHERE uuid = ${uuid} AND user_id = ${req.user.tenantId}`;
+    if (billRes.length === 0) return res.status(404).json({ error: 'Bill not found' });
+    const bill = billRes[0];
+
+    // Create a stripe payment link
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: `Order #${uuid.substring(0,8)}`,
+          },
+          unit_amount: Math.round(bill.grand_total || bill.grandTotal * 100),
+        },
+        quantity: 1,
+      }],
+      mode: 'payment',
+      success_url: `http://localhost:3000/api/public/bills/${uuid}/success`,
+      cancel_url: `http://localhost:3000/api/public/bills/${uuid}/cancel`,
+    });
+
+    res.json({ url: session.url });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+    
   
 // --- Backup Routes ---
 app.get('/api/backup/export', authenticateToken, async (req: any, res) => {
@@ -1806,7 +1906,29 @@ app.post('/api/shop-settings', authenticateToken, async (req: any, res) => {
 });
 
 
-app.listen(PORT, '0.0.0.0', () => {
+
+  if (process.env.NODE_ENV !== 'production') {
+    try {
+      const viteName = 'vite';
+      const viteModule = await import(viteName /* @vite-ignore */);
+      const createViteServer = viteModule.createServer;
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+      });
+      app.use(vite.middlewares);
+    } catch (e) {
+      console.warn("Vite not found or failed to load, skipping dev server middleware:", e);
+    }
+  } else {
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  }
+
+  app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
   });
 }

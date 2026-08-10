@@ -1,3 +1,4 @@
+import { api } from './api';
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Tag, Plus, CheckCircle2, XCircle } from 'lucide-react';
@@ -17,7 +18,7 @@ const PromotionsScreen = ({ products }: { products: Product[] }) => {
 
   const fetchData = async () => {
     try {
-      const res = await (window as any).api.get('/promotions');
+      const res = await api.get('/promotions');
       setPromotions(res);
     } catch(err) { console.error(err); }
   };
@@ -27,7 +28,7 @@ const PromotionsScreen = ({ products }: { products: Product[] }) => {
   const handleCreate = async (e: any) => {
     e.preventDefault();
     try {
-      await (window as any).api.post('/promotions', {
+      await api.post('/promotions', {
         ...newPromo,
         start_date: new Date(newPromo.start_date).toISOString(),
         end_date: new Date(newPromo.end_date).toISOString()

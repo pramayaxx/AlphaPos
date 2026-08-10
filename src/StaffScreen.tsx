@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserPlus, Trash2, Shield, User as UserIcon } from 'lucide-react';
-import { api } from './App';
+import { api } from './api';
+import { User } from './db';
 
 const StaffScreen = () => {
   const [staff, setStaff] = useState<any[]>([]);

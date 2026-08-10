@@ -1,3 +1,4 @@
+import { api } from './api';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -35,7 +36,7 @@ import TablesScreen from './TablesScreen';
 import KDSScreen from './KDSScreen';
 
 
-import { Calculator, Tag, Store, ScanBarcode, Utensils, Layers, ChefHat, Armchair, Scale, Monitor, 
+import { Award, Mail, CreditCard, Calculator, Tag, Store, ScanBarcode, Utensils, Layers, ChefHat, Armchair, Scale, Monitor, 
   Banknote, Ticket, Wallet, Truck, RotateCcw, PackageOpen, Gift, FileText, LayoutDashboard, 
   ShoppingCart, 
   Package, 
@@ -105,80 +106,7 @@ import { googleSignIn, sendGmailReport } from './gmail';
 // --- API Utility ---
 const API_URL = '/api';
 
-export const api = {
-  get: async (endpoint: string) => {
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_URL}${endpoint}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (!res.ok) {
-       const text = await res.text();
-       try { const json = JSON.parse(text); throw new Error(json.message || text); } catch(e) { throw new Error(text); }
-    }
-    return res.json();
-  },
-  post: async (endpoint: string, data: any) => {
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_URL}${endpoint}`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(data)
-    });
-    if (!res.ok) {
-       const text = await res.text();
-       try { const json = JSON.parse(text); throw new Error(json.message || text); } catch(e) { throw new Error(text); }
-    }
-    return res.json();
-  },
-  put: async (endpoint: string, data: any) => {
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_URL}${endpoint}`, {
-      method: 'PUT',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(data)
-    });
-    if (!res.ok) {
-       const text = await res.text();
-       try { const json = JSON.parse(text); throw new Error(json.message || text); } catch(e) { throw new Error(text); }
-    }
-    return res.json();
-  },
-  
-  patch: async (endpoint: string, data: any) => {
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_URL}${endpoint}`, {
-      method: 'PATCH',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(data)
-    });
-    if (!res.ok) {
-       const text = await res.text();
-       try { const json = JSON.parse(text); throw new Error(json.message || text); } catch(e) { throw new Error(text); }
-    }
-    return res.json();
-  },
-  delete: async (endpoint: string) => {
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_URL}${endpoint}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (!res.ok) {
-       const text = await res.text();
-       try { const json = JSON.parse(text); throw new Error(json.message || text); } catch(e) { throw new Error(text); }
-    }
-    return res.json();
-  }
-};
+
 
 // --- Components ---
 
@@ -990,7 +918,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
     const pin = prompt(`Manager PIN required for: ${actionDesc}`);
     if (!pin) return false;
     try {
-      const res = await (window as any).api.post('/verify-pin', { pin });
+      const res = await api.post('/verify-pin', { pin });
       if (res.success) {
         alert(`Manager ${res.manager.full_name || 'Approved'}`);
         return true;
@@ -1010,6 +938,10 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
   const [lastBill, setLastBill] = useState<Bill | null>(null);
   const [discountType, setDiscountType] = useState<'percent' | 'fixed'>('percent');
   const [discountValue, setDiscountValue] = useState(0);
+
+  const [usePoints, setUsePoints] = useState(false);
+  const [pointsRedeemed, setPointsRedeemed] = useState(0);
+
   const [isPrinterConnected, setIsPrinterConnected] = useState(false);
   
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
@@ -1213,8 +1145,20 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
     ? (subtotal * discountValue) / 100 
     : discountValue;
   
+  
   const taxAmount = (subtotal - discountAmount) * (settings.taxRate || 0) / 100;
-  const grandTotal = Math.max(0, subtotal - discountAmount + taxAmount);
+  let baseGrandTotal = Math.max(0, subtotal - discountAmount + taxAmount);
+  
+  const selectedCustomerObj = customers.find(c => String(c.id) === String(selectedCustomerId));
+  const availablePoints = selectedCustomerObj ? (selectedCustomerObj.loyalty_points || 0) : 0;
+  
+  // 1 point = 0.01 currency
+  const pointValue = 0.01;
+  const maxPointsToUse = Math.min(availablePoints, Math.floor(baseGrandTotal / pointValue));
+  
+  const pointsDiscount = usePoints ? maxPointsToUse * pointValue : 0;
+  const grandTotal = Math.max(0, baseGrandTotal - pointsDiscount);
+
 
   
   const handleSaveQuote = async () => {
@@ -1254,10 +1198,13 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
         uuid: crypto.randomUUID(),
         dateTime: new Date(),
         items: [...cart],
+        
         subtotal,
         discount: discountAmount,
         discountType,
         discountValue,
+        pointsRedeemed: usePoints ? maxPointsToUse : 0,
+
         taxAmount,
         taxRate: settings.taxRate || 0,
         grandTotal,
@@ -1426,6 +1373,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
         <ReceiptView bill={lastBill} settings={settings} />
 
         <div className="grid grid-cols-2 gap-4">
+          
           <button onClick={handlePrint} className="py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 flex flex-col items-center gap-1 transition-colors">
             <Printer size={24} />
             <span>Print Bill</span>
@@ -1434,6 +1382,30 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
             <span>WhatsApp / Share</span>
           </a>
+          <button onClick={async () => {
+             const email = prompt("Enter customer email address:");
+             if(email) {
+               try {
+                 await api.post(`/bills/${lastBill.uuid}/send-receipt`, { email });
+                 alert('Receipt sent via Email!');
+               } catch(e) { alert('Failed to send receipt.'); }
+             }
+          }} className="py-3 bg-blue-100 text-blue-700 font-bold rounded-xl hover:bg-blue-200 flex flex-col items-center gap-1 transition-colors">
+            <Mail size={24} />
+            <span>Email Receipt</span>
+          </button>
+          <button onClick={async () => {
+             try {
+               const res = await api.post(`/bills/${lastBill.uuid}/create-payment-link`, {});
+               if(res.url) {
+                 window.open(res.url, '_blank');
+               }
+             } catch(e) { alert('Failed to create payment link.'); }
+          }} className="py-3 bg-[#635BFF] text-white font-bold rounded-xl hover:bg-[#544ee6] flex flex-col items-center gap-1 transition-colors">
+            <CreditCard size={24} />
+            <span>Pay via Stripe</span>
+          </button>
+
           
         
         <button onClick={() => window.open(window.location.origin + '/#cfd', '_blank', 'width=800,height=600')} className="mr-4 text-emerald-600 hover:text-emerald-700 flex items-center gap-2 font-bold text-sm bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 rounded-xl transition-colors">
@@ -3049,11 +3021,14 @@ const ReportsScreen = ({ bills, products, currentUser }: { bills: Bill[], produc
         </motion.div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <StatCard label={dateRange === 'today' ? "Today's Revenue" : "Total Revenue"} value={formatCurrency(totalSales)} icon={DollarSign} color="blue" />
         <StatCard label="Total Orders" value={totalOrders.toString()} icon={ShoppingCart} color="emerald" />
         <StatCard label="Avg. Order Value" value={formatCurrency(avgOrder)} icon={TrendingUp} color="amber" />
+        <StatCard label="Net Profit" value={formatCurrency(netProfit)} icon={DollarSign} color="blue" />
       </div>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm">
@@ -3665,7 +3640,7 @@ export default function App() {
   const [staffList, setStaffList] = useState<any[]>([]);
   useEffect(() => {
     if(currentUser) {
-       (window as any).api.get('/staff').then(res => setStaffList(res)).catch(e => {});
+       api.get('/staff').then(res => setStaffList(res)).catch(e => {});
     }
   }, [currentUser]);
   const [isLoading, setIsLoading] = useState(true);

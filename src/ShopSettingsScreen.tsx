@@ -1,3 +1,4 @@
+import { api } from './api';
 import React, { useState, useEffect } from 'react';
 import { Store, Receipt, Users, CreditCard, ShieldCheck } from 'lucide-react';
 
@@ -9,8 +10,8 @@ const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup
   const [newStaff, setNewStaff] = useState({ full_name: '', phone: '', role: 'CASHIER', pin: '' });
 
   useEffect(() => {
-    (window as any).api.get('/staff').then(res => setStaff(res)).catch(e => console.error(e));
-    (window as any).api.get('/shop-settings').then(res => {
+    api.get('/staff').then(res => setStaff(res)).catch(e => console.error(e));
+    api.get('/shop-settings').then(res => {
         if(res) {
            setLocalSettings(res);
            setSettings(res);
@@ -20,7 +21,7 @@ const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup
 
   const saveSettings = async () => {
     try {
-      const res = await (window as any).api.post('/shop-settings', localSettings);
+      const res = await api.post('/shop-settings', localSettings);
       setSettings(res);
       alert('Settings saved!');
     } catch(err: any) { alert(err.message); }
@@ -29,8 +30,8 @@ const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup
   const addStaff = async (e: any) => {
     e.preventDefault();
     try {
-      await (window as any).api.post('/staff', newStaff);
-      const res = await (window as any).api.get('/staff');
+      await api.post('/staff', newStaff);
+      const res = await api.get('/staff');
       setStaff(res);
       setNewStaff({ full_name: '', phone: '', role: 'CASHIER', pin: '' });
     } catch(err: any) { alert(err.message); }
@@ -39,7 +40,7 @@ const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup
   const deleteStaff = async (id: number) => {
     if(!confirm("Delete this staff member?")) return;
     try {
-      await (window as any).api.delete(`/staff/${id}`);
+      await api.delete(`/staff/${id}`);
       setStaff(staff.filter(s => s.id !== id));
     } catch(err: any) { alert(err.message); }
   };

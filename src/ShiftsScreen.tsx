@@ -1,3 +1,4 @@
+import { api } from './api';
 import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
@@ -10,7 +11,7 @@ const ShiftsScreen = () => {
 
   const fetchShifts = async () => {
     try {
-      const res = await (window as any).api.get('/shifts');
+      const res = await api.get('/shifts');
       setShifts(res);
       const active = res.find((s: any) => s.status === 'OPEN');
       setActiveShift(active || null);
@@ -21,7 +22,7 @@ const ShiftsScreen = () => {
 
   const openShift = async () => {
     try {
-      await (window as any).api.post('/shifts/open', { starting_cash: startingCash, staff_id: 1 });
+      await api.post('/shifts/open', { starting_cash: startingCash, staff_id: 1 });
       fetchShifts();
     } catch(err: any) { alert(err.message); }
   };
@@ -29,7 +30,7 @@ const ShiftsScreen = () => {
   const closeShift = async () => {
     try {
       // expected cash is just starting cash for this simple example. In reality it would be starting_cash + cash_sales - cash_refunds
-      await (window as any).api.post(`/shifts/close/${activeShift.id}`, { ending_cash: endingCash, expected_cash: activeShift.starting_cash });
+      await api.post(`/shifts/close/${activeShift.id}`, { ending_cash: endingCash, expected_cash: activeShift.starting_cash });
       fetchShifts();
     } catch(err: any) { alert(err.message); }
   };

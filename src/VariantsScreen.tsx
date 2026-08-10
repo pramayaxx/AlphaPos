@@ -1,3 +1,4 @@
+import { api } from './api';
 import React, { useState, useEffect } from 'react';
 import { Layers, Plus, Save } from 'lucide-react';
 import { type Product } from './db';
@@ -10,7 +11,7 @@ const VariantsScreen = ({ products }: { products: Product[] }) => {
   const fetchVariants = async (productId: string) => {
     if(!productId) return;
     try {
-      const res = await (window as any).api.get(`/variants/${productId}`);
+      const res = await api.get(`/variants/${productId}`);
       setVariants(res);
     } catch(err) { console.error(err); }
   };
@@ -23,7 +24,7 @@ const VariantsScreen = ({ products }: { products: Product[] }) => {
     e.preventDefault();
     if (!selectedProduct) return;
     try {
-      await (window as any).api.post('/variants', {
+      await api.post('/variants', {
         product_id: parseInt(selectedProduct),
         name: newVariant.name,
         sku: newVariant.sku,

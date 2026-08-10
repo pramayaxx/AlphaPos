@@ -1,3 +1,4 @@
+import { api } from './api';
 import React, { useState, useEffect } from 'react';
 import { Store, Plus, MapPin } from 'lucide-react';
 
@@ -8,7 +9,7 @@ const BranchesScreen = () => {
 
   const fetchData = async () => {
     try {
-      const res = await (window as any).api.get('/branches');
+      const res = await api.get('/branches');
       setBranches(res);
     } catch(err) { console.error(err); }
   };
@@ -18,7 +19,7 @@ const BranchesScreen = () => {
   const handleCreate = async (e: any) => {
     e.preventDefault();
     try {
-      await (window as any).api.post('/branches', newBranch);
+      await api.post('/branches', newBranch);
       fetchData();
       setShowAdd(false);
       setNewBranch({name: '', location: ''});

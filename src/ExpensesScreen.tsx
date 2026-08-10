@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Banknote, Plus, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
-import { api } from './App';
+import { api } from './api';
+import { User } from './db';
 import { type Expense } from './db';
 
 const ExpensesScreen = () => {

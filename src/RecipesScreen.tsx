@@ -1,3 +1,4 @@
+import { api } from './api';
 import React, { useState, useEffect } from 'react';
 import { Utensils, Plus, Save } from 'lucide-react';
 import { type Product } from './db';
@@ -8,7 +9,7 @@ const RecipesScreen = ({ products }: { products: Product[] }) => {
 
   const fetchRecipes = async () => {
     try {
-      const res = await (window as any).api.get('/recipes');
+      const res = await api.get('/recipes');
       setRecipes(res);
     } catch(err) { console.error(err); }
   };
@@ -18,7 +19,7 @@ const RecipesScreen = ({ products }: { products: Product[] }) => {
   const handleAdd = async (e: any) => {
     e.preventDefault();
     try {
-      await (window as any).api.post('/recipes', {
+      await api.post('/recipes', {
         product_id: parseInt(newRecipe.product_id),
         raw_material_product_id: parseInt(newRecipe.raw_material_product_id),
         quantity_needed: parseFloat(newRecipe.quantity_needed.toString())

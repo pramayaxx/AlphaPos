@@ -1,3 +1,4 @@
+import { api } from './api';
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Calculator, DollarSign, UserCheck, Check } from 'lucide-react';
@@ -10,9 +11,9 @@ const PayrollScreen = () => {
 
   const fetchData = async () => {
     try {
-      const res = await (window as any).api.get('/payroll');
+      const res = await api.get('/payroll');
       setPayrolls(res);
-      const stf = await (window as any).api.get('/staff');
+      const stf = await api.get('/staff');
       setStaff(stf);
     } catch(err) {
       console.error(err);
@@ -33,7 +34,7 @@ const PayrollScreen = () => {
     if(!hours || !comm) return;
     
     try {
-      await (window as any).api.post('/payroll', {
+      await api.post('/payroll', {
         staff_id: parseInt(staffId),
         period_start: new Date(new Date().setDate(1)).toISOString(),
         period_end: new Date().toISOString(),

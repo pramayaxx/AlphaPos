@@ -1,3 +1,4 @@
+import { api } from './api';
 import React, { useState, useEffect } from 'react';
 import { Armchair, Plus, CheckCircle } from 'lucide-react';
 
@@ -8,7 +9,7 @@ const TablesScreen = ({ onTableSelect }: { onTableSelect: (table: any) => void }
 
   const fetchData = async () => {
     try {
-      const res = await (window as any).api.get('/tables');
+      const res = await api.get('/tables');
       setTables(res);
     } catch(err) { console.error(err); }
   };
@@ -18,7 +19,7 @@ const TablesScreen = ({ onTableSelect }: { onTableSelect: (table: any) => void }
   const handleCreate = async (e: any) => {
     e.preventDefault();
     try {
-      await (window as any).api.post('/tables', newTable);
+      await api.post('/tables', newTable);
       fetchData();
       setShowAdd(false);
       setNewTable({ name: '', capacity: 4 });
@@ -28,7 +29,7 @@ const TablesScreen = ({ onTableSelect }: { onTableSelect: (table: any) => void }
   const markAvailable = async (e: any, id: string) => {
     e.stopPropagation();
     try {
-      await (window as any).api.put(`/tables/${id}/status`, { status: 'AVAILABLE' });
+      await api.put(`/tables/${id}/status`, { status: 'AVAILABLE' });
       fetchData();
     } catch(err: any) { alert(err.message); }
   };

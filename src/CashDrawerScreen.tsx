@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Wallet, X, Plus, LogOut, Download } from 'lucide-react';
 import { format } from 'date-fns';
-import { api } from './App';
+import { api } from './api';
+import { User } from './db';
 import { type CashShift, type Bill, type Expense } from './db';
 
 const CashDrawerScreen = ({ bills }: { bills: Bill[] }) => {

@@ -1,3 +1,4 @@
+import { api } from './api';
 import React, { useState, useEffect } from 'react';
 import { FileText, Plus, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
@@ -7,7 +8,7 @@ const InvoicesScreen = () => {
 
   const fetchInvoices = async () => {
     try {
-      const res = await (window as any).api.get('/invoices');
+      const res = await api.get('/invoices');
       setInvoices(res);
     } catch(err) { console.error(err); }
   };

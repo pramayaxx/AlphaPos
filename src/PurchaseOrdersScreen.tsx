@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Truck, Plus, Search, CheckCircle, PackageOpen } from 'lucide-react';
 import { format } from 'date-fns';
-import { api } from './App';
+import { api } from './api';
+import { User } from './db';
 import { type PurchaseOrder, type Supplier, type Product } from './db';
 
 const PurchaseOrdersScreen = ({ products }: { products: Product[] }) => {

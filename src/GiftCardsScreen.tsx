@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Gift, Plus, X, Power, PowerOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
-import { api } from './App';
+import { api } from './api';
+import { User } from './db';
 import { type GiftCard } from './db';
 import { cn } from './lib/utils';
 

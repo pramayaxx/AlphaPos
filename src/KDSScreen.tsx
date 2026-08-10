@@ -1,3 +1,4 @@
+import { api } from './api';
 import React, { useState, useEffect } from 'react';
 import { ChefHat, Check, Clock, Utensils } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -7,7 +8,7 @@ const KDSScreen = () => {
 
   const fetchOrders = async () => {
     try {
-      const res = await (window as any).api.get('/kds');
+      const res = await api.get('/kds');
       setOrders(res);
     } catch(err) { console.error(err); }
   };
@@ -20,7 +21,7 @@ const KDSScreen = () => {
 
   const updateStatus = async (id: string, status: string) => {
     try {
-      await (window as any).api.put(`/kds/${id}/status`, { status });
+      await api.put(`/kds/${id}/status`, { status });
       fetchOrders();
     } catch(err) { alert(err.message); }
   };

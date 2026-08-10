@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Plus, Search, CheckCircle, XCircle, Printer } from 'lucide-react';
 import { format } from 'date-fns';
-import { api } from './App';
+import { api } from './api';
+import { User } from './db';
 import { type Quote, type Customer } from './db';
 
 const QuotesScreen = ({ customers }: { customers: Customer[] }) => {
