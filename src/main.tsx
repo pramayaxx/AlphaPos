@@ -3,11 +3,12 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 import { ThemeProvider } from './ThemeContext.tsx';
+import { I18nProvider } from './i18n.tsx';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
-      <App />
+      <I18nProvider><App /></I18nProvider>
     </ThemeProvider>
   </StrictMode>,
 );

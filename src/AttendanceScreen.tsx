@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { format, differenceInMinutes, differenceInHours } from 'date-fns';
 import { api } from './api';
 import { User } from './db';
-import { type AttendanceRecord, type User } from './db';
+import { type AttendanceRecord } from './db';
 import { cn } from './lib/utils';
 
 const AttendanceScreen = () => {

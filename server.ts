@@ -268,14 +268,6 @@ async function initDb() {
         capacity INTEGER DEFAULT 4
       );
 
-      CREATE TABLE IF NOT EXISTS kds_orders (
-        id SERIAL PRIMARY KEY,
-        bill_id UUID REFERENCES bills(id) ON DELETE CASCADE,
-        table_id INTEGER REFERENCES restaurant_tables(id),
-        status VARCHAR(50) DEFAULT 'PENDING', -- PENDING, PREPARING, READY, SERVED
-        notes TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
 
       CREATE TABLE IF NOT EXISTS shifts (
         id SERIAL PRIMARY KEY,
@@ -587,6 +579,25 @@ async function initDb() {
 
 
     
+    
+    await sql.unsafe(`
+      CREATE TABLE IF NOT EXISTS table_reservations (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
+        table_id INTEGER REFERENCES restaurant_tables(id),
+        customer_name VARCHAR(255),
+        customer_phone VARCHAR(50),
+        reservation_time TIMESTAMP,
+        guest_count INTEGER,
+        status VARCHAR(20) DEFAULT 'pending'
+      )
+    `);
+    
+    try { await sql`ALTER TABLE shop_settings ADD COLUMN enable_loyalty_tiers BOOLEAN DEFAULT false`; } catch (e) {}
+    try { await sql`ALTER TABLE shop_settings ADD COLUMN scale_integration BOOLEAN DEFAULT false`; } catch (e) {}
+    try { await sql`ALTER TABLE shop_settings ADD COLUMN barcode_scanner_mode BOOLEAN DEFAULT false`; } catch (e) {}
+    try { await sql`ALTER TABLE staff ADD COLUMN permissions JSONB DEFAULT '{}'::jsonb`; } catch (e) {}
+
     console.log('Database tables verified.');
     await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS staff (
@@ -1628,6 +1639,51 @@ app.post('/api/verify-pin', authenticateToken, async (req: any, res) => {
   }
 });
 
+
+// --- Reservations Routes ---
+app.get('/api/reservations', authenticateToken, async (req: any, res) => {
+  try {
+    const reservations = await sql`SELECT * FROM table_reservations WHERE user_id = ${req.user.tenantId} ORDER BY reservation_time ASC`;
+    res.json(reservations);
+  } catch (err: any) { res.status(500).json({ message: err.message }); }
+});
+app.post('/api/reservations', authenticateToken, async (req: any, res) => {
+  try {
+    const { table_id, customer_name, customer_phone, reservation_time, guest_count } = req.body;
+    const data = await sql`
+      INSERT INTO table_reservations (user_id, table_id, customer_name, customer_phone, reservation_time, guest_count, status)
+      VALUES (${req.user.tenantId}, ${table_id}, ${customer_name}, ${customer_phone}, ${reservation_time}, ${guest_count}, 'confirmed')
+      RETURNING *
+    `;
+    res.json(data[0]);
+  } catch (err: any) { res.status(500).json({ message: err.message }); }
+});
+
+// --- Public Menu & Ordering ---
+app.get('/api/public/menu/:tenantId', async (req: any, res) => {
+  try {
+    const { tenantId } = req.params;
+    const products = await sql`SELECT id, name, price, category, item_number, image_url FROM products WHERE user_id = ${tenantId}`;
+    res.json(products);
+  } catch (err: any) { res.status(500).json({ message: err.message }); }
+});
+app.post('/api/public/orders/:tenantId', async (req: any, res) => {
+  try {
+    const { tenantId } = req.params;
+    const { items, customer_name, customer_phone, total_amount, order_type } = req.body; // order_type = 'online'
+    
+    // Create Bill
+    const bills = await sql`
+      INSERT INTO bills (user_id, uuid, date_time, grand_total, status, order_type, customer_name, customer_phone)
+      VALUES (${tenantId}, gen_random_uuid(), NOW(), ${total_amount}, 'pending', ${order_type || 'online'}, ${customer_name}, ${customer_phone})
+      RETURNING *
+    `;
+    const bill = bills[0];
+    
+    
+    res.json({ success: true, bill });
+  } catch (err: any) { res.status(500).json({ message: err.message }); }
+});
 export default app;
 
 
@@ -1796,26 +1852,6 @@ app.put('/api/tables/:id/status', authenticateToken, async (req: any, res) => {
   } catch(e: any) { res.status(500).json({message: e.message}); }
 });
 
-app.get('/api/kds', authenticateToken, async (req: any, res) => {
-  try {
-    const data = await sql`
-      SELECT k.*, b.items, t.name as table_name 
-      FROM kds_orders k 
-      LEFT JOIN bills b ON k.bill_id = b.id 
-      LEFT JOIN restaurant_tables t ON k.table_id = t.id
-      WHERE k.status != 'SERVED'
-      ORDER BY k.created_at ASC
-    `;
-    res.json(data);
-  } catch(e: any) { res.status(500).json({message: e.message}); }
-});
-app.put('/api/kds/:id/status', authenticateToken, async (req: any, res) => {
-  try {
-    const { status } = req.body;
-    await sql`UPDATE kds_orders SET status = ${status} WHERE id = ${req.params.id}`;
-    res.json({success: true});
-  } catch(e: any) { res.status(500).json({message: e.message}); }
-});
 
 
 // --- Enterprise 3 Routes (Super Admin, Staff, Shop Settings) ---
@@ -1899,8 +1935,16 @@ app.get('/api/shop-settings', authenticateToken, async (req: any, res) => {
 });
 app.post('/api/shop-settings', authenticateToken, async (req: any, res) => {
   try {
-    const { name, phone, address, receipt_footer } = req.body;
-    const data = await sql`UPDATE shop_settings SET name = ${name}, phone = ${phone}, address = ${address}, receipt_footer = ${receipt_footer} WHERE user_id = ${req.user.tenantId} RETURNING *`;
+    const { name, phone, address, receipt_footer, enable_loyalty_tiers, scale_integration, barcode_scanner_mode } = req.body;
+    const data = await sql`UPDATE shop_settings SET 
+      name = ${name}, 
+      phone = ${phone}, 
+      address = ${address}, 
+      receipt_footer = ${receipt_footer},
+      enable_loyalty_tiers = ${enable_loyalty_tiers !== undefined ? enable_loyalty_tiers : false},
+      scale_integration = ${scale_integration !== undefined ? scale_integration : false},
+      barcode_scanner_mode = ${barcode_scanner_mode !== undefined ? barcode_scanner_mode : false}
+      WHERE user_id = ${req.user.tenantId} RETURNING *`;
     res.json(data[0]);
   } catch(e: any) { res.status(500).json({message: e.message}); }
 });

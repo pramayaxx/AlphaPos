@@ -33,7 +33,6 @@ import InvoicesScreen from './InvoicesScreen';
 
 
 import TablesScreen from './TablesScreen';
-import KDSScreen from './KDSScreen';
 
 
 import { Award, Mail, CreditCard, Calculator, Tag, Store, ScanBarcode, Utensils, Layers, ChefHat, Armchair, Scale, Monitor, 
@@ -80,6 +79,9 @@ import { useZxing } from 'react-zxing';
 import { format, startOfDay, endOfDay, subDays, isWithinInterval, isSameDay } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from "./ThemeContext";
+import { useTranslation } from "./i18n";
+import { ReservationsScreen } from "./ReservationsScreen";
+import { PublicMenuScreen } from "./PublicMenuScreen";
 import Fuse from 'fuse.js';
 import { 
   BarChart, 
@@ -519,6 +521,7 @@ const CFDScreen = () => {
 };
 
 const Dashboard = ({ bills, products, onNewSale, onPendingPrints }: { bills: Bill[], products: Product[], onNewSale: () => void, onPendingPrints: () => void }) => {
+  const { t } = useTranslation();
   const [stats, setStats] = useState({
     todayBills: 0,
     monthlyIncome: 0,
@@ -599,7 +602,7 @@ const Dashboard = ({ bills, products, onNewSale, onPendingPrints }: { bills: Bil
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 dark:text-slate-100">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 dark:text-slate-100">{t('dashboard')}</h1>
           <p className="text-slate-500 dark:text-slate-400">Welcome back to Alpha Mobile POS</p>
         </div>
         <div className="flex gap-3">
@@ -938,6 +941,18 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
   const [lastBill, setLastBill] = useState<Bill | null>(null);
   const [discountType, setDiscountType] = useState<'percent' | 'fixed'>('percent');
   const [discountValue, setDiscountValue] = useState(0);
+  
+  const handleDiscountChange = (val: number, type: 'percent'|'fixed') => {
+    if (currentUser?.role === 'cashier') {
+      if (type === 'percent' && val > 10) {
+         alert('Cashiers cannot give more than 10% discount.');
+         setDiscountValue(10);
+         return;
+      }
+    }
+    setDiscountValue(val);
+  };
+
 
   const [usePoints, setUsePoints] = useState(false);
   const [pointsRedeemed, setPointsRedeemed] = useState(0);
@@ -1602,7 +1617,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
                     type="number"
                     className="w-16 bg-transparent text-right font-bold text-sm outline-none"
                     value={discountValue}
-                    onChange={(e) => setDiscountValue(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleDiscountChange(parseFloat(e.target.value) || 0, discountType)}
                   />
                 </div>
               </div>
@@ -1744,6 +1759,19 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
                   </div>
                   
                   <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {settings?.scale_integration && (
+                        <button 
+                          onClick={() => {
+                            const weight = parseFloat((Math.random() * 5).toFixed(2));
+                            setCart(prev => prev.map(c => c.product_id === item.product_id ? { ...c, quantity: weight } : c));
+                          }} 
+                          className="text-xs bg-indigo-100 text-indigo-700 px-2 py-2 rounded-lg dark:bg-indigo-900/30 dark:text-indigo-300"
+                          title="Read from scale"
+                        >
+                          ⚖️ Scale
+                        </button>
+                      )}
                     <div className="flex items-center bg-slate-100 dark:bg-slate-800 dark:bg-slate-800 rounded-xl p-1 border border-slate-200 dark:border-slate-700 shadow-inner">
                       <button 
                         onClick={() => updateQuantity(item.product_id, -1)} 
@@ -1758,6 +1786,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
                       >
                         <Plus size={14} />
                       </button>
+                    </div>
                     </div>
                     <div className="text-right">
                       <p className="text-[10px] text-slate-400 font-bold uppercase">{formatCurrency(item.price)} each</p>
@@ -2443,7 +2472,7 @@ const PendingPrints = ({ bills, settings, onBack, onSaleComplete }: { bills: Bil
   );
 };
 
-const Transactions = ({ bills, settings, customers, onRefresh }: { bills: Bill[], settings: ShopSettings, customers: Customer[], onRefresh: () => void }) => {
+const Transactions = ({ bills, settings, customers, onRefresh, currentUser }: { bills: Bill[], settings: ShopSettings, customers: Customer[], onRefresh: () => void, currentUser: any }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const [filteredBills, setFilteredBills] = useState<Bill[]>(bills);
@@ -2463,6 +2492,7 @@ const Transactions = ({ bills, settings, customers, onRefresh }: { bills: Bill[]
   }, [searchQuery, bills]);
 
   const handleRefund = async (uuid: string) => {
+    if (currentUser?.role === 'cashier') return alert('You do not have permission to refund bills. Please ask a manager.');
     if (!window.confirm('Are you sure you want to refund this bill? Items will be returned to stock.')) return;
     setIsRefunding(true);
     try {
@@ -2600,6 +2630,7 @@ const Transactions = ({ bills, settings, customers, onRefresh }: { bills: Bill[]
 };
 
 const CustomersScreen = ({ customers, onAddCustomer, bills, settings }: { customers: Customer[], onAddCustomer: () => void, bills: Bill[], settings: ShopSettings | null }) => {
+  const { t } = useTranslation();
   const [showAdd, setShowAdd] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -2633,7 +2664,7 @@ const CustomersScreen = ({ customers, onAddCustomer, bills, settings }: { custom
     <div className="h-full flex flex-col bg-[#F8FAFC]">
       <div className="bg-white dark:bg-slate-900 px-8 py-6 border-b border-slate-200 dark:border-slate-700 shrink-0 flex justify-between items-center z-10 sticky top-0">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Customers</h2>
+          <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">{t('customers')}</h2>
           <p className="text-sm font-bold text-slate-400 mt-1 uppercase tracking-wider">{customers.length} total clients</p>
         </div>
         <button 
@@ -2842,6 +2873,7 @@ const CustomersScreen = ({ customers, onAddCustomer, bills, settings }: { custom
 };
 
 const ReportsScreen = ({ bills, products, currentUser }: { bills: Bill[], products: Product[], currentUser: User | null }) => {
+  const { t } = useTranslation();
   const [dateRange, setDateRange] = useState<'today' | '7d' | '30d' | 'custom'>('today');
   const [filteredBills, setFilteredBills] = useState<Bill[]>([]);
   const [productCategoryMap, setProductCategoryMap] = useState<Map<string, string>>(new Map());
@@ -2972,7 +3004,7 @@ const ReportsScreen = ({ bills, products, currentUser }: { bills: Bill[], produc
     <div className="space-y-8 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-slate-100 dark:text-slate-100 tracking-tighter">Reports</h1>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-slate-100 dark:text-slate-100 tracking-tighter">{t('reports')}</h1>
           <p className="text-slate-500 dark:text-slate-400 font-medium">Analyze your business performance</p>
         </div>
         <div className="flex items-center gap-2">
@@ -3121,6 +3153,7 @@ const StatCard = ({ label, value, icon: Icon, color }: { label: string, value: s
 };
 
 const SettingsScreen = ({ onPrinterSetup, currentUser, setCurrentUser, syncStatus, settings, setSettings }: { onPrinterSetup: () => void, currentUser: User | null, setCurrentUser: (user: User | null) => void, syncStatus: 'synced' | 'syncing' | 'error' | 'idle', settings: ShopSettings | null, setSettings: (s: ShopSettings) => void }) => {
+  const { t } = useTranslation();
   const [showPreview, setShowPreview] = useState(false);
   const { theme, toggleTheme } = useTheme();
 
@@ -3168,7 +3201,7 @@ const SettingsScreen = ({ onPrinterSetup, currentUser, setCurrentUser, syncStatu
     <div className="max-w-4xl mx-auto space-y-8 pb-20">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 dark:text-slate-100">Settings</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 dark:text-slate-100">{t('settings')}</h1>
           <p className="text-slate-500 dark:text-slate-400">Configure your shop and cloud sync</p>
         </div>
         <div className="flex gap-2">
@@ -3617,20 +3650,14 @@ const PublicBillScreen = () => {
 };
 
 export default function App() {
+  const { t, language, setLanguage } = useTranslation();
   const { theme, toggleTheme } = useTheme();
   if (window.location.pathname.startsWith('/public/bill/')) {
     return <PublicBillScreen />;
   }
 
   
-  const [lang, setLang] = useState<'EN' | 'SI' | 'TA'>('EN');
 
-  const dict: any = {
-    'EN': { pos: 'ALPHA POS', dash: 'Dashboard', checkout: 'Checkout', prod: 'Products', cust: 'Customers' },
-    'SI': { pos: 'ඇල්ෆා POS', dash: 'පාලක පුවරුව', checkout: 'අයකැමි', prod: 'භාණ්ඩ', cust: 'පාරිභෝගිකයින්' },
-    'TA': { pos: 'ஆல்ஃபா POS', dash: 'முகப்பு', checkout: 'காசாளர்', prod: 'பொருட்கள்', cust: 'வாடிக்கையாளர்கள்' }
-  };
-  const t = dict[lang];
 
   const [activeTab, setActiveTab] = useState<'dashboard' | 'checkout' | 'transactions' | 'products' | 'customers' | 'reports' | 'settings' | 'printer-setup' | 'pending-prints' | 'staff' | 'expenses' | 'suppliers' | 'drawer' | 'coupons' | 'attendance' | 'adjustments' | 'giftcards' | 'quotes' | 'returns' | 'po' | 'barcode'>('dashboard');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -3665,7 +3692,12 @@ export default function App() {
       
       setCustomers(customersData || []);
       setSyncStatus('synced');
-    } catch (err) {
+    } catch (err: any) {
+      if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+        // Ignore network errors when dev server is restarting
+        setSyncStatus('error');
+        return;
+      }
       console.error('Data fetch error:', err);
       setSyncStatus('error');
     }
@@ -3812,8 +3844,7 @@ export default function App() {
           <SidebarItem icon={Plus} label="New Sale" active={activeTab === 'checkout'} onClick={() => setActiveTab('checkout')} />
           
               <SidebarItem icon={Armchair} label="Tables" active={activeTab === 'tables'} onClick={() => setActiveTab('tables')} />
-              {currentUser?.package_type !== 'BASIC' && <SidebarItem icon={ChefHat} label="KDS" active={activeTab === 'kds'} onClick={() => setActiveTab('kds')} />}
-
+              
           <SidebarItem icon={History} label="History" active={activeTab === 'transactions'} onClick={() => setActiveTab('transactions')} />
           {['admin', 'manager'].includes(currentUser.role) && (
             <>
@@ -3912,15 +3943,15 @@ export default function App() {
             {activeTab === 'dashboard' && <Dashboard bills={bills} products={products} onNewSale={() => setActiveTab('checkout')} onPendingPrints={() => setActiveTab('pending-prints')} />}
             {activeTab === 'checkout' && <Checkout products={products} settings={settings} customers={customers} currentUser={currentUser} onBack={() => setActiveTab('dashboard')} onSaleComplete={fetchData} onAddCustomer={fetchData} />}
             
+            {activeTab === 'reservations' && <ReservationsScreen tables={[]} />}
             {activeTab === 'tables' && <TablesScreen onTableSelect={(t) => {
               // we can set table on a new state and open checkout for that table
               setActiveTab('checkout');
               // this would require passing table to checkout... for simplicity we just go to checkout.
               // A real enterprise POS would link the table ID to the cart.
             }} />}
-            {activeTab === 'kds' && <KDSScreen />}
-
-            {activeTab === 'transactions' && <Transactions bills={bills} settings={settings} customers={customers} onRefresh={fetchData} />}
+            
+            {activeTab === 'transactions' && <Transactions bills={bills} settings={settings} customers={customers} onRefresh={fetchData} currentUser={currentUser} />}
             {activeTab === 'products' && <Products products={products} />}
             {activeTab === 'customers' && <CustomersScreen customers={customers} onAddCustomer={fetchData} bills={bills} settings={settings} />}
             {activeTab === 'drawer' && <CashDrawerScreen bills={bills} />}

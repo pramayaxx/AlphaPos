@@ -85,6 +85,9 @@ export interface ShopSettings {
 
   taxRate?: number;
   taxName?: string;
+  enable_loyalty_tiers?: boolean;
+  scale_integration?: boolean;
+  barcode_scanner_mode?: boolean;
 }
 
 export interface Customer {
