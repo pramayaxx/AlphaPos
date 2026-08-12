@@ -27,12 +27,10 @@ import BranchesScreen from './BranchesScreen';
 import VariantsScreen from './VariantsScreen';
 
 import ShiftsScreen from './ShiftsScreen';
-import RecipesScreen from './RecipesScreen';
 import InvoicesScreen from './InvoicesScreen';
 
 
 
-import TablesScreen from './TablesScreen';
 
 
 import { Award, Mail, CreditCard, Calculator, Tag, Store, ScanBarcode, Utensils, Layers, ChefHat, Armchair, Scale, Monitor, 
@@ -80,8 +78,6 @@ import { format, startOfDay, endOfDay, subDays, isWithinInterval, isSameDay } fr
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from "./ThemeContext";
 import { useTranslation } from "./i18n";
-import { ReservationsScreen } from "./ReservationsScreen";
-import { PublicMenuScreen } from "./PublicMenuScreen";
 import Fuse from 'fuse.js';
 import { 
   BarChart, 
@@ -3698,7 +3694,7 @@ export default function App() {
         setSyncStatus('error');
         return;
       }
-      console.error('Data fetch error:', err);
+      console.warn('Data fetch error:', err?.message || err);
       setSyncStatus('error');
     }
   };
@@ -3732,10 +3728,10 @@ export default function App() {
             const s = await api.get('/settings');
             setSettings(s);
           } catch (err) {
-            console.error('Initial settings fetch error:', err);
+            console.warn('Initial settings fetch error:', err?.message || err);
           }
         } catch (err) {
-          console.error('Auth check error:', err);
+          console.warn('Auth check error:', err?.message || err);
           localStorage.removeItem('token');
           setCurrentUser(null);
         }
@@ -3843,7 +3839,6 @@ export default function App() {
           <SidebarItem icon={LayoutDashboard} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
           <SidebarItem icon={Plus} label="New Sale" active={activeTab === 'checkout'} onClick={() => setActiveTab('checkout')} />
           
-              <SidebarItem icon={Armchair} label="Tables" active={activeTab === 'tables'} onClick={() => setActiveTab('tables')} />
               
           <SidebarItem icon={History} label="History" active={activeTab === 'transactions'} onClick={() => setActiveTab('transactions')} />
           {['admin', 'manager'].includes(currentUser.role) && (
@@ -3854,7 +3849,6 @@ export default function App() {
 
               
               <SidebarItem icon={Clock} label="Shifts" active={activeTab === 'shifts'} onClick={() => setActiveTab('shifts')} />
-              <SidebarItem icon={Utensils} label="Recipes" active={activeTab === 'recipes'} onClick={() => setActiveTab('recipes')} />
               {currentUser?.package_type !== 'BASIC' && <SidebarItem icon={FileText} label="Invoices" active={activeTab === 'invoices'} onClick={() => setActiveTab('invoices')} />}
 
               <SidebarItem icon={PackageMinus} label="Stock Audits" active={activeTab === 'adjustments'} onClick={() => setActiveTab('adjustments')} />
@@ -3943,14 +3937,6 @@ export default function App() {
             {activeTab === 'dashboard' && <Dashboard bills={bills} products={products} onNewSale={() => setActiveTab('checkout')} onPendingPrints={() => setActiveTab('pending-prints')} />}
             {activeTab === 'checkout' && <Checkout products={products} settings={settings} customers={customers} currentUser={currentUser} onBack={() => setActiveTab('dashboard')} onSaleComplete={fetchData} onAddCustomer={fetchData} />}
             
-            {activeTab === 'reservations' && <ReservationsScreen tables={[]} />}
-            {activeTab === 'tables' && <TablesScreen onTableSelect={(t) => {
-              // we can set table on a new state and open checkout for that table
-              setActiveTab('checkout');
-              // this would require passing table to checkout... for simplicity we just go to checkout.
-              // A real enterprise POS would link the table ID to the cart.
-            }} />}
-            
             {activeTab === 'transactions' && <Transactions bills={bills} settings={settings} customers={customers} onRefresh={fetchData} currentUser={currentUser} />}
             {activeTab === 'products' && <Products products={products} />}
             {activeTab === 'customers' && <CustomersScreen customers={customers} onAddCustomer={fetchData} bills={bills} settings={settings} />}
@@ -3965,7 +3951,6 @@ export default function App() {
 
             
             {activeTab === 'shifts' && <ShiftsScreen />}
-            {activeTab === 'recipes' && <RecipesScreen products={products} />}
             {activeTab === 'invoices' && <InvoicesScreen />}
 
             {activeTab === 'adjustments' && <StockAdjustmentsScreen products={products} />}

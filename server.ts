@@ -1593,31 +1593,6 @@ app.get('/api/invoices', authenticateToken, async (req: any, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-
-// --- Recipes Routes ---
-app.get('/api/recipes', authenticateToken, async (req: any, res) => {
-  try {
-    const recipes = await sql`SELECT * FROM recipes WHERE user_id = ${req.user.tenantId} ORDER BY id DESC`;
-    res.json(recipes);
-  } catch (err: any) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-app.post('/api/recipes', authenticateToken, async (req: any, res) => {
-  try {
-    const { product_id, raw_material_product_id, quantity } = req.body;
-    const recipe = await sql`
-      INSERT INTO recipes (user_id, product_id, raw_material_product_id, quantity)
-      VALUES (${req.user.tenantId}, ${product_id}, ${raw_material_product_id}, ${quantity})
-      RETURNING *
-    `;
-    res.json(recipe[0]);
-  } catch (err: any) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
 // --- Verify PIN Route ---
 app.post('/api/verify-pin', authenticateToken, async (req: any, res) => {
   try {
@@ -1639,51 +1614,6 @@ app.post('/api/verify-pin', authenticateToken, async (req: any, res) => {
   }
 });
 
-
-// --- Reservations Routes ---
-app.get('/api/reservations', authenticateToken, async (req: any, res) => {
-  try {
-    const reservations = await sql`SELECT * FROM table_reservations WHERE user_id = ${req.user.tenantId} ORDER BY reservation_time ASC`;
-    res.json(reservations);
-  } catch (err: any) { res.status(500).json({ message: err.message }); }
-});
-app.post('/api/reservations', authenticateToken, async (req: any, res) => {
-  try {
-    const { table_id, customer_name, customer_phone, reservation_time, guest_count } = req.body;
-    const data = await sql`
-      INSERT INTO table_reservations (user_id, table_id, customer_name, customer_phone, reservation_time, guest_count, status)
-      VALUES (${req.user.tenantId}, ${table_id}, ${customer_name}, ${customer_phone}, ${reservation_time}, ${guest_count}, 'confirmed')
-      RETURNING *
-    `;
-    res.json(data[0]);
-  } catch (err: any) { res.status(500).json({ message: err.message }); }
-});
-
-// --- Public Menu & Ordering ---
-app.get('/api/public/menu/:tenantId', async (req: any, res) => {
-  try {
-    const { tenantId } = req.params;
-    const products = await sql`SELECT id, name, price, category, item_number, image_url FROM products WHERE user_id = ${tenantId}`;
-    res.json(products);
-  } catch (err: any) { res.status(500).json({ message: err.message }); }
-});
-app.post('/api/public/orders/:tenantId', async (req: any, res) => {
-  try {
-    const { tenantId } = req.params;
-    const { items, customer_name, customer_phone, total_amount, order_type } = req.body; // order_type = 'online'
-    
-    // Create Bill
-    const bills = await sql`
-      INSERT INTO bills (user_id, uuid, date_time, grand_total, status, order_type, customer_name, customer_phone)
-      VALUES (${tenantId}, gen_random_uuid(), NOW(), ${total_amount}, 'pending', ${order_type || 'online'}, ${customer_name}, ${customer_phone})
-      RETURNING *
-    `;
-    const bill = bills[0];
-    
-    
-    res.json({ success: true, bill });
-  } catch (err: any) { res.status(500).json({ message: err.message }); }
-});
 export default app;
 
 
@@ -1827,28 +1757,6 @@ app.post('/api/payroll', authenticateToken, async (req: any, res) => {
     const data = await sql`INSERT INTO payroll (user_id, staff_id, period_start, period_end, hours_worked, commission_earned, total_payment, status) 
                            VALUES (${req.user.tenantId}, ${staff_id}, ${period_start}, ${period_end}, ${hours_worked}, ${commission_earned}, ${total_payment}, ${status}) RETURNING *`;
     res.json(data[0]);
-  } catch(e: any) { res.status(500).json({message: e.message}); }
-});
-
-
-app.get('/api/tables', authenticateToken, async (req: any, res) => {
-  try {
-    const data = await sql`SELECT * FROM restaurant_tables ORDER BY id ASC`;
-    res.json(data);
-  } catch(e: any) { res.status(500).json({message: e.message}); }
-});
-app.post('/api/tables', authenticateToken, async (req: any, res) => {
-  try {
-    const { name, capacity } = req.body;
-    const data = await sql`INSERT INTO restaurant_tables (name, capacity) VALUES (${name}, ${capacity}) RETURNING *`;
-    res.json(data[0]);
-  } catch(e: any) { res.status(500).json({message: e.message}); }
-});
-app.put('/api/tables/:id/status', authenticateToken, async (req: any, res) => {
-  try {
-    const { status } = req.body;
-    await sql`UPDATE restaurant_tables SET status = ${status} WHERE id = ${req.params.id}`;
-    res.json({success: true});
   } catch(e: any) { res.status(500).json({message: e.message}); }
 });
 
