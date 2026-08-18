@@ -79,7 +79,7 @@ const CashDrawerScreen = ({ bills }: { bills: Bill[] }) => {
     if (!currentShift) return;
     setIsSubmitting(true);
     try {
-      await api.post(`/shifts/\${currentShift.id}/close`, { 
+      await api.post(`/shifts/${currentShift.id}/close`, { 
         closing_balance: parseFloat(closingBalance || '0'), 
         expected_balance: expectedBalance,
         notes 
@@ -177,7 +177,7 @@ const CashDrawerScreen = ({ bills }: { bills: Bill[] }) => {
                       <td className="p-4 text-slate-700 dark:text-slate-300 font-medium">{s.closed_by}</td>
                       <td className="p-4 text-slate-700 dark:text-slate-300 font-medium text-right">${Number(s.expected_balance).toFixed(2)}</td>
                       <td className="p-4 font-black text-slate-900 dark:text-slate-100 text-right">${Number(s.closing_balance).toFixed(2)}</td>
-                      <td className={`p-4 font-black text-right \${variance > 0 ? 'text-emerald-600' : variance < 0 ? 'text-red-600' : 'text-slate-400'}`}>
+                      <td className={`p-4 font-black text-right ${variance > 0 ? 'text-emerald-600' : variance < 0 ? 'text-red-600' : 'text-slate-400'}`}>
                         {variance > 0 ? '+' : ''}{variance.toFixed(2)}
                       </td>
                     </tr>
@@ -240,7 +240,7 @@ const CashDrawerScreen = ({ bills }: { bills: Bill[] }) => {
                 {closingBalance && (
                   <div className="flex justify-between items-center px-2">
                     <span className="text-sm font-bold text-slate-500">Variance:</span>
-                    <span className={`font-black \${(parseFloat(closingBalance) - expectedBalance) === 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                    <span className={`font-black ${(parseFloat(closingBalance) - expectedBalance) === 0 ? 'text-emerald-500' : 'text-red-500'}`}>
                       ${(parseFloat(closingBalance) - expectedBalance).toFixed(2)}
                     </span>
                   </div>

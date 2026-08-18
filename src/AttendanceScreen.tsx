@@ -55,7 +55,7 @@ const AttendanceScreen = () => {
   const handleClockOut = async (id: string) => {
     if (!confirm('Are you sure you want to clock out?')) return;
     try {
-      await api.post(`/attendance/\${id}/clock-out`, {});
+      await api.post(`/attendance/${id}/clock-out`, {});
       fetchData();
     } catch (err: any) {
       alert(err.message || 'Failed to clock out');
@@ -67,7 +67,7 @@ const AttendanceScreen = () => {
     const mins = differenceInMinutes(new Date(outTime), new Date(inTime));
     const hours = Math.floor(mins / 60);
     const remainingMins = mins % 60;
-    return `\${hours}h \${remainingMins}m`;
+    return `${hours}h ${remainingMins}m`;
   };
 
   return (

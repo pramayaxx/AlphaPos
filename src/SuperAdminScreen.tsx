@@ -34,7 +34,7 @@ const SuperAdminScreen = ({ onLogout }: { onLogout: () => void }) => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-slate-900 text-slate-100 min-h-screen">
+    <div className="h-full flex flex-col bg-slate-900 text-slate-100 min-h-[100dvh]">
       <div className="bg-slate-950 px-8 py-6 border-b border-slate-800 shrink-0 flex justify-between items-center z-10 sticky top-0">
         <div className="flex items-center gap-3">
           <ShieldAlert className="text-red-500" size={32} />

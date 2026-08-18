@@ -24,7 +24,7 @@ const QuotesScreen = ({ customers }: { customers: Customer[] }) => {
 
   const updateStatus = async (id: string, status: string) => {
     try {
-      await api.put(`/quotes/\${id}/status`, { status });
+      await api.put(`/quotes/${id}/status`, { status });
       fetchQuotes();
     } catch(err) {
       console.error(err);
@@ -83,7 +83,7 @@ const QuotesScreen = ({ customers }: { customers: Customer[] }) => {
                       ${Number(q.grand_total).toFixed(2)}
                     </td>
                     <td className="p-4">
-                      <span className={`px-2 py-1 rounded-lg text-xs font-bold uppercase \${
+                      <span className={`px-2 py-1 rounded-lg text-xs font-bold uppercase ${
                         q.status === 'accepted' ? 'bg-emerald-100 text-emerald-700' :
                         q.status === 'rejected' ? 'bg-red-100 text-red-700' :
                         q.status === 'invoiced' ? 'bg-blue-100 text-blue-700' :

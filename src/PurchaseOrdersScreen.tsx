@@ -84,7 +84,7 @@ const PurchaseOrdersScreen = ({ products }: { products: Product[] }) => {
   const handleReceive = async (id: string) => {
     if (!confirm('Mark PO as received and update stock?')) return;
     try {
-      await api.put(`/purchase-orders/\${id}/receive`, {});
+      await api.put(`/purchase-orders/${id}/receive`, {});
       fetchPos();
     } catch(err: any) {
       alert(err.message || 'Failed to receive PO');
@@ -146,7 +146,7 @@ const PurchaseOrdersScreen = ({ products }: { products: Product[] }) => {
                   <td className="p-4 text-slate-700 dark:text-slate-300 font-medium">{p.supplier_name}</td>
                   <td className="p-4 font-black text-slate-900 dark:text-slate-100">${Number(p.total_amount).toFixed(2)}</td>
                   <td className="p-4">
-                    <span className={`px-2 py-1 rounded-lg text-xs font-bold uppercase \${p.status === 'received' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                    <span className={`px-2 py-1 rounded-lg text-xs font-bold uppercase ${p.status === 'received' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                       {p.status}
                     </span>
                   </td>

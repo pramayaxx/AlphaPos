@@ -55,7 +55,7 @@ const CouponsScreen = () => {
 
   const toggleActive = async (id: string, currentStatus: boolean) => {
     try {
-      await api.post(`/coupons/\${id}/toggle`, { is_active: !currentStatus });
+      await api.post(`/coupons/${id}/toggle`, { is_active: !currentStatus });
       fetchCoupons();
     } catch(err) {
       console.error(err);
@@ -110,7 +110,7 @@ const CouponsScreen = () => {
                 <div>
                   <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-wider font-mono">{coupon.code}</h3>
                   <p className="text-emerald-600 dark:text-emerald-400 font-bold text-lg mt-1">
-                    {coupon.discount_type === 'percent' ? `\${coupon.discount_value}% OFF` : `$\${coupon.discount_value} OFF`}
+                    {coupon.discount_type === 'percent' ? `${coupon.discount_value}% OFF` : `$${coupon.discount_value} OFF`}
                   </p>
                 </div>
 

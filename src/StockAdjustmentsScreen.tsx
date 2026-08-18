@@ -41,7 +41,7 @@ const StockAdjustmentsScreen = ({ products }: { products: Product[] }) => {
     
     // Check if deducting more than available
     if (amount < 0 && prod.stock_quantity + amount < 0) {
-      if (!confirm(`This will drop the stock below zero (\${prod.stock_quantity + amount}). Continue?`)) {
+      if (!confirm(`This will drop the stock below zero (${prod.stock_quantity + amount}). Continue?`)) {
         return;
       }
     }
@@ -111,7 +111,7 @@ const StockAdjustmentsScreen = ({ products }: { products: Product[] }) => {
                     )}
                   </td>
                   <td className="p-4 text-slate-600 dark:text-slate-400 font-medium">{r.reason}</td>
-                  <td className={`p-4 font-black text-right \${r.change_amount > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  <td className={`p-4 font-black text-right ${r.change_amount > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                     {r.change_amount > 0 ? '+' : ''}{r.change_amount}
                   </td>
                 </tr>
@@ -160,7 +160,7 @@ const StockAdjustmentsScreen = ({ products }: { products: Product[] }) => {
                       <div 
                         key={p.id}
                         onClick={() => setSelectedProductId(p.id)}
-                        className={`p-3 border-b border-slate-200 dark:border-slate-700/50 cursor-pointer transition-colors \${selectedProductId === p.id ? 'bg-amber-100 dark:bg-amber-900/30' : 'hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                        className={`p-3 border-b border-slate-200 dark:border-slate-700/50 cursor-pointer transition-colors ${selectedProductId === p.id ? 'bg-amber-100 dark:bg-amber-900/30' : 'hover:bg-slate-100 dark:hover:bg-slate-700'}`}
                       >
                         <div className="font-bold text-slate-900 dark:text-slate-100">{p.name}</div>
                         <div className="text-xs text-slate-500">Stock: {p.stock_quantity} | {p.item_number}</div>

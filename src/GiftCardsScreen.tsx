@@ -49,7 +49,7 @@ const GiftCardsScreen = () => {
 
   const toggleActive = async (id: string, currentStatus: boolean) => {
     try {
-      await api.post(`/gift-cards/\${id}/toggle`, { is_active: !currentStatus });
+      await api.post(`/gift-cards/${id}/toggle`, { is_active: !currentStatus });
       fetchCards();
     } catch(err) {
       console.error(err);

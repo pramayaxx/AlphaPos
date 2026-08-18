@@ -269,7 +269,7 @@ const AuthScreen = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center p-6 font-sans">
+    <div className="min-h-[100dvh] bg-[#0A0A0A] flex items-center justify-center p-6 font-sans">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[120px] rounded-full" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-600/20 blur-[120px] rounded-full" />
@@ -467,7 +467,7 @@ const CFDScreen = () => {
   }, []);
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-slate-900 text-white p-8">
+    <div className="h-[100dvh] w-screen flex flex-col bg-slate-900 text-white p-8">
       <div className="flex justify-between items-center mb-10 border-b border-slate-800 pb-6">
         <h1 className="text-4xl font-black tracking-tighter text-blue-500">ALPHA POS</h1>
         <h2 className="text-2xl font-bold text-slate-400">Customer Display</h2>
@@ -3620,11 +3620,11 @@ const PublicBillScreen = () => {
     }
   };
 
-  if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
-  if (error || !bill || !settings) return <div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-500 font-bold">{error || 'Bill not found'}</div>;
+  if (loading) return <div className="h-[100dvh] flex items-center justify-center bg-slate-50 dark:bg-slate-900"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
+  if (error || !bill || !settings) return <div className="h-[100dvh] flex items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-500 font-bold">{error || 'Bill not found'}</div>;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col items-center py-8 px-4">
+    <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-900 flex flex-col items-center py-8 px-4">
       <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-3xl shadow-xl overflow-hidden border border-slate-100 dark:border-slate-700">
         
         {/* Header */}
@@ -3778,7 +3778,7 @@ export default function App() {
   };
 
   if (isLoading || !settings) return (
-    <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+    <div className="min-h-[100dvh] bg-[#0A0A0A] flex items-center justify-center">
       <RefreshCw size={40} className="animate-spin text-blue-600" />
     </div>
   );
@@ -3796,7 +3796,7 @@ export default function App() {
 
   if (currentUser && !currentUser.is_superadmin && staffList.length > 0 && !currentStaff) {
     return (
-      <div className="flex h-screen bg-slate-900 items-center justify-center">
+      <div className="flex h-[100dvh] bg-slate-900 items-center justify-center">
         <div className="bg-slate-800 p-8 rounded-3xl max-w-md w-full text-center">
           <h2 className="text-2xl font-black text-white mb-6">Staff Unlock</h2>
           <div className="grid grid-cols-2 gap-4">
@@ -3822,7 +3822,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-[#F8FAFC] dark:bg-slate-950 dark:text-slate-100 text-slate-900 dark:text-slate-100 dark:text-slate-100 font-sans overflow-hidden">
+    <div className="flex flex-col md:flex-row h-[100dvh] bg-[#F8FAFC] dark:bg-slate-950 dark:text-slate-100 text-slate-900 dark:text-slate-100 dark:text-slate-100 font-sans overflow-hidden">
       {/* Sidebar - Desktop */}
       <aside className="hidden md:flex w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 p-8 flex-col gap-10">
         <div className="flex items-center gap-4 px-2">

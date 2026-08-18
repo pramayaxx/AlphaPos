@@ -449,7 +449,7 @@ async function initDb() {
     `);
 
     await sql.unsafe(`
-      CREATE TABLE IF NOT EXISTS purchase_orders (
+      CREATE TABLE IF NOT EXISTS purchases (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
         supplier_id INTEGER REFERENCES suppliers(id),
@@ -759,10 +759,6 @@ app.post('/api/products', authenticateToken, async (req: any, res) => {
       }
     }
     
-    const existingName = await sql`SELECT * FROM products WHERE user_id = ${req.user.tenantId} AND LOWER(name) = LOWER(${p.name})`;
-    if (existingName.length > 0) {
-      return res.status(400).json({ message: 'Product with this name already exists' });
-    }
 
     const products = await sql`
       INSERT INTO products (user_id, item_number, name, category, price, stock_quantity, low_stock_threshold, image_url, discount_value, discount_type)
@@ -1430,7 +1426,7 @@ app.get('/api/purchases', authenticateToken, async (req: any, res) => {
   try {
     const purchases = await sql`
       SELECT p.*, s.name as supplier_name, pr.name as product_name 
-      FROM purchase_orders p
+      FROM purchases p
       LEFT JOIN suppliers s ON p.supplier_id = s.id
       LEFT JOIN products pr ON p.product_id = pr.id
       WHERE p.user_id = ${req.user.tenantId} 
@@ -1446,7 +1442,7 @@ app.post('/api/purchases', authenticateToken, async (req: any, res) => {
   try {
     const p = req.body;
     const newPo = await sql`
-      INSERT INTO purchase_orders (user_id, supplier_id, product_id, quantity, cost_price, status)
+      INSERT INTO purchases (user_id, supplier_id, product_id, quantity, cost_price, status)
       VALUES (${req.user.tenantId}, ${p.supplier_id}, ${p.product_id}, ${p.quantity}, ${p.cost_price}, 'received')
       RETURNING *
     `;
@@ -1587,7 +1583,7 @@ app.post('/api/settings', authenticateToken, async (req: any, res) => {
 // --- Invoices Routes ---
 app.get('/api/invoices', authenticateToken, async (req: any, res) => {
   try {
-    const invoices = await sql`SELECT * FROM invoices WHERE user_id = ${req.user.tenantId} ORDER BY date_time DESC`;
+    const invoices = await sql`SELECT * FROM invoices WHERE user_id = ${req.user.tenantId} ORDER BY created_at DESC`;
     res.json(invoices);
   } catch (err: any) {
     res.status(500).json({ message: err.message });
