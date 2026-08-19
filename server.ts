@@ -720,6 +720,41 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+app.delete('/api/data/wipe', authenticateToken, async (req: any, res) => {
+  try {
+    const userId = req.user.id;
+    await sql`DELETE FROM returns WHERE user_id = ${userId}`;
+    await sql`DELETE FROM purchase_orders WHERE user_id = ${userId}`;
+    await sql`DELETE FROM quotes WHERE user_id = ${userId}`;
+    await sql`DELETE FROM gift_cards WHERE user_id = ${userId}`;
+    await sql`DELETE FROM stock_adjustments WHERE user_id = ${userId}`;
+    await sql`DELETE FROM attendance WHERE user_id = ${userId}`;
+    await sql`DELETE FROM coupons WHERE user_id = ${userId}`;
+    await sql`DELETE FROM cash_shifts WHERE user_id = ${userId}`;
+    await sql`DELETE FROM purchases WHERE user_id = ${userId}`;
+    await sql`DELETE FROM suppliers WHERE user_id = ${userId}`;
+    await sql`DELETE FROM expenses WHERE user_id = ${userId}`;
+    await sql`DELETE FROM customer_payments WHERE user_id = ${userId}`;
+    await sql`DELETE FROM invoices WHERE user_id = ${userId}`;
+    await sql`DELETE FROM customers WHERE user_id = ${userId}`;
+    await sql`DELETE FROM bills WHERE user_id = ${userId}`;
+    try { await sql`DELETE FROM table_reservations WHERE user_id = ${userId}`; } catch(e){}
+    try { await sql`DELETE FROM shifts WHERE user_id = ${userId}`; } catch(e){}
+    try { await sql`DELETE FROM payroll WHERE user_id = ${userId}`; } catch(e){}
+    try { await sql`DELETE FROM staff WHERE user_id = ${userId}`; } catch(e){}
+    try { await sql`DELETE FROM promotions WHERE user_id = ${userId}`; } catch(e){}
+    try { await sql`DELETE FROM product_batches WHERE user_id = ${userId}`; } catch(e){}
+    try { await sql`DELETE FROM product_variants WHERE user_id = ${userId}`; } catch(e){}
+    try { await sql`DELETE FROM branches WHERE user_id = ${userId}`; } catch(e){}
+    await sql`DELETE FROM products WHERE user_id = ${userId}`;
+    
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error('Wipe error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/auth/me', authenticateToken, async (req: any, res) => {
   try {
     const users = await sql`SELECT id, email, full_name as "fullName", role, is_superadmin, package_type, status FROM users WHERE id = ${req.user.id}`;

@@ -110,6 +110,17 @@ export interface User {
 }
 
 export async function resetDatabase() {
+  try {
+    const token = localStorage.getItem('token');
+    if (token) {
+      await fetch('/api/data/wipe', {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    }
+  } catch (e) {
+    console.error('Failed to wipe remote data', e);
+  }
   localStorage.clear();
   window.location.reload();
 }

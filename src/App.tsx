@@ -394,13 +394,13 @@ const AuthScreen = () => {
           <div className="mt-8 pt-8 border-t border-white/10 space-y-3">
             <button 
               onClick={() => {
-                if (window.confirm('This will clear cache and log you out. Are you sure?')) {
+                if (window.confirm('WARNING: This will permanently delete ALL your items, bills, and test data, and log you out. Are you sure?')) {
                   resetDatabase();
                 }
               }}
               className="w-full py-3 text-[10px] text-slate-600 dark:text-slate-300 font-bold uppercase tracking-widest hover:text-rose-500 transition-colors"
             >
-              Clear Cache / Logout
+              Wipe All Data & Logout
             </button>
             <div className="flex justify-center gap-4 text-xs text-slate-500 mt-4">
               <a href="/public/terms" className="hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">Terms & Conditions</a>
