@@ -685,10 +685,18 @@ app.post('/api/auth/register', async (req, res) => {
     const existing = await sql`SELECT * FROM users WHERE email = ${email}`;
     if (existing.length > 0) return res.status(400).json({ message: 'Email already exists' });
 
+    let is_superadmin = false;
+    try {
+      const adminCheck = await sql`SELECT COUNT(*) FROM users WHERE is_superadmin = true`;
+      if (parseInt(adminCheck[0].count) === 0) {
+        is_superadmin = true;
+      }
+    } catch(e) {}
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await sql`
       INSERT INTO users (email, password, full_name, role, is_superadmin) 
-      VALUES (${email}, ${hashedPassword}, ${fullName}, ${role || 'admin'})
+      VALUES (${email}, ${hashedPassword}, ${fullName}, ${role || 'admin'}, ${is_superadmin})
       RETURNING id, email, full_name, role
     `;
     res.json(user[0]);
@@ -1647,32 +1655,73 @@ app.post('/api/bills/:uuid/create-payment-link', authenticateToken, async (req: 
     if (billRes.length === 0) return res.status(404).json({ error: 'Bill not found' });
     const bill = billRes[0];
 
-    // Create a stripe payment link
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [{
-        price_data: {
-          currency: 'usd',
-          product_data: {
-            name: `Order #${uuid.substring(0,8)}`,
-          },
-          unit_amount: Math.round(bill.grand_total || bill.grandTotal * 100),
-        },
-        quantity: 1,
-      }],
-      mode: 'payment',
-      success_url: `http://localhost:3000/api/public/bills/${uuid}/success`,
-      cancel_url: `http://localhost:3000/api/public/bills/${uuid}/cancel`,
-    });
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+    const host = req.headers['x-forwarded-host'] || req.get('host') || 'localhost:3000';
+    const baseUrl = `${protocol}://${host}`;
 
-    res.json({ url: session.url });
+    // Return the URL to our local PayHere checkout page
+    res.json({ url: `${baseUrl}/api/public/bills/${uuid}/payhere` });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
-    
-  
+app.get('/api/public/bills/:uuid/payhere', async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const bills = await sql`SELECT * FROM bills WHERE uuid = ${uuid}`;
+    if (bills.length === 0) return res.status(404).send('Bill not found');
+    const bill = bills[0];
+
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+    const host = req.headers['x-forwarded-host'] || req.get('host') || 'localhost:3000';
+    const baseUrl = `${protocol}://${host}`;
+
+    const merchantId = process.env.PAYHERE_MERCHANT_ID || '1234567'; // Default test merchant
+    const isProd = process.env.NODE_ENV === 'production' && process.env.PAYHERE_MERCHANT_ID;
+    const payhereUrl = isProd ? 'https://www.payhere.lk/pay/checkout' : 'https://sandbox.payhere.lk/pay/checkout';
+
+    const amount = Number(bill.grand_total || bill.grandTotal).toFixed(2);
+    const orderId = uuid.substring(0,8);
+    const currency = 'LKR';
+
+    // Basic HTML that auto-submits to PayHere
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <title>Redirecting to PayHere...</title>
+      </head>
+      <body onload="document.getElementById('payhere-form').submit();">
+          <div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif;">
+              <h3>Redirecting to secure payment...</h3>
+          </div>
+          <form id="payhere-form" method="post" action="${payhereUrl}" style="display: none;">
+              <input type="hidden" name="merchant_id" value="${merchantId}">
+              <input type="hidden" name="return_url" value="${baseUrl}/api/public/bills/${uuid}/success">
+              <input type="hidden" name="cancel_url" value="${baseUrl}/api/public/bills/${uuid}/cancel">
+              <input type="hidden" name="notify_url" value="${baseUrl}/api/public/bills/${uuid}/notify">  
+              <input type="hidden" name="order_id" value="${orderId}">
+              <input type="hidden" name="items" value="Order #${orderId}"><br>
+              <input type="hidden" name="currency" value="${currency}">
+              <input type="hidden" name="amount" value="${amount}">  
+              
+              <input type="hidden" name="first_name" value="Customer">
+              <input type="hidden" name="last_name" value="">
+              <input type="hidden" name="email" value="">
+              <input type="hidden" name="phone" value="">
+              <input type="hidden" name="address" value="">
+              <input type="hidden" name="city" value="Colombo">
+              <input type="hidden" name="country" value="Sri Lanka">
+          </form> 
+      </body>
+      </html>
+    `;
+    res.send(html);
+  } catch (error: any) {
+    res.status(500).send('Error creating payment: ' + error.message);
+  }
+});
 // --- Backup Routes ---
 app.get('/api/backup/export', authenticateToken, async (req: any, res) => {
   try {

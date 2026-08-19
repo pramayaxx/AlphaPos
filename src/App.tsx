@@ -1412,9 +1412,9 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
                  window.open(res.url, '_blank');
                }
              } catch(e) { alert('Failed to create payment link.'); }
-          }} className="py-3 bg-[#635BFF] text-white font-bold rounded-xl hover:bg-[#544ee6] flex flex-col items-center gap-1 transition-colors">
+          }} className="py-3 bg-slate-800 dark:bg-slate-700 text-white font-bold rounded-xl hover:bg-slate-700 flex flex-col items-center gap-1 transition-colors">
             <CreditCard size={24} />
-            <span>Pay via Stripe</span>
+            <span>Pay via PayHere</span>
           </button>
 
           
