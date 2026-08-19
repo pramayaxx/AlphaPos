@@ -109,17 +109,26 @@ export interface User {
   role: 'admin' | 'cashier' | 'manager' | 'guest';
 }
 
-export async function resetDatabase() {
+export async function resetDatabase(passcode: string) {
   try {
     const token = localStorage.getItem('token');
     if (token) {
-      await fetch('/api/data/wipe', {
+      const res = await fetch('/api/data/wipe', {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ passcode })
       });
+      if (!res.ok) {
+        throw new Error('Incorrect passcode');
+      }
     }
-  } catch (e) {
+  } catch (e: any) {
     console.error('Failed to wipe remote data', e);
+    alert(e.message || 'Failed to wipe data');
+    return;
   }
   localStorage.clear();
   window.location.reload();

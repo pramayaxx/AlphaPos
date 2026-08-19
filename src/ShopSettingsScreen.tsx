@@ -1,6 +1,6 @@
 import { api } from './api';
 import React, { useState, useEffect } from 'react';
-import { Store, Receipt, Users, CreditCard, ShieldCheck } from 'lucide-react';
+import { Store, Receipt, Users, CreditCard, ShieldCheck, AlertTriangle, KeyRound, Trash2 } from 'lucide-react';
 
 
 const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup }: any) => {
@@ -8,6 +8,44 @@ const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup
   const [localSettings, setLocalSettings] = useState<any>(settings || { name: '', phone: '', address: '', receiptFooter: '' });
   const [staff, setStaff] = useState<any[]>([]);
   const [newStaff, setNewStaff] = useState({ full_name: '', phone: '', role: 'CASHIER', pin: '' });
+
+  // Passcode change state
+  const [isChangingPasscode, setIsChangingPasscode] = useState(false);
+  const [passcodeForm, setPasscodeForm] = useState({ current: '', new: '', confirm: '' });
+  const [passcodeError, setPasscodeError] = useState('');
+
+  const handleChangePasscode = async () => {
+    setPasscodeError('');
+    
+    const currentStored = settings?.wipe_passcode || '12345';
+    
+    if (passcodeForm.current !== currentStored) {
+      setPasscodeError('Current passcode is incorrect.');
+      return;
+    }
+    
+    if (!passcodeForm.new || passcodeForm.new.length < 4) {
+      setPasscodeError('New passcode must be at least 4 characters.');
+      return;
+    }
+    
+    if (passcodeForm.new !== passcodeForm.confirm) {
+      setPasscodeError('New passcodes do not match.');
+      return;
+    }
+    
+    try {
+      const updatedSettings = { ...localSettings, wipe_passcode: passcodeForm.new };
+      setLocalSettings(updatedSettings);
+      const res = await api.post('/shop-settings', updatedSettings);
+      setSettings(res);
+      setIsChangingPasscode(false);
+      setPasscodeForm({ current: '', new: '', confirm: '' });
+      alert('Wipe passcode updated successfully!');
+    } catch (err: any) {
+      setPasscodeError(err.message || 'Failed to update passcode');
+    }
+  };
 
   useEffect(() => {
     api.get('/staff').then(res => setStaff(res)).catch(e => console.error(e));
@@ -70,6 +108,132 @@ const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup
                <div><label className="block text-xs font-bold text-slate-500 mb-2">Phone</label><input type="text" value={localSettings.phone || ''} onChange={e=>setLocalSettings({...localSettings, phone: e.target.value})} className="w-full bg-slate-50 p-3 rounded-xl" /></div>
                <div><label className="block text-xs font-bold text-slate-500 mb-2">Address</label><textarea value={localSettings.address || ''} onChange={e=>setLocalSettings({...localSettings, address: e.target.value})} className="w-full bg-slate-50 p-3 rounded-xl" /></div>
                <button onClick={saveSettings} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl">Save Changes</button>
+               
+               <div className="mt-16 pt-10 border-t border-slate-100 dark:border-slate-800">
+                 <div className="flex items-center gap-3 mb-6">
+                   <AlertTriangle className="text-rose-500" size={24} />
+                   <h3 className="text-2xl font-black text-rose-500 tracking-tight">Danger Zone</h3>
+                 </div>
+                 
+                 <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl overflow-hidden shadow-sm">
+                   
+                   <div className="p-6 sm:p-8 border-b border-slate-100 dark:border-slate-700">
+                     <div className="flex flex-col gap-4">
+                       <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between">
+                         <div className="flex-1">
+                           <h4 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-1">
+                             <KeyRound size={18} className="text-slate-400" />
+                             Wipe Data Passcode
+                           </h4>
+                           <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                             Set a custom secure passcode. This code will be required whenever you attempt to permanently delete store data. Keep this safe.
+                           </p>
+                         </div>
+                         
+                         {!isChangingPasscode && (
+                           <button 
+                             onClick={() => setIsChangingPasscode(true)} 
+                             className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-white font-bold py-3 px-6 rounded-xl transition-colors whitespace-nowrap"
+                           >
+                             Change Passcode
+                           </button>
+                         )}
+                       </div>
+                       
+                       {isChangingPasscode && (
+                         <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 mt-2">
+                           <h5 className="font-bold text-slate-900 dark:text-white mb-4">Update Passcode</h5>
+                           {passcodeError && (
+                             <div className="bg-rose-50 text-rose-600 p-3 rounded-lg text-sm mb-4 border border-rose-100 flex items-center gap-2">
+                               <AlertTriangle size={16} />
+                               {passcodeError}
+                             </div>
+                           )}
+                           <div className="space-y-4">
+                             <div>
+                               <label className="block text-xs font-bold text-slate-500 mb-1">Current Passcode</label>
+                               <input 
+                                 type="password" 
+                                 value={passcodeForm.current} 
+                                 onChange={e => setPasscodeForm({...passcodeForm, current: e.target.value})}
+                                 className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
+                                 placeholder="Enter current passcode"
+                               />
+                             </div>
+                             <div className="grid sm:grid-cols-2 gap-4">
+                               <div>
+                                 <label className="block text-xs font-bold text-slate-500 mb-1">New Passcode</label>
+                                 <input 
+                                   type="password" 
+                                   value={passcodeForm.new} 
+                                   onChange={e => setPasscodeForm({...passcodeForm, new: e.target.value})}
+                                   className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
+                                   placeholder="Min 4 characters"
+                                 />
+                               </div>
+                               <div>
+                                 <label className="block text-xs font-bold text-slate-500 mb-1">Confirm New Passcode</label>
+                                 <input 
+                                   type="password" 
+                                   value={passcodeForm.confirm} 
+                                   onChange={e => setPasscodeForm({...passcodeForm, confirm: e.target.value})}
+                                   className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
+                                   placeholder="Re-enter new passcode"
+                                 />
+                               </div>
+                             </div>
+                           </div>
+                           <div className="flex gap-3 mt-6">
+                             <button 
+                               onClick={handleChangePasscode}
+                               className="bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 font-bold py-2.5 px-6 rounded-xl transition-colors"
+                             >
+                               Save Passcode
+                             </button>
+                             <button 
+                               onClick={() => {
+                                 setIsChangingPasscode(false);
+                                 setPasscodeError('');
+                                 setPasscodeForm({ current: '', new: '', confirm: '' });
+                               }}
+                               className="bg-white dark:bg-transparent border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold py-2.5 px-6 rounded-xl transition-colors"
+                             >
+                               Cancel
+                             </button>
+                           </div>
+                         </div>
+                       )}
+                     </div>
+                   </div>
+                   
+                   <div className="p-6 sm:p-8 bg-rose-50/50 dark:bg-rose-500/5">
+                     <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between">
+                       <div className="flex-1">
+                         <h4 className="text-base font-bold text-rose-700 dark:text-rose-400 flex items-center gap-2 mb-1">
+                           <Trash2 size={18} className="text-rose-500 dark:text-rose-400" />
+                           Wipe All System Data
+                         </h4>
+                         <p className="text-sm text-rose-600/80 dark:text-rose-400/80 leading-relaxed">
+                           This action is irreversible. It will permanently delete all bills, products, customers, transactions, and test data. Your account will be logged out immediately.
+                         </p>
+                       </div>
+                       <button 
+                         onClick={async () => {
+                           const code = window.prompt('WARNING: This will permanently delete ALL your data. Please enter the wipe passcode to confirm:');
+                           if (code !== null) {
+                             const { resetDatabase } = await import('./db');
+                             await resetDatabase(code);
+                           }
+                         }}
+                         className="w-full sm:w-auto bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 whitespace-nowrap flex justify-center items-center gap-2"
+                       >
+                         Wipe Data & Logout
+                       </button>
+                     </div>
+                   </div>
+                   
+                 </div>
+               </div>
              </div>
            )}
 

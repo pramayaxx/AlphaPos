@@ -594,6 +594,7 @@ async function initDb() {
     try { await sql`ALTER TABLE shop_settings ADD COLUMN enable_loyalty_tiers BOOLEAN DEFAULT false`; } catch (e) {}
     try { await sql`ALTER TABLE shop_settings ADD COLUMN scale_integration BOOLEAN DEFAULT false`; } catch (e) {}
     try { await sql`ALTER TABLE shop_settings ADD COLUMN barcode_scanner_mode BOOLEAN DEFAULT false`; } catch (e) {}
+    try { await sql`ALTER TABLE shop_settings ADD COLUMN wipe_passcode VARCHAR(50) DEFAULT '12345'`; } catch (e) {}
     try { await sql`ALTER TABLE staff ADD COLUMN permissions JSONB DEFAULT '{}'::jsonb`; } catch (e) {}
 
     console.log('Database tables verified.');
@@ -723,6 +724,16 @@ app.post('/api/auth/login', async (req, res) => {
 app.delete('/api/data/wipe', authenticateToken, async (req: any, res) => {
   try {
     const userId = req.user.id;
+    const { passcode } = req.body;
+    
+    // Get shop settings to check passcode
+    const settings = await sql`SELECT wipe_passcode FROM shop_settings WHERE user_id = ${userId}`;
+    const expectedPasscode = settings.length > 0 && settings[0].wipe_passcode ? settings[0].wipe_passcode : '12345';
+    
+    if (passcode !== expectedPasscode) {
+      return res.status(401).json({ error: 'Incorrect passcode' });
+    }
+
     await sql`DELETE FROM returns WHERE user_id = ${userId}`;
     await sql`DELETE FROM purchase_orders WHERE user_id = ${userId}`;
     await sql`DELETE FROM quotes WHERE user_id = ${userId}`;
@@ -1921,7 +1932,7 @@ app.get('/api/shop-settings', authenticateToken, async (req: any, res) => {
 });
 app.post('/api/shop-settings', authenticateToken, async (req: any, res) => {
   try {
-    const { name, phone, address, receipt_footer, enable_loyalty_tiers, scale_integration, barcode_scanner_mode } = req.body;
+    const { name, phone, address, receipt_footer, enable_loyalty_tiers, scale_integration, barcode_scanner_mode, wipe_passcode } = req.body;
     const data = await sql`UPDATE shop_settings SET 
       name = ${name}, 
       phone = ${phone}, 
@@ -1929,7 +1940,8 @@ app.post('/api/shop-settings', authenticateToken, async (req: any, res) => {
       receipt_footer = ${receipt_footer},
       enable_loyalty_tiers = ${enable_loyalty_tiers !== undefined ? enable_loyalty_tiers : false},
       scale_integration = ${scale_integration !== undefined ? scale_integration : false},
-      barcode_scanner_mode = ${barcode_scanner_mode !== undefined ? barcode_scanner_mode : false}
+      barcode_scanner_mode = ${barcode_scanner_mode !== undefined ? barcode_scanner_mode : false},
+      wipe_passcode = ${wipe_passcode || '12345'}
       WHERE user_id = ${req.user.tenantId} RETURNING *`;
     res.json(data[0]);
   } catch(e: any) { res.status(500).json({message: e.message}); }
