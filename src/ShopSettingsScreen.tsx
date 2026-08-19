@@ -133,7 +133,7 @@ const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup
                 <div className="bg-slate-50 p-6 rounded-2xl">
                    <h4 className="font-bold mb-2">Payment Method</h4>
                    <p className="text-slate-500 text-sm mb-4">Update your credit card to ensure uninterrupted service.</p>
-                   <button className="bg-white border border-slate-200 text-slate-900 font-bold py-3 px-6 rounded-xl shadow-sm">Update Card (Stripe integration)</button>
+                   <button className="bg-white border border-slate-200 text-slate-900 font-bold py-3 px-6 rounded-xl shadow-sm">Update Card (PayHere integration)</button>
                 </div>
              </div>
            )}

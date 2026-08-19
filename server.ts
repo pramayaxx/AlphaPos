@@ -1,7 +1,5 @@
 import express from 'express';
 
-import Stripe from 'stripe';
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_123'); // Dummy key if not set
 
 import PDFDocument from 'pdfkit';
 import path from 'path';
