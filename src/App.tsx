@@ -402,6 +402,13 @@ const AuthScreen = () => {
             >
               Clear Cache / Logout
             </button>
+            <div className="flex justify-center gap-4 text-xs text-slate-500 mt-4">
+              <a href="/public/terms" className="hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">Terms & Conditions</a>
+              <span>|</span>
+              <a href="/public/privacy" className="hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+              <span>|</span>
+              <a href="/public/returns" className="hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">Return Policy</a>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -3650,6 +3657,72 @@ export default function App() {
   const { theme, toggleTheme } = useTheme();
   if (window.location.pathname.startsWith('/public/bill/')) {
     return <PublicBillScreen />;
+  }
+  if (window.location.pathname === '/public/terms') {
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-900 p-8">
+        <div className="max-w-3xl mx-auto bg-white p-10 rounded-2xl shadow-sm">
+          <h1 className="text-3xl font-black mb-6">Terms and Conditions</h1>
+          <div className="prose prose-slate">
+            <p>Welcome to Alpha Mobile POS.</p>
+            <h3>1. Terms</h3>
+            <p>By accessing this website and application, you are agreeing to be bound by these terms of service, all applicable laws and regulations, and agree that you are responsible for compliance with any applicable local laws.</p>
+            <h3>2. Use License</h3>
+            <p>Permission is granted to temporarily download one copy of the materials on Alpha Mobile POS's website for personal, non-commercial transitory viewing only.</p>
+            <h3>3. Disclaimer</h3>
+            <p>The materials on Alpha Mobile POS's website are provided on an 'as is' basis. Alpha Mobile POS makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.</p>
+            <h3>4. Limitations</h3>
+            <p>In no event shall Alpha Mobile POS or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the materials on Alpha Mobile POS's website.</p>
+            <br/><br/>
+            <button onClick={() => window.location.href = '/'} className="text-blue-500 font-bold hover:underline">Return Home</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (window.location.pathname === '/public/privacy') {
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-900 p-8">
+        <div className="max-w-3xl mx-auto bg-white p-10 rounded-2xl shadow-sm">
+          <h1 className="text-3xl font-black mb-6">Privacy Policy</h1>
+          <div className="prose prose-slate">
+            <p>Your privacy is important to us.</p>
+            <h3>Information we collect</h3>
+            <p>We only ask for personal information when we truly need it to provide a service to you. We collect it by fair and lawful means, with your knowledge and consent.</p>
+            <h3>Use of Information</h3>
+            <p>We use the information we collect to operate and maintain our app, send you communications, and respond to your requests.</p>
+            <h3>Information Sharing</h3>
+            <p>We don't share any personally identifying information publicly or with third-parties, except when required to by law.</p>
+            <h3>Data Security</h3>
+            <p>We protect data within commercially acceptable means to prevent loss and theft, as well as unauthorized access, disclosure, copying, use or modification.</p>
+            <br/><br/>
+            <button onClick={() => window.location.href = '/'} className="text-blue-500 font-bold hover:underline">Return Home</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (window.location.pathname === '/public/returns') {
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-900 p-8">
+        <div className="max-w-3xl mx-auto bg-white p-10 rounded-2xl shadow-sm">
+          <h1 className="text-3xl font-black mb-6">Return & Refund Policy</h1>
+          <div className="prose prose-slate">
+            <p>Thank you for shopping at Alpha Mobile POS.</p>
+            <h3>Returns</h3>
+            <p>You have 30 calendar days to return an item from the date you received it. To be eligible for a return, your item must be unused and in the same condition that you received it. Your item must be in the original packaging.</p>
+            <h3>Refunds</h3>
+            <p>Once we receive your item, we will inspect it and notify you that we have received your returned item. We will immediately notify you on the status of your refund after inspecting the item. If your return is approved, we will initiate a refund to your credit card (or original method of payment).</p>
+            <h3>Shipping</h3>
+            <p>You will be responsible for paying for your own shipping costs for returning your item. Shipping costs are non-refundable.</p>
+            <h3>Contact Us</h3>
+            <p>If you have any questions on how to return your item to us, contact us.</p>
+            <br/><br/>
+            <button onClick={() => window.location.href = '/'} className="text-blue-500 font-bold hover:underline">Return Home</button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   
