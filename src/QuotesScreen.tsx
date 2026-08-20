@@ -71,10 +71,10 @@ const QuotesScreen = ({ customers }: { customers: Customer[] }) => {
               {filteredQuotes.map((q, i) => {
                 const cust = customers.find(c => c.id === q.customer_id);
                 return (
-                  <tr key={q.id || i} className="hover:bg-slate-50/50 dark:hover:bg-slate-800 transition-colors">
+                  <tr key={q.id || i} className="hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 transition-colors">
                     <td className="p-4">
                       <div className="font-black text-slate-900 dark:text-slate-100">{q.uuid}</div>
-                      <div className="text-xs font-bold text-slate-500">{format(new Date(q.date_time), 'MMM dd, yyyy HH:mm')}</div>
+                      <div className="text-xs font-bold text-slate-500 dark:text-slate-400">{format(new Date(q.date_time), 'MMM dd, yyyy HH:mm')}</div>
                     </td>
                     <td className="p-4 text-slate-700 dark:text-slate-300 font-medium">
                       {cust ? cust.name : <span className="text-slate-400 italic">Walk-in</span>}
@@ -106,7 +106,7 @@ const QuotesScreen = ({ customers }: { customers: Customer[] }) => {
               })}
               {filteredQuotes.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-500 font-bold">No quotes found.</td>
+                  <td colSpan={5} className="p-8 text-center text-slate-500 dark:text-slate-400 font-bold">No quotes found.</td>
                 </tr>
               )}
             </tbody>

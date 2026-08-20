@@ -77,7 +77,7 @@ const BarcodeScreen = ({ products }: { products: Product[] }) => {
                 >
                   <div>
                     <div className="font-bold text-slate-900 dark:text-slate-100">{p.name}</div>
-                    <div className="text-xs text-slate-500">{p.item_number}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">{p.item_number}</div>
                   </div>
                   <Plus size={18} className="text-blue-500" />
                 </button>
@@ -94,12 +94,12 @@ const BarcodeScreen = ({ products }: { products: Product[] }) => {
               <div key={item.product.id} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
                 <div>
                   <div className="font-bold text-slate-900 dark:text-slate-100">{item.product.name}</div>
-                  <div className="text-xs text-slate-500">{item.product.item_number}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">{item.product.item_number}</div>
                 </div>
                 <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
-                  <button onClick={() => updateQuantity(item.product.id as string, -1)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-500"><Minus size={16} /></button>
+                  <button onClick={() => updateQuantity(item.product.id as string, -1)} className="p-1 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-800 rounded text-slate-500 dark:text-slate-400"><Minus size={16} /></button>
                   <span className="font-bold w-8 text-center">{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.product.id as string, 1)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-500"><Plus size={16} /></button>
+                  <button onClick={() => updateQuantity(item.product.id as string, 1)} className="p-1 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-800 rounded text-slate-500 dark:text-slate-400"><Plus size={16} /></button>
                 </div>
               </div>
             ))}

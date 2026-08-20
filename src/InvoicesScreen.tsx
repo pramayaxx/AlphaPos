@@ -28,7 +28,7 @@ const InvoicesScreen = () => {
         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 overflow-hidden">
            <table className="w-full text-left">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-100 text-slate-500 font-bold text-xs uppercase tracking-wider">
+              <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider">
                 <th className="p-4">Inv #</th>
                 <th className="p-4">Customer</th>
                 <th className="p-4">Created</th>
@@ -41,10 +41,10 @@ const InvoicesScreen = () => {
               {invoices.map(inv => {
                 const isPaid = inv.status === 'PAID';
                 return (
-                <tr key={inv.id} className="border-b border-slate-50 hover:bg-slate-50">
+                <tr key={inv.id} className="border-b border-slate-50 hover:bg-slate-50 dark:bg-slate-800">
                   <td className="p-4 font-bold text-blue-600">INV-{inv.id.toString().padStart(4, '0')}</td>
                   <td className="p-4 font-bold">{inv.customer_name}</td>
-                  <td className="p-4 font-medium text-slate-600">{format(new Date(inv.created_at), 'MMM d, yyyy')}</td>
+                  <td className="p-4 font-medium text-slate-600 dark:text-slate-400">{format(new Date(inv.created_at), 'MMM d, yyyy')}</td>
                   <td className="p-4 font-bold text-red-500">{format(new Date(inv.due_date), 'MMM d, yyyy')}</td>
                   <td className="p-4 font-black text-lg">${inv.amount.toFixed(2)}</td>
                   <td className="p-4 font-bold text-sm">
@@ -54,7 +54,7 @@ const InvoicesScreen = () => {
               )})}
               {invoices.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-12 text-center text-slate-500 font-bold">No invoices generated yet. Generate an invoice from Checkout for B2B clients.</td>
+                  <td colSpan={6} className="p-12 text-center text-slate-500 dark:text-slate-400 font-bold">No invoices generated yet. Generate an invoice from Checkout for B2B clients.</td>
                 </tr>
               )}
             </tbody>

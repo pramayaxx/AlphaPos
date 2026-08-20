@@ -102,7 +102,7 @@ const StockAdjustmentsScreen = ({ products }: { products: Product[] }) => {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {records.map((r, i) => (
-                <tr key={r.id || i} className="hover:bg-slate-50/50 dark:hover:bg-slate-800 transition-colors">
+                <tr key={r.id || i} className="hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 transition-colors">
                   <td className="p-4 font-bold text-slate-900 dark:text-slate-100">{format(new Date(r.created_at), 'MMM dd, yyyy HH:mm')}</td>
                   <td className="p-4 text-slate-700 dark:text-slate-300 font-medium">
                     {r.current_product_name || r.product_name}
@@ -118,7 +118,7 @@ const StockAdjustmentsScreen = ({ products }: { products: Product[] }) => {
               ))}
               {records.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-slate-500 font-bold">No stock adjustments recorded.</td>
+                  <td colSpan={4} className="p-8 text-center text-slate-500 dark:text-slate-400 font-bold">No stock adjustments recorded.</td>
                 </tr>
               )}
             </tbody>
@@ -136,13 +136,13 @@ const StockAdjustmentsScreen = ({ products }: { products: Product[] }) => {
                   <AlertCircle size={24} className="text-amber-500" />
                   Adjust Stock Level
                 </h3>
-                <button onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
+                <button onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-400"><X size={20} /></button>
               </div>
               
               <div className="flex-1 overflow-auto pr-2">
                 <form id="adj-form" onSubmit={handleAdd} className="space-y-6">
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Search Product</label>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Search Product</label>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input 
@@ -163,17 +163,17 @@ const StockAdjustmentsScreen = ({ products }: { products: Product[] }) => {
                         className={`p-3 border-b border-slate-200 dark:border-slate-700/50 cursor-pointer transition-colors ${selectedProductId === p.id ? 'bg-amber-100 dark:bg-amber-900/30' : 'hover:bg-slate-100 dark:hover:bg-slate-700'}`}
                       >
                         <div className="font-bold text-slate-900 dark:text-slate-100">{p.name}</div>
-                        <div className="text-xs text-slate-500">Stock: {p.stock_quantity} | {p.item_number}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">Stock: {p.stock_quantity} | {p.item_number}</div>
                       </div>
                     ))}
                     {filteredProducts.length === 0 && (
-                      <div className="p-4 text-center text-slate-500 text-sm font-bold">No products found</div>
+                      <div className="p-4 text-center text-slate-500 dark:text-slate-400 text-sm font-bold">No products found</div>
                     )}
                   </div>
 
                   <div className="flex gap-4">
                     <div className="flex-1">
-                      <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Adjustment Amount *</label>
+                      <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Adjustment Amount *</label>
                       <input 
                         type="number" 
                         value={changeAmount} 
@@ -182,12 +182,12 @@ const StockAdjustmentsScreen = ({ products }: { products: Product[] }) => {
                         className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-black text-lg outline-none focus:border-amber-500" 
                         placeholder="e.g. -5 or 10" 
                       />
-                      <p className="text-xs text-slate-500 mt-1">Use negative numbers for loss/damage.</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Use negative numbers for loss/damage.</p>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Reason</label>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Reason</label>
                     <input 
                       type="text" 
                       value={reason} 

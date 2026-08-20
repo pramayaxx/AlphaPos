@@ -77,7 +77,7 @@ const ExpensesScreen = () => {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {expenses.map((e, i) => (
-                <tr key={e.id || i} className="hover:bg-slate-50/50 dark:hover:bg-slate-800 transition-colors">
+                <tr key={e.id || i} className="hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 transition-colors">
                   <td className="p-4 font-bold text-slate-900 dark:text-slate-100">{format(new Date(e.date_time), 'MMM dd, yyyy HH:mm')}</td>
                   <td className="p-4 text-slate-700 dark:text-slate-300 font-medium">{e.description}</td>
                   <td className="p-4 text-slate-500 dark:text-slate-400 font-medium">
@@ -103,19 +103,19 @@ const ExpensesScreen = () => {
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">Add Expense</h3>
-                <button onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
+                <button onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-400"><X size={20} /></button>
               </div>
               <form onSubmit={handleAdd} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Description *</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Description *</label>
                   <input type="text" value={description} onChange={e => setDescription(e.target.value)} required className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium outline-none" placeholder="e.g. Office Supplies" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Amount *</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Amount *</label>
                   <input type="number" step="0.01" min="0" value={amount} onChange={e => setAmount(e.target.value)} required className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold outline-none" placeholder="0.00" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Category</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Category</label>
                   <input type="text" value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium outline-none" placeholder="e.g. Utilities, Maintenance" />
                 </div>
                 <button type="submit" disabled={isSubmitting} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl mt-4 text-lg">{isSubmitting ? 'Saving...' : 'Save Expense'}</button>

@@ -80,7 +80,7 @@ const PayrollScreen = () => {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {payrolls.map((p, i) => (
-                <tr key={p.id || i} className="hover:bg-slate-50/50 dark:hover:bg-slate-800 transition-colors">
+                <tr key={p.id || i} className="hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 transition-colors">
                   <td className="p-4 font-bold text-slate-900 dark:text-slate-100">{p.staff_name || 'Staff #'+p.staff_id}</td>
                   <td className="p-4 text-slate-700 dark:text-slate-300 font-medium">
                     {format(new Date(p.period_start), 'MMM d')} - {format(new Date(p.period_end), 'MMM d, yyyy')}
@@ -97,7 +97,7 @@ const PayrollScreen = () => {
               ))}
               {payrolls.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-slate-500 font-bold">No payroll records found.</td>
+                  <td colSpan={6} className="p-8 text-center text-slate-500 dark:text-slate-400 font-bold">No payroll records found.</td>
                 </tr>
               )}
             </tbody>

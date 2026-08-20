@@ -116,11 +116,11 @@ const CouponsScreen = () => {
 
                 <div className="space-y-2 mt-2 pt-4 border-t border-slate-100 dark:border-slate-700/50">
                   <div className="flex justify-between text-sm font-medium">
-                    <span className="text-slate-500">Min. Purchase</span>
+                    <span className="text-slate-500 dark:text-slate-400">Min. Purchase</span>
                     <span className="text-slate-900 dark:text-slate-100">${Number(coupon.min_purchase).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm font-medium">
-                    <span className="text-slate-500">Expires</span>
+                    <span className="text-slate-500 dark:text-slate-400">Expires</span>
                     <span className={cn("text-slate-900 dark:text-slate-100", isExpired && "text-red-500")}>
                       {coupon.valid_until ? format(new Date(coupon.valid_until), 'MMM dd, yyyy') : 'Never'}
                     </span>
@@ -137,7 +137,7 @@ const CouponsScreen = () => {
           })}
 
           {coupons.length === 0 && (
-            <div className="col-span-full py-16 text-center text-slate-500 font-bold">
+            <div className="col-span-full py-16 text-center text-slate-500 dark:text-slate-400 font-bold">
               No coupons created yet.
             </div>
           )}
@@ -151,35 +151,35 @@ const CouponsScreen = () => {
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">Create Coupon</h3>
-                <button onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
+                <button onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-400"><X size={20} /></button>
               </div>
               <form onSubmit={handleAdd} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Coupon Code *</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Coupon Code *</label>
                   <input type="text" value={code} onChange={e => setCode(e.target.value.toUpperCase())} required className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-black text-lg uppercase outline-none font-mono" placeholder="SUMMER20" />
                 </div>
                 
                 <div className="flex gap-4">
                   <div className="flex-1">
-                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Type</label>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Type</label>
                     <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
                       <button type="button" onClick={() => setDiscountType('percent')} className={cn("flex-1 py-2 font-bold text-sm rounded-lg transition-all", discountType === 'percent' ? "bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-400" : "text-slate-500")}>% OFF</button>
                       <button type="button" onClick={() => setDiscountType('fixed')} className={cn("flex-1 py-2 font-bold text-sm rounded-lg transition-all", discountType === 'fixed' ? "bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-400" : "text-slate-500")}>$ OFF</button>
                     </div>
                   </div>
                   <div className="flex-1">
-                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Value *</label>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Value *</label>
                     <input type="number" step="0.01" min="0" value={discountValue} onChange={e => setDiscountValue(e.target.value)} required className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold outline-none" placeholder="10" />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Min Purchase ($)</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Min Purchase ($)</label>
                   <input type="number" step="0.01" min="0" value={minPurchase} onChange={e => setMinPurchase(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold outline-none" placeholder="0.00" />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Expiration Date (Optional)</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Expiration Date (Optional)</label>
                   <input type="date" value={validUntil} onChange={e => setValidUntil(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold outline-none" />
                 </div>
 

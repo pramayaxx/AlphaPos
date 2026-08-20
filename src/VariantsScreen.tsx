@@ -47,7 +47,7 @@ const VariantsScreen = ({ products }: { products: Product[] }) => {
 
       <div className="flex-1 overflow-auto p-4 md:p-8 flex gap-8">
         <div className="w-1/3 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 h-fit">
-          <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Select Base Product</label>
+          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Select Base Product</label>
           <select 
             value={selectedProduct} 
             onChange={e => setSelectedProduct(e.target.value)}
@@ -77,7 +77,7 @@ const VariantsScreen = ({ products }: { products: Product[] }) => {
         <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6">
           <h3 className="font-black text-xl mb-6">Existing Variants</h3>
           {variants.length === 0 ? (
-            <div className="text-center p-12 text-slate-500 font-bold">
+            <div className="text-center p-12 text-slate-500 dark:text-slate-400 font-bold">
               {selectedProduct ? 'No variants found for this product.' : 'Select a product first.'}
             </div>
           ) : (
@@ -90,7 +90,7 @@ const VariantsScreen = ({ products }: { products: Product[] }) => {
                     </div>
                     <div>
                       <div className="font-bold text-lg">{v.name}</div>
-                      <div className="text-sm text-slate-500 flex gap-4">
+                      <div className="text-sm text-slate-500 dark:text-slate-400 flex gap-4">
                         <span>SKU: {v.sku || 'N/A'}</span>
                         <span>Stock: {v.stock_quantity}</span>
                       </div>

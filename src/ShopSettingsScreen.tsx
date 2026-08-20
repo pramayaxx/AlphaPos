@@ -1,10 +1,10 @@
 import { api } from './api';
 import React, { useState, useEffect } from 'react';
-import { Store, Receipt, Users, CreditCard, ShieldCheck, AlertTriangle, KeyRound, Trash2 } from 'lucide-react';
+import { Store, Receipt, Users, CreditCard, ShieldCheck, AlertTriangle, KeyRound, Trash2, Globe, Cloud } from 'lucide-react';
 
 
 const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup }: any) => {
-  const [activeTab, setActiveTab] = useState<'general' | 'receipt' | 'staff' | 'billing'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'receipt' | 'staff' | 'billing' | 'integrations'>('general');
   const [localSettings, setLocalSettings] = useState<any>(settings || { name: '', phone: '', address: '', receiptFooter: '' });
   const [staff, setStaff] = useState<any[]>([]);
   const [newStaff, setNewStaff] = useState({ full_name: '', phone: '', role: 'CASHIER', pin: '' });
@@ -98,6 +98,7 @@ const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup
            <button onClick={() => setActiveTab('receipt')} className={`p-4 rounded-xl text-left font-bold flex items-center gap-3 transition-colors ${activeTab === 'receipt' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}><Receipt size={20}/> Receipt config</button>
            <button onClick={() => setActiveTab('staff')} className={`p-4 rounded-xl text-left font-bold flex items-center gap-3 transition-colors ${activeTab === 'staff' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}><Users size={20}/> Staff & Roles</button>
            <button onClick={() => setActiveTab('billing')} className={`p-4 rounded-xl text-left font-bold flex items-center gap-3 transition-colors ${activeTab === 'billing' ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}><CreditCard size={20}/> SaaS Billing</button>
+           <button onClick={() => setActiveTab('integrations')} className={`p-4 rounded-xl text-left font-bold flex items-center gap-3 transition-colors ${activeTab === 'integrations' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}><Globe size={20}/> Web & Cloud</button>
         </div>
 
         <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-8 h-fit">
@@ -151,7 +152,7 @@ const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup
                            )}
                            <div className="space-y-4">
                              <div>
-                               <label className="block text-xs font-bold text-slate-500 mb-1">Current Passcode</label>
+                               <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Current Passcode</label>
                                <input 
                                  type="password" 
                                  value={passcodeForm.current} 
@@ -162,7 +163,7 @@ const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup
                              </div>
                              <div className="grid sm:grid-cols-2 gap-4">
                                <div>
-                                 <label className="block text-xs font-bold text-slate-500 mb-1">New Passcode</label>
+                                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">New Passcode</label>
                                  <input 
                                    type="password" 
                                    value={passcodeForm.new} 
@@ -172,7 +173,7 @@ const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup
                                  />
                                </div>
                                <div>
-                                 <label className="block text-xs font-bold text-slate-500 mb-1">Confirm New Passcode</label>
+                                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Confirm New Passcode</label>
                                  <input 
                                    type="password" 
                                    value={passcodeForm.confirm} 
@@ -271,7 +272,7 @@ const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
                       {staff.map(s => (
-                        <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <tr key={s.id} className="hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-800/50 transition-colors">
                           <td className="p-4 font-bold dark:text-white">{s.full_name}</td>
                           <td className="p-4"><span className="bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-3 py-1 rounded-full text-xs font-bold">{s.role}</span></td>
                           <td className="p-4"><button onClick={() => deleteStaff(s.id)} className="text-red-500 hover:text-red-600 font-bold text-sm transition-colors">Remove</button></td>
@@ -279,6 +280,45 @@ const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup
                       ))}
                     </tbody>
                  </table>
+               </div>
+             </div>
+           )}
+
+           {activeTab === 'integrations' && (
+             <div className="space-y-6 max-w-xl">
+               <h3 className="text-xl font-black mb-4 dark:text-white flex items-center gap-2">
+                 <Cloud className="text-blue-600" />
+                 Cloud Sync & Web
+               </h3>
+               
+               <div className="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/30 p-6 rounded-2xl mb-6">
+                 <h4 className="font-bold text-emerald-800 dark:text-emerald-400 flex items-center gap-2 mb-2">
+                   <ShieldCheck size={20} /> Real-time Cloud Sync Active
+                 </h4>
+                 <p className="text-sm text-emerald-700/80 dark:text-emerald-500/80 font-medium">
+                   Your data is securely stored and synced in real-time to your Cloud Database instance. No manual backup is needed. You can access this system from any device.
+                 </p>
+               </div>
+
+               <hr className="my-8 border-slate-100 dark:border-slate-800" />
+               
+               <h3 className="text-lg font-black mb-4 dark:text-white">E-commerce Integrations</h3>
+               <div className="space-y-4">
+                 <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+                   <div>
+                     <h4 className="font-bold text-slate-900 dark:text-slate-100">Shopify</h4>
+                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Sync products and online orders</p>
+                   </div>
+                   <button onClick={() => alert('Shopify OAuth integration required. Please contact administrator.')} className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors">Connect</button>
+                 </div>
+                 
+                 <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+                   <div>
+                     <h4 className="font-bold text-slate-900 dark:text-slate-100">WooCommerce</h4>
+                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Sync inventory via Webhooks</p>
+                   </div>
+                   <button onClick={() => alert('WooCommerce Webhook URL generation required. Please contact administrator.')} className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors">Connect</button>
+                 </div>
                </div>
              </div>
            )}

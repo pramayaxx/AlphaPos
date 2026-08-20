@@ -109,13 +109,13 @@ const GiftCardsScreen = () => {
 
                 <div className="space-y-2 mt-2 pt-4 border-t border-slate-100 dark:border-slate-700/50">
                   <div className="flex justify-between text-sm font-medium">
-                    <span className="text-slate-500">Issued On</span>
+                    <span className="text-slate-500 dark:text-slate-400">Issued On</span>
                     <span className="text-slate-900 dark:text-slate-100">{format(new Date(card.issued_at), 'MMM dd, yyyy')}</span>
                   </div>
                 </div>
 
                 {!isActive && Number(card.balance) <= 0 && (
-                  <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-slate-200 text-slate-600 text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest border border-slate-300">
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-slate-200 text-slate-600 dark:text-slate-400 text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest border border-slate-300">
                     Empty
                   </div>
                 )}
@@ -124,7 +124,7 @@ const GiftCardsScreen = () => {
           })}
 
           {cards.length === 0 && (
-            <div className="col-span-full py-16 text-center text-slate-500 font-bold">
+            <div className="col-span-full py-16 text-center text-slate-500 dark:text-slate-400 font-bold">
               No gift cards issued yet.
             </div>
           )}
@@ -141,11 +141,11 @@ const GiftCardsScreen = () => {
                   <Gift size={24} className="text-indigo-600" />
                   Issue Gift Card
                 </h3>
-                <button onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
+                <button onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-400"><X size={20} /></button>
               </div>
               <form onSubmit={handleAdd} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Card Code *</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Card Code *</label>
                   <div className="flex gap-2">
                     <input type="text" value={code} onChange={e => setCode(e.target.value.toUpperCase())} required className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-black text-lg uppercase outline-none font-mono" placeholder="GC-12345" />
                     <button type="button" onClick={() => setCode('GC-' + Math.random().toString(36).substring(2, 8).toUpperCase())} className="bg-slate-200 dark:bg-slate-700 px-4 rounded-xl font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600">
@@ -155,7 +155,7 @@ const GiftCardsScreen = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Initial Balance ($) *</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Initial Balance ($) *</label>
                   <input type="number" step="0.01" min="1" value={balance} onChange={e => setBalance(e.target.value)} required className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold outline-none" placeholder="50.00" />
                 </div>
 

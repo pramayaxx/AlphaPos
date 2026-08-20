@@ -138,10 +138,10 @@ const PurchaseOrdersScreen = ({ products }: { products: Product[] }) => {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredPos.map((p, i) => (
-                <tr key={p.id || i} className="hover:bg-slate-50/50 dark:hover:bg-slate-800 transition-colors">
+                <tr key={p.id || i} className="hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 transition-colors">
                   <td className="p-4">
                     <div className="font-black text-slate-900 dark:text-slate-100">{p.po_number}</div>
-                    <div className="text-xs font-bold text-slate-500">{format(new Date(p.order_date), 'MMM dd, yyyy')}</div>
+                    <div className="text-xs font-bold text-slate-500 dark:text-slate-400">{format(new Date(p.order_date), 'MMM dd, yyyy')}</div>
                   </td>
                   <td className="p-4 text-slate-700 dark:text-slate-300 font-medium">{p.supplier_name}</td>
                   <td className="p-4 font-black text-slate-900 dark:text-slate-100">${Number(p.total_amount).toFixed(2)}</td>
@@ -164,7 +164,7 @@ const PurchaseOrdersScreen = ({ products }: { products: Product[] }) => {
               ))}
               {filteredPos.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-500 font-bold">No purchase orders found.</td>
+                  <td colSpan={5} className="p-8 text-center text-slate-500 dark:text-slate-400 font-bold">No purchase orders found.</td>
                 </tr>
               )}
             </tbody>
@@ -185,7 +185,7 @@ const PurchaseOrdersScreen = ({ products }: { products: Product[] }) => {
               <form id="po-form" onSubmit={handleSave} className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Supplier *</label>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Supplier *</label>
                     <select 
                       value={selectedSupplier} 
                       onChange={e => setSelectedSupplier(e.target.value)} 
@@ -197,7 +197,7 @@ const PurchaseOrdersScreen = ({ products }: { products: Product[] }) => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Expected Date</label>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Expected Date</label>
                     <input 
                       type="date" 
                       value={expectedDate} 
@@ -209,7 +209,7 @@ const PurchaseOrdersScreen = ({ products }: { products: Product[] }) => {
 
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Order Items *</label>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Order Items *</label>
                     <button type="button" onClick={handleAddItem} className="text-blue-600 text-sm font-bold hover:underline flex items-center gap-1">
                       <Plus size={16} /> Add Item
                     </button>
@@ -248,7 +248,7 @@ const PurchaseOrdersScreen = ({ products }: { products: Product[] }) => {
                       </div>
                     ))}
                     {items.length === 0 && (
-                      <div className="text-center py-4 text-slate-500 text-sm font-bold border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl">
+                      <div className="text-center py-4 text-slate-500 dark:text-slate-400 text-sm font-bold border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl">
                         No items added. Click "Add Item" to start.
                       </div>
                     )}
@@ -256,7 +256,7 @@ const PurchaseOrdersScreen = ({ products }: { products: Product[] }) => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Notes</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Notes</label>
                   <textarea 
                     value={notes} 
                     onChange={e => setNotes(e.target.value)} 

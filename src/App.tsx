@@ -119,7 +119,7 @@ const ReceiptView = ({ bill, settings }: { bill: Bill, settings: ShopSettings })
   return (
     <div 
       id="receipt" 
-      className="p-8 bg-white border border-slate-200 rounded-2xl shadow-sm font-mono leading-relaxed mx-auto text-slate-900" 
+      className="p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm font-mono leading-relaxed mx-auto text-slate-900 dark:text-slate-100" 
       style={{ 
         fontSize: `${settings.receiptFontSize}px`,
         width: settings.receiptPaperSize === 'custom' ? `${widthPx}px` : (settings.receiptPaperSize === '58mm' ? '219px' : (settings.receiptPaperSize === '80mm' ? '302px' : '100%')),
@@ -167,7 +167,7 @@ const ReceiptView = ({ bill, settings }: { bill: Bill, settings: ShopSettings })
               <span className="flex-1 pr-2">{item.name}</span>
               <span className="w-24 text-right">{(item.quantity * item.price).toFixed(2)}</span>
             </div>
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-slate-500 dark:text-slate-400">
               {item.quantity} x {Number(item.price).toFixed(2)}
             </div>
           </div>
@@ -187,6 +187,12 @@ const ReceiptView = ({ bill, settings }: { bill: Bill, settings: ShopSettings })
             <span>-{Number(bill.discount).toFixed(2)}</span>
           </div>
         )}
+        {(bill as any).pointsRedeemed > 0 && (
+          <div className="flex justify-between text-emerald-600">
+            <span>Points Discount ({(bill as any).pointsRedeemed} pts)</span>
+            <span>-{Number((bill as any).pointsRedeemed * 0.01).toFixed(2)}</span>
+          </div>
+        )}
       </div>
 
       <div className="border-t border-dashed border-slate-300 my-4"></div>
@@ -195,6 +201,19 @@ const ReceiptView = ({ bill, settings }: { bill: Bill, settings: ShopSettings })
         <span className="uppercase tracking-widest">Total</span>
         <span>{formatCurrency(bill.grandTotal)}</span>
       </div>
+      
+      {bill.paymentMethod && (
+        <div className="flex justify-between mt-2 text-xs font-bold text-slate-500 uppercase">
+          <span>Payment Method</span>
+          <span>{bill.paymentMethod}</span>
+        </div>
+      )}
+      {(bill as any).pointsEarned > 0 && (
+        <div className="flex justify-between mt-1 text-xs font-bold text-emerald-600">
+          <span>Points Earned</span>
+          <span>+{(bill as any).pointsEarned} pts</span>
+        </div>
+      )}
 
       <div className="border-t border-dashed border-slate-300 my-4"></div>
 
@@ -288,8 +307,8 @@ const AuthScreen = () => {
           <p className="text-slate-500 dark:text-slate-400 font-medium">Next-gen retail management</p>
         </div>
 
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-10 shadow-2xl">
-          <div className="flex gap-4 mb-10 p-1.5 bg-white/5 rounded-2xl">
+        <div className="bg-white dark:bg-slate-900/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-10 shadow-2xl">
+          <div className="flex gap-4 mb-10 p-1.5 bg-white dark:bg-slate-900/5 rounded-2xl">
             <button 
               onClick={() => setIsLogin(true)}
               className={cn(
@@ -319,7 +338,7 @@ const AuthScreen = () => {
                   <input 
                     type="text" 
                     placeholder="John Doe"
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                    className="w-full bg-white dark:bg-slate-900/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
                     value={fullName}
                     onChange={e => setFullName(e.target.value)}
                   />
@@ -335,7 +354,7 @@ const AuthScreen = () => {
                   type="email" 
                   ref={isLogin ? emailRef : undefined}
                   placeholder="admin@example.com"
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                  className="w-full bg-white dark:bg-slate-900/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                 />
@@ -349,7 +368,7 @@ const AuthScreen = () => {
                 <input 
                   type={showPassword ? "text" : "password"} 
                   placeholder="password"
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                  className="w-full bg-white dark:bg-slate-900/5 border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                 />
@@ -392,7 +411,7 @@ const AuthScreen = () => {
           </form>
 
           <div className="mt-8 pt-8 border-t border-white/10 space-y-3">
-            <div className="flex justify-center gap-4 text-xs text-slate-500 mt-4">
+            <div className="flex justify-center gap-4 text-xs text-slate-500 dark:text-slate-400 mt-4">
               <a href="/public/terms" className="hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">Terms & Conditions</a>
               <span>|</span>
               <a href="/public/privacy" className="hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
@@ -490,7 +509,7 @@ const CFDScreen = () => {
               ))}
               {cart.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="py-10 text-center text-slate-500 text-2xl font-bold">Welcome! Next customer please.</td>
+                  <td colSpan={3} className="py-10 text-center text-slate-500 dark:text-slate-400 text-2xl font-bold">Welcome! Next customer please.</td>
                 </tr>
               )}
             </tbody>
@@ -504,7 +523,7 @@ const CFDScreen = () => {
           <div className="mt-16 text-blue-200 text-xl font-medium">
             Scan QR to pay / Earn points
           </div>
-          <div className="w-48 h-48 bg-white rounded-2xl mt-6 p-2">
+          <div className="w-48 h-48 bg-white dark:bg-slate-900 rounded-2xl mt-6 p-2">
              <div className="w-full h-full border-4 border-dashed border-slate-300 rounded-xl flex items-center justify-center text-slate-400 font-bold">QR CODE</div>
           </div>
         </div>
@@ -1200,6 +1219,10 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
 
   const handleConfirm = async () => {
     if (cart.length === 0) return;
+    if (paymentMethod === 'credit' && !selectedCustomerId) {
+      alert('You must select a customer for store credit (Layaways).');
+      return;
+    }
 
     try {
       const savedBillData = {
@@ -1212,7 +1235,8 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
         discountType,
         discountValue,
         pointsRedeemed: usePoints ? maxPointsToUse : 0,
-
+        pointsEarned: Math.floor(grandTotal), // 1 point per $1 spent
+        
         taxAmount,
         taxRate: settings.taxRate || 0,
         grandTotal,
@@ -1220,7 +1244,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
         createdBy: currentUser.id,
         customerId: selectedCustomerId || undefined,
         paymentMethod,
-        status: 'paid'
+        status: paymentMethod === 'credit' ? 'unpaid' : 'paid'
       };
 
       const savedBill = await api.post('/bills', savedBillData);
@@ -1420,7 +1444,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
           <Monitor size={18} /> Open CFD
         </button>
         <button onClick={handleReadScale}
-   className="mr-4 text-slate-500 hover:text-blue-500 flex items-center gap-2 font-bold text-sm bg-slate-100 dark:bg-slate-800 px-3 py-2 rounded-xl transition-colors">
+   className="mr-4 text-slate-500 dark:text-slate-400 hover:text-blue-500 flex items-center gap-2 font-bold text-sm bg-slate-100 dark:bg-slate-800 px-3 py-2 rounded-xl transition-colors">
           <Scale size={18} /> Read Scale
         </button>
         <button onClick={onBack}
@@ -1661,6 +1685,26 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
                 onAddCustomer={onAddCustomer}
               />
             </div>
+
+            {selectedCustomerId && (() => {
+              const cust = customers.find(c => String(c.id) === String(selectedCustomerId));
+              if (cust && cust.loyalty_points && cust.loyalty_points > 0) {
+                return (
+                  <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-100 dark:border-blue-800/30">
+                    <div>
+                      <p className="text-sm font-bold text-blue-700 dark:text-blue-400">Available: {cust.loyalty_points} Points</p>
+                      <p className="text-xs text-blue-600/70 dark:text-blue-400/70">1 point = {formatCurrency(0.01)}</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" checked={usePoints} onChange={e => setUsePoints(e.target.checked)} className="sr-only peer" />
+                      <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+
             <div>
               <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Payment</label>
               <div className="flex gap-2">
@@ -1726,13 +1770,13 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
 
         {/* Enhanced Cart Items below Order Summary */}
         <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 flex items-center justify-between">
+          <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between">
             <h3 className="font-bold text-slate-900 dark:text-slate-100 dark:text-slate-100">Cart Items</h3>
             <span className="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">
               {cart.length} {cart.length === 1 ? 'Item' : 'Items'}
             </span>
           </div>
-          <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[400px] overflow-y-auto">
             {cart.length === 0 ? (
               <div className="p-12 text-center text-slate-400">
                 <ShoppingCart size={48} className="mx-auto mb-4 opacity-20" />
@@ -2029,9 +2073,9 @@ const Products = ({ products }: { products: Product[] }) => {
               <th className="px-6 py-4 font-semibold">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {filteredProducts.map(product => (
-              <tr key={product.id} className="hover:bg-slate-50/50 transition-colors cursor-pointer" onClick={() => setSelectedProduct(product)}>
+              <tr key={product.id} className="hover:bg-slate-50 dark:bg-slate-800/50 transition-colors cursor-pointer" onClick={() => setSelectedProduct(product)}>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 dark:bg-slate-800 rounded-lg flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-700">
@@ -2220,7 +2264,7 @@ const Products = ({ products }: { products: Product[] }) => {
                 )}
                 <button 
                   onClick={() => setSelectedProduct(null)}
-                  className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-md text-white rounded-full hover:bg-white/40 transition-colors"
+                  className="absolute top-4 right-4 p-2 bg-white dark:bg-slate-900/20 backdrop-blur-md text-white rounded-full hover:bg-white dark:bg-slate-900/40 transition-colors"
                 >
                   <X size={20} />
                 </button>
@@ -2355,7 +2399,7 @@ const PrinterSetup = ({ onBack }: { onBack: () => void }) => {
             </button>
           </div>
           
-          <div className="divide-y divide-slate-100 border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden">
             {devices.map(device => (
               <div key={device.address} className="p-4 flex items-center justify-between hover:bg-slate-50 dark:bg-slate-800 transition-colors">
                 <div className="flex items-center gap-3">
@@ -2440,9 +2484,9 @@ const PendingPrints = ({ bills, settings, onBack, onSaleComplete }: { bills: Bil
                 <th className="px-6 py-4 font-semibold text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {pendingBills.map(bill => (
-                <tr key={bill.id} className="hover:bg-slate-50/50 transition-colors">
+                <tr key={bill.id} className="hover:bg-slate-50 dark:bg-slate-800/50 transition-colors">
                   <td className="px-6 py-4 font-bold text-slate-900 dark:text-slate-100 dark:text-slate-100">{bill.uuid.slice(0, 8).toUpperCase()}</td>
                   <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{format(bill.dateTime, 'MMM dd, HH:mm')}</td>
                   <td className="px-6 py-4 font-bold text-blue-600">{formatCurrency(bill.grandTotal)}</td>
@@ -2531,9 +2575,9 @@ const Transactions = ({ bills, settings, customers, onRefresh, currentUser }: { 
               <th className="px-6 py-4 font-semibold text-right">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {filteredBills.map(bill => (
-              <tr key={bill.id} className="hover:bg-slate-50/50 transition-colors">
+              <tr key={bill.id} className="hover:bg-slate-50 dark:bg-slate-800/50 transition-colors">
                 <td className="px-6 py-4 font-bold text-slate-900 dark:text-slate-100 dark:text-slate-100">
                   #{bill.uuid.slice(0, 8).toUpperCase()}
                   {bill.status === 'refunded' && (
@@ -2673,7 +2717,7 @@ const CustomersScreen = ({ customers, onAddCustomer, bills, settings }: { custom
         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50/50">
+              <tr className="bg-slate-50 dark:bg-slate-800/50">
                 <th className="p-4 text-xs font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800">Name</th>
                 <th className="p-4 text-xs font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 hidden sm:table-cell">Phone</th>
                 <th className="p-4 text-xs font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 hidden md:table-cell">Email</th>
@@ -2683,7 +2727,7 @@ const CustomersScreen = ({ customers, onAddCustomer, bills, settings }: { custom
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {customers.map((c, i) => (
-                <tr key={c.id || i} onClick={() => setSelectedCustomer(c)} className="hover:bg-slate-50/50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+                <tr key={c.id || i} onClick={() => setSelectedCustomer(c)} className="hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
                   <td className="p-4 font-bold text-slate-900 dark:text-slate-100">{c.name}</td>
                   <td className="p-4 text-slate-500 dark:text-slate-400 hidden sm:table-cell font-medium">{c.phone || '-'}</td>
                   <td className="p-4 text-slate-500 dark:text-slate-400 hidden md:table-cell font-medium">{c.email || '-'}</td>
@@ -2806,7 +2850,7 @@ const CustomersScreen = ({ customers, onAddCustomer, bills, settings }: { custom
             >
                <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                   <h3 className="font-bold text-slate-900 dark:text-slate-100">Invoice Details</h3>
-                  <button onClick={() => setSelectedBill(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-500">
+                  <button onClick={() => setSelectedBill(null)} className="p-2 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400">
                     <X size={20} />
                   </button>
                </div>
@@ -2832,7 +2876,7 @@ const CustomersScreen = ({ customers, onAddCustomer, bills, settings }: { custom
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
             >
-              <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50">
+              <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
                 <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 dark:text-slate-100">Add Customer</h3>
                 <button onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 shadow-sm p-2 rounded-xl transition-colors">
                   <X size={20} />
@@ -3039,7 +3083,7 @@ const ReportsScreen = ({ bills, products, currentUser }: { bills: Bill[], produc
               <p className="text-blue-100 text-sm font-medium">Total Orders Today</p>
               <p className="text-xl font-bold">{bills.filter(b => isSameDay(b.dateTime, new Date())).length}</p>
             </div>
-            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-white dark:bg-slate-900/20 rounded-2xl flex items-center justify-center">
               <TrendingUp size={24} />
             </div>
           </div>
@@ -3476,7 +3520,7 @@ const SettingsScreen = ({ onPrinterSetup, currentUser, setCurrentUser, syncStatu
               exit={{ opacity: 0, scale: 0.9 }}
               className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-hidden flex flex-col"
             >
-              <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50">
+              <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 dark:text-slate-100">Receipt Preview</h3>
                 <button onClick={() => setShowPreview(false)} className="p-2 hover:bg-slate-200 dark:bg-slate-700 rounded-full transition-colors">
                   <X size={20} />
@@ -3618,7 +3662,7 @@ const PublicBillScreen = () => {
   };
 
   if (loading) return <div className="h-[100dvh] flex items-center justify-center bg-slate-50 dark:bg-slate-900"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
-  if (error || !bill || !settings) return <div className="h-[100dvh] flex items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-500 font-bold">{error || 'Bill not found'}</div>;
+  if (error || !bill || !settings) return <div className="h-[100dvh] flex items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 font-bold">{error || 'Bill not found'}</div>;
 
   return (
     <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-900 flex flex-col items-center py-8 px-4">
@@ -3626,7 +3670,7 @@ const PublicBillScreen = () => {
         
         {/* Header */}
         <div className="bg-blue-600 p-6 text-center text-white">
-          <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+          <div className="w-16 h-16 bg-white dark:bg-slate-900/20 rounded-full flex items-center justify-center mx-auto mb-3">
              <CheckCircle2 size={32} className="text-white" />
           </div>
           <h2 className="text-2xl font-bold">E-Receipt</h2>
@@ -3650,8 +3694,8 @@ export default function App() {
   }
   if (window.location.pathname === '/public/terms') {
     return (
-      <div className="min-h-screen bg-slate-50 text-slate-900 p-8">
-        <div className="max-w-3xl mx-auto bg-white p-10 rounded-2xl shadow-sm">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-8">
+        <div className="max-w-3xl mx-auto bg-white dark:bg-slate-900 p-10 rounded-2xl shadow-sm">
           <h1 className="text-3xl font-black mb-6">Terms and Conditions</h1>
           <div className="prose prose-slate">
             <p>Welcome to Alpha Mobile POS.</p>
@@ -3672,8 +3716,8 @@ export default function App() {
   }
   if (window.location.pathname === '/public/privacy') {
     return (
-      <div className="min-h-screen bg-slate-50 text-slate-900 p-8">
-        <div className="max-w-3xl mx-auto bg-white p-10 rounded-2xl shadow-sm">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-8">
+        <div className="max-w-3xl mx-auto bg-white dark:bg-slate-900 p-10 rounded-2xl shadow-sm">
           <h1 className="text-3xl font-black mb-6">Privacy Policy</h1>
           <div className="prose prose-slate">
             <p>Your privacy is important to us.</p>
@@ -3694,8 +3738,8 @@ export default function App() {
   }
   if (window.location.pathname === '/public/returns') {
     return (
-      <div className="min-h-screen bg-slate-50 text-slate-900 p-8">
-        <div className="max-w-3xl mx-auto bg-white p-10 rounded-2xl shadow-sm">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-8">
+        <div className="max-w-3xl mx-auto bg-white dark:bg-slate-900 p-10 rounded-2xl shadow-sm">
           <h1 className="text-3xl font-black mb-6">Return & Refund Policy</h1>
           <div className="prose prose-slate">
             <p>Thank you for shopping at Alpha Mobile POS.</p>
@@ -3878,7 +3922,7 @@ export default function App() {
             localStorage.removeItem('token');
             setCurrentUser(null);
             window.location.reload();
-          }} className="mt-8 text-slate-500 font-bold text-sm">Logout Tenant</button>
+          }} className="mt-8 text-slate-500 dark:text-slate-400 font-bold text-sm">Logout Tenant</button>
         </div>
       </div>
     );

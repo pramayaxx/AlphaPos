@@ -58,8 +58,8 @@ const StaffScreen = () => {
     <div className="max-w-4xl mx-auto space-y-8 pb-20">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Staff Management</h1>
-          <p className="text-slate-500">Manage employee accounts and permissions</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Staff Management</h1>
+          <p className="text-slate-500 dark:text-slate-400">Manage employee accounts and permissions</p>
         </div>
         <button 
           onClick={() => setShowAdd(!showAdd)}
@@ -71,14 +71,14 @@ const StaffScreen = () => {
       </div>
 
       {showAdd && (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="p-6 bg-slate-50 border-b border-slate-100 flex items-center gap-3">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+          <div className="p-6 bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
               <UserPlus size={20} />
             </div>
             <div>
-              <h3 className="font-bold text-slate-900">Add New Staff Member</h3>
-              <p className="text-sm text-slate-500">Create a separate login for an employee</p>
+              <h3 className="font-bold text-slate-900 dark:text-slate-100">Add New Staff Member</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Create a separate login for an employee</p>
             </div>
           </div>
           <form onSubmit={handleAdd} className="p-6 space-y-4">
@@ -87,7 +87,7 @@ const StaffScreen = () => {
                 <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
                 <input 
                   type="text" 
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   value={fullName}
                   onChange={e => setFullName(e.target.value)}
                   required
@@ -97,7 +97,7 @@ const StaffScreen = () => {
                 <label className="block text-sm font-medium text-slate-700 mb-1">Email Address (Login)</label>
                 <input 
                   type="email" 
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required
@@ -107,7 +107,7 @@ const StaffScreen = () => {
                 <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
                 <input 
                   type="password" 
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
@@ -116,7 +116,7 @@ const StaffScreen = () => {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
                 <select 
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   value={role}
                   onChange={e => setRole(e.target.value)}
                 >
@@ -130,7 +130,7 @@ const StaffScreen = () => {
               <button 
                 type="button" 
                 onClick={() => setShowAdd(false)}
-                className="px-6 py-2 text-slate-600 font-bold hover:bg-slate-50 rounded-lg transition-colors"
+                className="px-6 py-2 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-50 dark:bg-slate-800 rounded-lg transition-colors"
               >
                 Cancel
               </button>
@@ -148,21 +148,21 @@ const StaffScreen = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {staff.length === 0 ? (
-          <div className="col-span-full py-12 text-center bg-white border border-slate-100 rounded-2xl border-dashed">
+          <div className="col-span-full py-12 text-center bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl border-dashed">
             <UserPlus className="mx-auto text-slate-300 mb-3" size={48} />
-            <p className="text-slate-500 font-medium">No staff members added yet</p>
+            <p className="text-slate-500 dark:text-slate-400 font-medium">No staff members added yet</p>
             <p className="text-xs text-slate-400 mt-1">Add staff to give them separate logins to your store.</p>
           </div>
         ) : (
           staff.map(member => (
-            <div key={member.id} className="bg-white border border-slate-100 p-4 rounded-xl shadow-sm flex items-center justify-between">
+            <div key={member.id} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-xl shadow-sm flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${member.role === 'admin' ? 'bg-amber-500' : member.role === 'manager' ? 'bg-indigo-500' : 'bg-blue-500'}`}>
                   {member.fullName.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-900">{member.fullName}</h4>
-                  <p className="text-xs text-slate-500">{member.email}</p>
+                  <h4 className="font-bold text-slate-900 dark:text-slate-100">{member.fullName}</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{member.email}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">

@@ -311,9 +311,16 @@ async function initDb() {
         image_url TEXT,
         discount_value NUMERIC(10, 2) DEFAULT 0,
         discount_type VARCHAR(20) DEFAULT 'amount',
+        is_bundle BOOLEAN DEFAULT false,
+        bundle_items JSONB,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    
+    try {
+      await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS is_bundle BOOLEAN DEFAULT false`;
+      await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS bundle_items JSONB`;
+    } catch(e) {}
 
     await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS bills (
@@ -935,11 +942,26 @@ app.post('/api/bills', authenticateToken, async (req: any, res) => {
     // 1. Process cart items (reduce stock)
     for (const item of b.items) {
       if (item.product_id && !item.product_id.startsWith('CUSTOM-')) {
-        await sql`
-          UPDATE products 
-          SET stock_quantity = GREATEST(0, stock_quantity - ${item.quantity})
-          WHERE id = ${item.product_id} AND user_id = ${req.user.tenantId}
-        `;
+        const prodRows = await sql`SELECT is_bundle, bundle_items FROM products WHERE id = ${item.product_id}`;
+        if (prodRows.length > 0) {
+          const prod = prodRows[0];
+          if (prod.is_bundle && prod.bundle_items) {
+             const bundleItems = typeof prod.bundle_items === 'string' ? JSON.parse(prod.bundle_items) : prod.bundle_items;
+             for (const bItem of bundleItems) {
+                await sql`
+                  UPDATE products
+                  SET stock_quantity = GREATEST(0, stock_quantity - (${item.quantity} * ${bItem.quantity}))
+                  WHERE id = ${bItem.product_id} AND user_id = ${req.user.tenantId}
+                `;
+             }
+          } else {
+            await sql`
+              UPDATE products 
+              SET stock_quantity = GREATEST(0, stock_quantity - ${item.quantity})
+              WHERE id = ${item.product_id} AND user_id = ${req.user.tenantId}
+            `;
+          }
+        }
       }
     }
 

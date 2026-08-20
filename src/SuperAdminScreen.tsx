@@ -77,7 +77,7 @@ const SuperAdminScreen = ({ onLogout }: { onLogout: () => void }) => {
            </div>
            <table className="w-full text-left text-slate-300">
             <thead>
-              <tr className="bg-slate-900 border-b border-slate-700 font-bold text-xs uppercase tracking-wider text-slate-500">
+              <tr className="bg-slate-900 border-b border-slate-700 font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <th className="p-4">Tenant Email</th>
                 <th className="p-4">Owner Name</th>
                 <th className="p-4">Package</th>

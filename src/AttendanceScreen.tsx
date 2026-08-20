@@ -101,7 +101,7 @@ const AttendanceScreen = () => {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {records.map((r, i) => (
-                <tr key={r.id || i} className="hover:bg-slate-50/50 dark:hover:bg-slate-800 transition-colors">
+                <tr key={r.id || i} className="hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 transition-colors">
                   <td className="p-4 font-bold text-slate-900 dark:text-slate-100 flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-black">
                       {r.staff_name.charAt(0).toUpperCase()}
@@ -131,7 +131,7 @@ const AttendanceScreen = () => {
               ))}
               {records.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-slate-500 font-bold">No time clock records found.</td>
+                  <td colSpan={6} className="p-8 text-center text-slate-500 dark:text-slate-400 font-bold">No time clock records found.</td>
                 </tr>
               )}
             </tbody>
@@ -146,17 +146,17 @@ const AttendanceScreen = () => {
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">Clock In</h3>
-                <button onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
+                <button onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-400"><X size={20} /></button>
               </div>
               
               {staff.length === 0 ? (
-                <div className="text-center py-6 text-slate-500 font-bold">
+                <div className="text-center py-6 text-slate-500 dark:text-slate-400 font-bold">
                   No staff members available. Go to the Staff tab to add them first.
                 </div>
               ) : (
                 <form onSubmit={handleClockIn} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Select Staff Member *</label>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Select Staff Member *</label>
                     <select 
                       value={selectedStaff} 
                       onChange={e => setSelectedStaff(e.target.value)} 

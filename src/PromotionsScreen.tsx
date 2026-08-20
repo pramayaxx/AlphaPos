@@ -69,7 +69,7 @@ const PromotionsScreen = ({ products }: { products: Product[] }) => {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {promotions.map((p, i) => (
-                <tr key={p.id || i} className="hover:bg-slate-50/50 dark:hover:bg-slate-800 transition-colors">
+                <tr key={p.id || i} className="hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 transition-colors">
                   <td className="p-4 font-bold text-slate-900 dark:text-slate-100 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">
                       <Tag size={20} />
@@ -94,7 +94,7 @@ const PromotionsScreen = ({ products }: { products: Product[] }) => {
               ))}
               {promotions.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-slate-500 font-bold">No active promotions.</td>
+                  <td colSpan={4} className="p-8 text-center text-slate-500 dark:text-slate-400 font-bold">No active promotions.</td>
                 </tr>
               )}
             </tbody>
@@ -109,11 +109,11 @@ const PromotionsScreen = ({ products }: { products: Product[] }) => {
             <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 mb-6">Create Campaign</h3>
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">Campaign Name</label>
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Campaign Name</label>
                 <input required type="text" value={newPromo.name} onChange={e=>setNewPromo({...newPromo, name: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-3 font-medium" />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">Promo Type</label>
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Promo Type</label>
                 <select value={newPromo.promo_type} onChange={e=>setNewPromo({...newPromo, promo_type: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-3 font-medium">
                   <option value="PERCENT_OFF">Percentage Off</option>
                   <option value="BOGO">Buy 1 Get 1 (BOGO)</option>
@@ -121,17 +121,17 @@ const PromotionsScreen = ({ products }: { products: Product[] }) => {
               </div>
               {newPromo.promo_type === 'PERCENT_OFF' && (
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">Discount (%)</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Discount (%)</label>
                   <input required type="number" min="1" max="100" value={newPromo.discount_percent} onChange={e=>setNewPromo({...newPromo, discount_percent: parseFloat(e.target.value)})} className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-3 font-medium" />
                 </div>
               )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">Start Date</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Start Date</label>
                   <input required type="date" value={newPromo.start_date} onChange={e=>setNewPromo({...newPromo, start_date: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-3 font-medium" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">End Date</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">End Date</label>
                   <input required type="date" value={newPromo.end_date} onChange={e=>setNewPromo({...newPromo, end_date: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-3 font-medium" />
                 </div>
               </div>

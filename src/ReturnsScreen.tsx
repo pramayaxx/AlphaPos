@@ -138,7 +138,7 @@ const ReturnsScreen = () => {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredReturns.map((r, i) => (
-                <tr key={r.id || i} className="hover:bg-slate-50/50 dark:hover:bg-slate-800 transition-colors">
+                <tr key={r.id || i} className="hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 transition-colors">
                   <td className="p-4 font-bold text-slate-900 dark:text-slate-100">{format(new Date(r.return_date), 'MMM dd, yyyy HH:mm')}</td>
                   <td className="p-4 text-blue-600 dark:text-blue-400 font-bold font-mono">
                     {r.original_bill_uuid ? r.original_bill_uuid.split('-')[0] : 'Unknown'}
@@ -153,7 +153,7 @@ const ReturnsScreen = () => {
               ))}
               {filteredReturns.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-slate-500 font-bold">No returns processed yet.</td>
+                  <td colSpan={4} className="p-8 text-center text-slate-500 dark:text-slate-400 font-bold">No returns processed yet.</td>
                 </tr>
               )}
             </tbody>
@@ -173,7 +173,7 @@ const ReturnsScreen = () => {
             <div className="flex-1 overflow-auto pr-2">
               <form id="return-form" onSubmit={handleProcessReturn} className="space-y-6">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Select Original Receipt *</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Select Original Receipt *</label>
                   <select 
                     value={selectedBillId} 
                     onChange={e => handleSelectBill(e.target.value)} 
@@ -189,7 +189,7 @@ const ReturnsScreen = () => {
 
                 {selectedItems.length > 0 && (
                   <div className="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
-                    <div className="bg-slate-50 dark:bg-slate-800 p-3 text-xs font-black text-slate-500 uppercase tracking-wider flex">
+                    <div className="bg-slate-50 dark:bg-slate-800 p-3 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider flex">
                       <div className="flex-1">Item</div>
                       <div className="w-24 text-center">Purchased</div>
                       <div className="w-24 text-center">Return Qty</div>
@@ -197,7 +197,7 @@ const ReturnsScreen = () => {
                     {selectedItems.map((item, idx) => (
                       <div key={idx} className="p-3 border-t border-slate-200 dark:border-slate-700 flex items-center bg-white dark:bg-slate-900">
                         <div className="flex-1 font-bold text-slate-900 dark:text-slate-100">{item.name}</div>
-                        <div className="w-24 text-center text-slate-500 font-medium">{item.quantity}</div>
+                        <div className="w-24 text-center text-slate-500 dark:text-slate-400 font-medium">{item.quantity}</div>
                         <div className="w-24">
                           <input 
                             type="number" 
@@ -214,7 +214,7 @@ const ReturnsScreen = () => {
                 )}
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Reason for Return</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Reason for Return</label>
                   <input 
                     type="text" 
                     value={reason} 

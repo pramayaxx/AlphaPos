@@ -53,16 +53,16 @@ const ShiftsScreen = () => {
                 <CheckCircle size={20} /> Shift is OPEN
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">Opened At</label>
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Opened At</label>
                 <div className="font-medium text-lg">{format(new Date(activeShift.start_time), 'hh:mm a')}</div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">Starting Cash</label>
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Starting Cash</label>
                 <div className="font-medium text-lg">${activeShift.starting_cash.toFixed(2)}</div>
               </div>
               
-              <div className="border-t border-slate-200 pt-4 mt-4">
-                <label className="block text-xs font-bold text-slate-500 mb-2">Count Drawer to Close (Ending Cash)</label>
+              <div className="border-t border-slate-200 dark:border-slate-700 pt-4 mt-4">
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Count Drawer to Close (Ending Cash)</label>
                 <input type="number" step="0.01" value={endingCash} onChange={e=>setEndingCash(parseFloat(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl p-3 mb-4" />
                 <button onClick={closeShift} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2">
                   <XCircle size={18} /> Close Shift & Print Z-Report
@@ -71,11 +71,11 @@ const ShiftsScreen = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="p-4 bg-slate-50 text-slate-500 rounded-xl font-bold flex items-center gap-2">
+              <div className="p-4 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl font-bold flex items-center gap-2">
                 <Clock size={20} /> No active shift
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-500 mb-2">Starting Cash (Float)</label>
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Starting Cash (Float)</label>
                 <input type="number" step="0.01" value={startingCash} onChange={e=>setStartingCash(parseFloat(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl p-3 mb-4" />
                 <button onClick={openShift} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2">
                   <CheckCircle size={18} /> Open Shift
@@ -88,7 +88,7 @@ const ShiftsScreen = () => {
         <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 overflow-hidden">
            <table className="w-full text-left">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-100 text-slate-500 font-bold text-xs uppercase tracking-wider">
+              <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider">
                 <th className="p-4">Date</th>
                 <th className="p-4">Opened / Closed</th>
                 <th className="p-4">Starting</th>
@@ -102,7 +102,7 @@ const ShiftsScreen = () => {
                 const isClosed = s.status === 'CLOSED';
                 const variance = isClosed ? (s.ending_cash - s.expected_cash) : 0;
                 return (
-                <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50">
+                <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50 dark:bg-slate-800">
                   <td className="p-4 font-bold">{format(new Date(s.start_time), 'MMM d, yyyy')}</td>
                   <td className="p-4 text-sm">
                     <div>{format(new Date(s.start_time), 'hh:mm a')}</div>
@@ -124,7 +124,7 @@ const ShiftsScreen = () => {
                      ) : '-'}
                   </td>
                   <td className="p-4 font-bold text-sm">
-                    {s.status === 'OPEN' ? <span className="text-emerald-600">OPEN</span> : <span className="text-slate-500">CLOSED</span>}
+                    {s.status === 'OPEN' ? <span className="text-emerald-600">OPEN</span> : <span className="text-slate-500 dark:text-slate-400">CLOSED</span>}
                   </td>
                 </tr>
               )})}

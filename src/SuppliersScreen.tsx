@@ -127,7 +127,7 @@ const SuppliersScreen = ({ products }: { products: Product[] }) => {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {purchases.map((p, i) => (
-                  <tr key={p.id || i} className="hover:bg-slate-50/50 dark:hover:bg-slate-800 transition-colors">
+                  <tr key={p.id || i} className="hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 transition-colors">
                     <td className="p-4 font-bold text-slate-900 dark:text-slate-100">{format(new Date(p.date_time), 'MMM dd, yyyy')}</td>
                     <td className="p-4 text-slate-700 dark:text-slate-300 font-medium">{p.product_name || p.product_id}</td>
                     <td className="p-4 text-slate-500 dark:text-slate-400 font-medium">{p.supplier_name || '-'}</td>
@@ -180,19 +180,19 @@ const SuppliersScreen = ({ products }: { products: Product[] }) => {
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">Add Supplier</h3>
-                <button onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
+                <button onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-400"><X size={20} /></button>
               </div>
               <form onSubmit={handleAddSupplier} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Company Name *</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Company Name *</label>
                   <input type="text" value={name} onChange={e => setName(e.target.value)} required className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium outline-none" placeholder="Acme Corp" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Contact Person</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Contact Person</label>
                   <input type="text" value={contactPerson} onChange={e => setContactPerson(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium outline-none" placeholder="John Smith" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Phone</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Phone</label>
                   <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium outline-none" placeholder="+1 234..." />
                 </div>
                 <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl mt-4">{isSubmitting ? 'Saving...' : 'Save Supplier'}</button>
@@ -207,18 +207,18 @@ const SuppliersScreen = ({ products }: { products: Product[] }) => {
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">Receive Stock</h3>
-                <button onClick={() => setShowPurchase(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
+                <button onClick={() => setShowPurchase(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-400"><X size={20} /></button>
               </div>
               <form onSubmit={handleAddPurchase} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Supplier *</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Supplier *</label>
                   <select value={selectedSupplier} onChange={e => setSelectedSupplier(e.target.value)} required className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium outline-none">
                     <option value="">Select Supplier</option>
                     {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Product *</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Product *</label>
                   <select value={selectedProduct} onChange={e => setSelectedProduct(e.target.value)} required className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium outline-none">
                     <option value="">Select Product</option>
                     {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -226,11 +226,11 @@ const SuppliersScreen = ({ products }: { products: Product[] }) => {
                 </div>
                 <div className="flex gap-4">
                   <div className="flex-1">
-                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Quantity *</label>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Quantity *</label>
                     <input type="number" value={quantity} onChange={e => setQuantity(e.target.value)} required min="1" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold outline-none" />
                   </div>
                   <div className="flex-1">
-                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Total Cost *</label>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Total Cost *</label>
                     <input type="number" value={costPrice} onChange={e => setCostPrice(e.target.value)} required min="0" step="0.01" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold outline-none" />
                   </div>
                 </div>

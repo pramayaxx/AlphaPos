@@ -6,6 +6,7 @@ export type Product = {
   price: number;
   wholesale_price?: number;
   is_bundle?: boolean;
+  bundle_items?: { product_id: string, quantity: number }[];
   commission_rate?: number;
   discount_value: number;
   discount_type: 'amount' | 'percentage';

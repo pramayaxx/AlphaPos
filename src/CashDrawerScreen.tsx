@@ -126,7 +126,7 @@ const CashDrawerScreen = ({ bills }: { bills: Bill[] }) => {
                 <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
                 Active Shift
               </h3>
-              <span className="text-sm font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-lg">
+              <span className="text-sm font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-lg">
                 Opened by {currentShift.opened_by} at {format(new Date(currentShift.opened_at), 'hh:mm a')}
               </span>
             </div>
@@ -168,7 +168,7 @@ const CashDrawerScreen = ({ bills }: { bills: Bill[] }) => {
                 {shifts.filter(s => s.status === 'closed').map(s => {
                   const variance = Number(s.closing_balance) - Number(s.expected_balance);
                   return (
-                    <tr key={s.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800 transition-colors">
+                    <tr key={s.id} className="hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 transition-colors">
                       <td className="p-4 font-bold text-slate-900 dark:text-slate-100">
                         {format(new Date(s.opened_at), 'MMM dd')} <br/>
                         <span className="text-xs text-slate-400">{format(new Date(s.opened_at), 'HH:mm')} - {s.closed_at ? format(new Date(s.closed_at), 'HH:mm') : ''}</span>
@@ -201,15 +201,15 @@ const CashDrawerScreen = ({ bills }: { bills: Bill[] }) => {
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">Open Register</h3>
-                <button onClick={() => setShowOpenModal(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
+                <button onClick={() => setShowOpenModal(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-400"><X size={20} /></button>
               </div>
               <form onSubmit={handleOpenShift} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Opening Cash Balance *</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Opening Cash Balance *</label>
                   <input type="number" step="0.01" min="0" value={openingBalance} onChange={e => setOpeningBalance(e.target.value)} required className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-black text-lg outline-none" placeholder="0.00" autoFocus />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Notes (Optional)</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Notes (Optional)</label>
                   <textarea value={notes} onChange={e => setNotes(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium outline-none" placeholder="e.g. Added $50 coins to float" rows={3}></textarea>
                 </div>
                 <button type="submit" disabled={isSubmitting} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl mt-4 text-lg">{isSubmitting ? 'Opening...' : 'Open Shift'}</button>
@@ -224,7 +224,7 @@ const CashDrawerScreen = ({ bills }: { bills: Bill[] }) => {
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">Close Register</h3>
-                <button onClick={() => setShowCloseModal(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
+                <button onClick={() => setShowCloseModal(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-400"><X size={20} /></button>
               </div>
               
               <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl mb-6 text-center">
@@ -234,19 +234,19 @@ const CashDrawerScreen = ({ bills }: { bills: Bill[] }) => {
 
               <form onSubmit={handleCloseShift} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Actual Cash in Drawer *</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Actual Cash in Drawer *</label>
                   <input type="number" step="0.01" min="0" value={closingBalance} onChange={e => setClosingBalance(e.target.value)} required className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-black text-lg outline-none" placeholder="0.00" autoFocus />
                 </div>
                 {closingBalance && (
                   <div className="flex justify-between items-center px-2">
-                    <span className="text-sm font-bold text-slate-500">Variance:</span>
+                    <span className="text-sm font-bold text-slate-500 dark:text-slate-400">Variance:</span>
                     <span className={`font-black ${(parseFloat(closingBalance) - expectedBalance) === 0 ? 'text-emerald-500' : 'text-red-500'}`}>
                       ${(parseFloat(closingBalance) - expectedBalance).toFixed(2)}
                     </span>
                   </div>
                 )}
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Notes (Required if variance)</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Notes (Required if variance)</label>
                   <textarea value={notes} onChange={e => setNotes(e.target.value)} required={(closingBalance && parseFloat(closingBalance) !== expectedBalance) ? true : false} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-medium outline-none" placeholder="Explain any discrepancy..." rows={3}></textarea>
                 </div>
                 <button type="submit" disabled={isSubmitting} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl mt-4 text-lg">{isSubmitting ? 'Closing...' : 'Close Shift'}</button>
