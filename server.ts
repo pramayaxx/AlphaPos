@@ -108,7 +108,10 @@ app.get('/api/public/bills/:uuid', async (req, res) => {
         showInvoiceNumber: true,
         showDateTime: true,
         taxRate: 0,
-        taxName: 'Tax'
+        taxName: 'Tax',
+        enableLoyalty: false,
+        amountPerPoint: 100,
+        valuePerPoint: 1
       };
     }
 
@@ -349,6 +352,13 @@ async function initDb() {
     try { await sql`ALTER TABLE bills ADD COLUMN customer_id VARCHAR(100)`; } catch (e) {}
     try { await sql`ALTER TABLE bills ADD COLUMN payment_method VARCHAR(50) DEFAULT 'cash'`; } catch (e) {}
     try { await sql`ALTER TABLE bills ADD COLUMN status VARCHAR(50) DEFAULT 'paid'`; } catch (e) {}
+
+    try { await sql.unsafe(`ALTER TABLE shop_settings ADD COLUMN enable_loyalty BOOLEAN DEFAULT false`); } catch (e) {}
+    try { await sql.unsafe(`ALTER TABLE shop_settings ADD COLUMN amount_per_point NUMERIC(10, 2) DEFAULT 0`); } catch (e) {}
+    try { await sql.unsafe(`ALTER TABLE shop_settings ADD COLUMN value_per_point NUMERIC(10, 2) DEFAULT 0`); } catch (e) {}
+    try { await sql.unsafe(`ALTER TABLE bills ADD COLUMN points_used INTEGER DEFAULT 0`); } catch (e) {}
+    try { await sql.unsafe(`ALTER TABLE bills ADD COLUMN points_earned INTEGER DEFAULT 0`); } catch (e) {}
+
 
     await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS bill_items (
@@ -966,8 +976,8 @@ app.post('/api/bills', authenticateToken, async (req: any, res) => {
     }
 
     const bills = await sql`
-      INSERT INTO bills (user_id, uuid, date_time, subtotal, discount, discount_type, discount_value, grand_total, is_printed, customer_id, payment_method, tax_amount, tax_rate, status)
-      VALUES (${req.user.tenantId}, ${b.uuid}, ${b.dateTime}, ${b.subtotal}, ${b.discount}, ${b.discountType}, ${b.discountValue}, ${b.grandTotal}, ${b.isPrinted}, ${b.customerId || null}, ${b.paymentMethod || 'cash'}, ${b.taxAmount || 0}, ${b.taxRate || 0}, ${b.status || 'paid'})
+      INSERT INTO bills (user_id, uuid, date_time, subtotal, discount, discount_type, discount_value, grand_total, is_printed, customer_id, payment_method, tax_amount, tax_rate, status, points_used, points_earned)
+      VALUES (${req.user.tenantId}, ${b.uuid}, ${b.dateTime}, ${b.subtotal}, ${b.discount}, ${b.discountType}, ${b.discountValue}, ${b.grandTotal}, ${b.isPrinted}, ${b.customerId || null}, ${b.paymentMethod || 'cash'}, ${b.taxAmount || 0}, ${b.taxRate || 0}, ${b.status || 'paid'}, ${b.pointsRedeemed || 0}, ${b.pointsEarned || 0})
       RETURNING *
     `;
     
@@ -1012,6 +1022,8 @@ app.post('/api/bills', authenticateToken, async (req: any, res) => {
     savedBill.customerId = savedBill.customer_id;
     savedBill.paymentMethod = savedBill.payment_method;
     savedBill.status = savedBill.status;
+    savedBill.pointsEarned = savedBill.points_earned;
+    savedBill.pointsRedeemed = savedBill.points_used;
 
     res.json(savedBill);
   } catch (err: any) {
@@ -1607,7 +1619,10 @@ app.get('/api/settings', authenticateToken, async (req: any, res) => {
         showDateTime: true,
         
         taxRate: 0,
-        taxName: 'Tax'
+        taxName: 'Tax',
+        enableLoyalty: false,
+        amountPerPoint: 100,
+        valuePerPoint: 1
       });
     }
     const s = settings[0];
@@ -1628,7 +1643,10 @@ app.get('/api/settings', authenticateToken, async (req: any, res) => {
       showDateTime: s.show_date_time,
       
       taxRate: Number(s.tax_rate) || 0,
-      taxName: s.tax_name || 'Tax'
+      taxName: s.tax_name || 'Tax',
+      enableLoyalty: s.enable_loyalty || false,
+      amountPerPoint: Number(s.amount_per_point) || 0,
+      valuePerPoint: Number(s.value_per_point) || 0
     });
   } catch (err: any) {
     res.status(500).json({ message: err.message });
@@ -1640,12 +1658,12 @@ app.post('/api/settings', authenticateToken, async (req: any, res) => {
     const s = req.body;
     await sql`
       INSERT INTO shop_settings (
-        user_id, name, address, phone, receipt_header, receipt_footer, receipt_font_size, receipt_width, receipt_paper_size, show_store_name, show_store_details, show_address, show_phone, show_invoice_number, show_date_time, sync_provider, live_sync, tax_rate, tax_name
+        user_id, name, address, phone, receipt_header, receipt_footer, receipt_font_size, receipt_width, receipt_paper_size, show_store_name, show_store_details, show_address, show_phone, show_invoice_number, show_date_time, sync_provider, live_sync, tax_rate, tax_name, enable_loyalty, amount_per_point, value_per_point
       ) VALUES (
-        ${req.user.tenantId}, ${s.name}, ${s.address}, ${s.phone}, ${s.receiptHeader}, ${s.receiptFooter}, ${s.receiptFontSize}, ${s.receiptWidth}, ${s.receiptPaperSize}, ${s.showStoreName}, ${s.showStoreDetails}, ${s.showAddress}, ${s.showPhone}, ${s.showInvoiceNumber}, ${s.showDateTime}, 'cloud', true, ${s.taxRate || 0}, ${s.taxName || 'Tax'}
+        ${req.user.tenantId}, ${s.name}, ${s.address}, ${s.phone}, ${s.receiptHeader}, ${s.receiptFooter}, ${s.receiptFontSize}, ${s.receiptWidth}, ${s.receiptPaperSize}, ${s.showStoreName}, ${s.showStoreDetails}, ${s.showAddress}, ${s.showPhone}, ${s.showInvoiceNumber}, ${s.showDateTime}, 'cloud', true, ${s.taxRate || 0}, ${s.taxName || 'Tax'}, ${s.enableLoyalty || false}, ${s.amountPerPoint || 0}, ${s.valuePerPoint || 0}
       )
       ON CONFLICT (user_id) DO UPDATE SET
-        name = ${s.name}, address = ${s.address}, phone = ${s.phone}, receipt_header = ${s.receiptHeader}, receipt_footer = ${s.receiptFooter}, receipt_font_size = ${s.receiptFontSize}, receipt_width = ${s.receiptWidth}, receipt_paper_size = ${s.receiptPaperSize}, show_store_name = ${s.showStoreName}, show_store_details = ${s.showStoreDetails}, show_address = ${s.showAddress}, show_phone = ${s.showPhone}, show_invoice_number = ${s.showInvoiceNumber}, show_date_time = ${s.showDateTime}, sync_provider = 'cloud', live_sync = true, tax_rate = ${s.taxRate || 0}, tax_name = ${s.taxName || 'Tax'}
+        name = ${s.name}, address = ${s.address}, phone = ${s.phone}, receipt_header = ${s.receiptHeader}, receipt_footer = ${s.receiptFooter}, receipt_font_size = ${s.receiptFontSize}, receipt_width = ${s.receiptWidth}, receipt_paper_size = ${s.receiptPaperSize}, show_store_name = ${s.showStoreName}, show_store_details = ${s.showStoreDetails}, show_address = ${s.showAddress}, show_phone = ${s.showPhone}, show_invoice_number = ${s.showInvoiceNumber}, show_date_time = ${s.showDateTime}, sync_provider = 'cloud', live_sync = true, tax_rate = ${s.taxRate || 0}, tax_name = ${s.taxName || 'Tax'}, enable_loyalty = ${s.enableLoyalty || false}, amount_per_point = ${s.amountPerPoint || 0}, value_per_point = ${s.valuePerPoint || 0}
     `;
     res.json({ message: 'Settings saved' });
   } catch (err: any) {

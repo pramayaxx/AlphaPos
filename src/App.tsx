@@ -1,3 +1,4 @@
+import { useSync } from "./useSync";
 import { api } from './api';
 /**
  * @license
@@ -1180,11 +1181,12 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
   const availablePoints = selectedCustomerObj ? (selectedCustomerObj.loyalty_points || 0) : 0;
   
   // 1 point = 0.01 currency
-  const pointValue = 0.01;
+  const pointValue = settings?.valuePerPoint || 0.01;
   const maxPointsToUse = Math.min(availablePoints, Math.floor(baseGrandTotal / pointValue));
   
   const pointsDiscount = usePoints ? maxPointsToUse * pointValue : 0;
   const grandTotal = Math.max(0, baseGrandTotal - pointsDiscount);
+  const pointsEarned = settings?.enableLoyalty && settings?.amountPerPoint && settings.amountPerPoint > 0 ? Math.floor(grandTotal / settings.amountPerPoint) : 0;
 
 
   
@@ -1234,8 +1236,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
         discount: discountAmount,
         discountType,
         discountValue,
-        pointsRedeemed: usePoints ? maxPointsToUse : 0,
-        pointsEarned: Math.floor(grandTotal), // 1 point per $1 spent
+        
         
         taxAmount,
         taxRate: settings.taxRate || 0,
@@ -1244,7 +1245,9 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
         createdBy: currentUser.id,
         customerId: selectedCustomerId || undefined,
         paymentMethod,
-        status: paymentMethod === 'credit' ? 'unpaid' : 'paid'
+        status: paymentMethod === 'credit' ? 'unpaid' : 'paid',
+        pointsRedeemed: usePoints ? maxPointsToUse : 0,
+        pointsEarned: pointsEarned
       };
 
       const savedBill = await api.post('/bills', savedBillData);
@@ -1404,16 +1407,23 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
 
         <ReceiptView bill={lastBill} settings={settings} />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           
           <button onClick={handlePrint} className="py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 flex flex-col items-center gap-1 transition-colors">
             <Printer size={24} />
             <span>Print Bill</span>
           </button>
+          
           <a href={waUrl} target="_blank" rel="noopener noreferrer" onClick={handleShareWhatsApp} className="py-3 bg-[#25D366] text-white font-bold rounded-xl hover:bg-[#128C7E] flex flex-col items-center gap-1 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-            <span>WhatsApp / Share</span>
+            <span>WhatsApp</span>
           </a>
+          
+          <a href={`sms:${phoneStr}?body=${encodeURIComponent(text)}`} className="py-3 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-600 flex flex-col items-center gap-1 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-square"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>Send SMS</span>
+          </a>
+
           <button onClick={async () => {
              const email = prompt("Enter customer email address:");
              if(email) {
@@ -1669,10 +1679,18 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
               </div>
             ) : null}
 
-            <div className="border-t border-slate-100 dark:border-slate-800 pt-4 flex justify-between items-end">
+                        <div className="border-t border-slate-100 dark:border-slate-800 pt-4 flex justify-between items-end">
               <span className="text-slate-900 dark:text-slate-100 dark:text-slate-100 font-bold">Grand Total</span>
               <span className="text-3xl font-black text-blue-600 dark:text-blue-400">{formatCurrency(grandTotal)}</span>
             </div>
+            
+            {pointsEarned > 0 && (
+              <div className="flex justify-between items-center text-sm font-bold text-emerald-600 dark:text-emerald-400 pt-2">
+                <span>Loyalty Points Earned</span>
+                <span>+{pointsEarned} Points</span>
+              </div>
+            )}
+
           </div>
 
           <div className="space-y-3 mb-6 bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl">
@@ -1692,8 +1710,8 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
                 return (
                   <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-100 dark:border-blue-800/30">
                     <div>
-                      <p className="text-sm font-bold text-blue-700 dark:text-blue-400">Available: {cust.loyalty_points} Points</p>
-                      <p className="text-xs text-blue-600/70 dark:text-blue-400/70">1 point = {formatCurrency(0.01)}</p>
+                      <p className="text-sm font-bold text-blue-700 dark:text-blue-400">Available: {cust.loyalty_points} Points (Valued at {(cust.loyalty_points * (settings?.valuePerPoint || 0.01)).toFixed(2)})</p>
+                      <p className="text-xs text-blue-600/70 dark:text-blue-400/70">1 point = {formatCurrency(settings?.valuePerPoint || 0.01)}</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" checked={usePoints} onChange={e => setUsePoints(e.target.checked)} className="sr-only peer" />
@@ -2163,7 +2181,7 @@ const Products = ({ products }: { products: Product[] }) => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="col-span-2">
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Product Name <span className="text-rose-500">*</span></label>
                     <input 
@@ -3556,11 +3574,12 @@ const SettingsScreen = ({ onPrinterSetup, currentUser, setCurrentUser, syncStatu
 
 // --- Main App ---
 
-const SyncIndicator = ({ isOnline, isMobile, isSyncing }: { isOnline: boolean, isMobile?: boolean, isSyncing?: boolean }) => {
+const SyncIndicator = ({ isOnline, isMobile, isSyncing, pendingCount = 0 }: { isOnline: boolean, isMobile?: boolean, isSyncing?: boolean, pendingCount?: number }) => {
   const getStatusConfig = () => {
-    if (!isOnline) return { icon: Lock, text: 'No Connection', color: 'text-rose-600', bg: 'bg-rose-50', pulse: true, spin: false, sub: 'App is offline' };
-    if (isSyncing) return { icon: RefreshCw, text: 'Syncing...', color: 'text-blue-600', bg: 'bg-blue-50', pulse: false, spin: true, sub: 'Fetching data...' };
-    return { icon: CheckCircle2, text: 'Database Online', color: 'text-emerald-600', bg: 'bg-emerald-50', pulse: false, spin: false, sub: 'Connected' };
+    if (!isOnline) return { icon: Lock, text: 'Offline Mode', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20', pulse: true, spin: false, sub: pendingCount > 0 ? `${pendingCount} items pending` : 'Working offline' };
+    if (isSyncing) return { icon: RefreshCw, text: 'Syncing...', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20', pulse: false, spin: true, sub: 'Fetching data...' };
+    if (pendingCount > 0) return { icon: RefreshCw, text: 'Pending Sync', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20', pulse: true, spin: false, sub: `${pendingCount} items waiting` };
+    return { icon: CheckCircle2, text: 'Database Online', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20', pulse: false, spin: false, sub: 'Connected' };
   };
 
   const config = getStatusConfig();
@@ -3763,7 +3782,7 @@ export default function App() {
 
 
   const [activeTab, setActiveTab] = useState<'dashboard' | 'checkout' | 'transactions' | 'products' | 'customers' | 'reports' | 'settings' | 'printer-setup' | 'pending-prints' | 'staff' | 'expenses' | 'suppliers' | 'drawer' | 'coupons' | 'attendance' | 'adjustments' | 'giftcards' | 'quotes' | 'returns' | 'po' | 'barcode'>('dashboard');
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const { isOnline, isSyncing: isQueueSyncing, pendingCount, syncNow } = useSync();
   const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'error' | 'idle'>('idle');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentStaff, setCurrentStaff] = useState<any>(null);
@@ -3868,14 +3887,10 @@ export default function App() {
 
     checkAuth();
 
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      
     };
   }, []);
 
@@ -3906,7 +3921,7 @@ export default function App() {
       <div className="flex h-[100dvh] bg-slate-50 dark:bg-slate-900 items-center justify-center">
         <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-200 dark:border-slate-700 max-w-md w-full text-center shadow-xl">
           <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-6">Staff Unlock</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {staffList.map(s => (
               <button key={s.id} onClick={() => {
                 const pin = prompt('Enter PIN for ' + s.full_name);
@@ -3983,7 +3998,7 @@ export default function App() {
         </nav>
 
         <div className="space-y-4">
-          <SyncIndicator isOnline={isOnline} isSyncing={syncStatus === 'syncing'} />
+          <SyncIndicator isOnline={isOnline} isSyncing={syncStatus === 'syncing' || isQueueSyncing} pendingCount={pendingCount} />
           
           <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
           <button 
@@ -4023,7 +4038,7 @@ export default function App() {
           <h1 className="text-lg font-black tracking-tighter">ALPHA</h1>
         </div>
         <div className="flex items-center gap-3">
-          <SyncIndicator isOnline={isOnline} isMobile isSyncing={syncStatus === 'syncing'} />
+          <SyncIndicator isOnline={isOnline} isMobile isSyncing={syncStatus === 'syncing' || isQueueSyncing} pendingCount={pendingCount} />
           <button onClick={handleLogout} className="p-2 text-rose-500 bg-rose-50 dark:bg-rose-900/20 rounded-lg">
             <LogOut size={20} />
           </button>

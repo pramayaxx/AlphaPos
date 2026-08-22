@@ -63,6 +63,8 @@ export interface Bill {
   paymentMethod?: string;
   customerId?: string;
   status?: string;
+  pointsEarned?: number;
+  pointsRedeemed?: number;
 }
 
 export interface ShopSettings {
@@ -82,6 +84,9 @@ export interface ShopSettings {
   showPhone: boolean;
   showInvoiceNumber: boolean;
   showDateTime: boolean;
+  enableLoyalty?: boolean;
+  amountPerPoint?: number;
+  valuePerPoint?: number;
 
 
   taxRate?: number;
@@ -97,6 +102,7 @@ export interface Customer {
   phone?: string;
   email?: string;
   loyalty_points?: number;
+  points?: number;
   store_credit?: number;
   total_debt?: number;
 }

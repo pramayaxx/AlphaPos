@@ -4,6 +4,7 @@ import App from './App.tsx';
 import './index.css';
 import { ThemeProvider } from './ThemeContext.tsx';
 import { I18nProvider } from './i18n.tsx';
+import { registerSW } from 'virtual:pwa-register';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -14,9 +15,5 @@ createRoot(document.getElementById('root')!).render(
 );
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(function(registrations) {
-    for(let registration of registrations) {
-      registration.unregister();
-    }
-  });
+  registerSW({ immediate: true });
 }

@@ -1,27 +1,18 @@
 const fs = require('fs');
-let code = fs.readFileSync('src/ShopSettingsScreen.tsx', 'utf-8');
+let code = fs.readFileSync('server.ts', 'utf8');
 
-const newFields = `
-              <h3 className="font-bold text-lg mt-6">Hardware & Features</h3>
-              <div className="space-y-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={formData.scale_integration} onChange={e => setFormData({...formData, scale_integration: e.target.checked})} />
-                  Enable Weight Scale Integration
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={formData.barcode_scanner_mode} onChange={e => setFormData({...formData, barcode_scanner_mode: e.target.checked})} />
-                  Enable Direct Barcode Scanner Mode
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={formData.enable_loyalty_tiers} onChange={e => setFormData({...formData, enable_loyalty_tiers: e.target.checked})} />
-                  Enable Customer Loyalty Tiers
-                </label>
-              </div>
-`;
+// Update get settings
+code = code.replace(/taxName: s\.tax_name \|\| 'Tax'/g, 
+  "taxName: s.tax_name || 'Tax',\n      enableLoyalty: s.enable_loyalty || false,\n      amountPerPoint: Number(s.amount_per_point) || 0,\n      valuePerPoint: Number(s.value_per_point) || 0");
 
-if (!code.includes('Hardware & Features')) {
-  // Find where to insert, maybe after </form> or inside it.
-  const insertTarget = '<button type="submit" className="w-full bg-indigo-600';
-  code = code.replace(insertTarget, newFields + '\n              ' + insertTarget);
-  fs.writeFileSync('src/ShopSettingsScreen.tsx', code);
-}
+code = code.replace(/taxName: 'Tax'/g, 
+  "taxName: 'Tax',\n        enableLoyalty: false,\n        amountPerPoint: 100,\n        valuePerPoint: 1");
+
+// Update post settings
+code = code.replace(/tax_rate, tax_name/g, "tax_rate, tax_name, enable_loyalty, amount_per_point, value_per_point");
+code = code.replace(/tax_rate = \$\{s.taxRate \|\| 0\}, tax_name = \$\{s.taxName \|\| 'Tax'\}/g, 
+  "tax_rate = ${s.taxRate || 0}, tax_name = ${s.taxName || 'Tax'}, enable_loyalty = ${s.enableLoyalty || false}, amount_per_point = ${s.amountPerPoint || 0}, value_per_point = ${s.valuePerPoint || 0}");
+code = code.replace(/\$\{s.taxRate \|\| 0\}, \$\{s.taxName \|\| 'Tax'\}/g, 
+  "${s.taxRate || 0}, ${s.taxName || 'Tax'}, ${s.enableLoyalty || false}, ${s.amountPerPoint || 0}, ${s.valuePerPoint || 0}");
+
+fs.writeFileSync('server.ts', code);
