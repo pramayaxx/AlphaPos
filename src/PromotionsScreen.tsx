@@ -41,7 +41,7 @@ const PromotionsScreen = ({ products }: { products: Product[] }) => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#F8FAFC]">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
       <div className="bg-white dark:bg-slate-900 px-8 py-6 border-b border-slate-200 dark:border-slate-700 shrink-0 flex justify-between items-center z-10 sticky top-0">
         <div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Advanced Promotions</h2>
@@ -71,21 +71,21 @@ const PromotionsScreen = ({ products }: { products: Product[] }) => {
               {promotions.map((p, i) => (
                 <tr key={p.id || i} className="hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 transition-colors">
                   <td className="p-4 font-bold text-slate-900 dark:text-slate-100 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center">
                       <Tag size={20} />
                     </div>
                     {p.name}
                   </td>
                   <td className="p-4">
                     <span className="font-bold text-slate-900 dark:text-slate-100">{p.promo_type}</span>
-                    {p.discount_percent && <div className="text-sm text-emerald-600 font-bold">{p.discount_percent}% OFF</div>}
+                    {p.discount_percent && <div className="text-sm text-emerald-600 dark:text-emerald-400 font-bold">{p.discount_percent}% OFF</div>}
                   </td>
                   <td className="p-4 text-slate-700 dark:text-slate-300 font-medium">
                     {format(new Date(p.start_date), 'MMM d')} - {format(new Date(p.end_date), 'MMM d')}
                   </td>
                   <td className="p-4">
                     {p.is_active ? (
-                      <span className="inline-flex items-center gap-1 text-emerald-600 text-sm font-bold"><CheckCircle2 size={16}/> Active</span>
+                      <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-sm font-bold"><CheckCircle2 size={16}/> Active</span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-slate-400 text-sm font-bold"><XCircle size={16}/> Inactive</span>
                     )}

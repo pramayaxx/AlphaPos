@@ -63,7 +63,7 @@ const CouponsScreen = () => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#F8FAFC]">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
       <div className="bg-white dark:bg-slate-900 px-8 py-6 border-b border-slate-200 dark:border-slate-700 shrink-0 flex justify-between items-center z-10 sticky top-0">
         <div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Coupons & Discounts</h2>
@@ -99,7 +99,7 @@ const CouponsScreen = () => {
                     onClick={() => toggleActive(coupon.id, coupon.is_active)}
                     className={cn(
                       "p-2 rounded-xl transition-colors",
-                      coupon.is_active ? "bg-emerald-100 text-emerald-600 hover:bg-emerald-200" : "bg-slate-200 text-slate-500 hover:bg-slate-300"
+                      coupon.is_active ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/50" : "bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700"
                     )}
                     title={coupon.is_active ? "Disable" : "Enable"}
                   >
@@ -109,7 +109,7 @@ const CouponsScreen = () => {
                 
                 <div>
                   <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-wider font-mono">{coupon.code}</h3>
-                  <p className="text-emerald-600 dark:text-emerald-400 font-bold text-lg mt-1">
+                  <p className="text-emerald-600 dark:text-emerald-400 dark:text-emerald-400 font-bold text-lg mt-1">
                     {coupon.discount_type === 'percent' ? `${coupon.discount_value}% OFF` : `$${coupon.discount_value} OFF`}
                   </p>
                 </div>
@@ -128,7 +128,7 @@ const CouponsScreen = () => {
                 </div>
 
                 {isExpired && (
-                  <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-red-100 text-red-700 text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest border border-red-200">
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest border border-red-200 dark:border-red-800/30">
                     Expired
                   </div>
                 )}

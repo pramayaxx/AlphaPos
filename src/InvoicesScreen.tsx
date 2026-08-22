@@ -16,7 +16,7 @@ const InvoicesScreen = () => {
   useEffect(() => { fetchInvoices(); }, []);
 
   return (
-    <div className="h-full flex flex-col bg-[#F8FAFC]">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
       <div className="bg-white dark:bg-slate-900 px-8 py-6 border-b border-slate-200 dark:border-slate-700 shrink-0 flex justify-between items-center z-10 sticky top-0">
         <div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Accounts Receivable</h2>
@@ -42,13 +42,13 @@ const InvoicesScreen = () => {
                 const isPaid = inv.status === 'PAID';
                 return (
                 <tr key={inv.id} className="border-b border-slate-50 hover:bg-slate-50 dark:bg-slate-800">
-                  <td className="p-4 font-bold text-blue-600">INV-{inv.id.toString().padStart(4, '0')}</td>
+                  <td className="p-4 font-bold text-blue-600 dark:text-blue-400">INV-{inv.id.toString().padStart(4, '0')}</td>
                   <td className="p-4 font-bold">{inv.customer_name}</td>
                   <td className="p-4 font-medium text-slate-600 dark:text-slate-400">{format(new Date(inv.created_at), 'MMM d, yyyy')}</td>
                   <td className="p-4 font-bold text-red-500">{format(new Date(inv.due_date), 'MMM d, yyyy')}</td>
                   <td className="p-4 font-black text-lg">${inv.amount.toFixed(2)}</td>
                   <td className="p-4 font-bold text-sm">
-                    {isPaid ? <span className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded">PAID</span> : <span className="text-amber-600 bg-amber-50 px-2 py-1 rounded">UNPAID</span>}
+                    {isPaid ? <span className="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded">PAID</span> : <span className="text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded">UNPAID</span>}
                   </td>
                 </tr>
               )})}

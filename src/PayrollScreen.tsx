@@ -50,7 +50,7 @@ const PayrollScreen = () => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#F8FAFC]">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
       <div className="bg-white dark:bg-slate-900 px-8 py-6 border-b border-slate-200 dark:border-slate-700 shrink-0 flex justify-between items-center z-10 sticky top-0">
         <div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">HR & Payroll</h2>
@@ -85,11 +85,11 @@ const PayrollScreen = () => {
                   <td className="p-4 text-slate-700 dark:text-slate-300 font-medium">
                     {format(new Date(p.period_start), 'MMM d')} - {format(new Date(p.period_end), 'MMM d, yyyy')}
                   </td>
-                  <td className="p-4 font-bold text-blue-600">{p.hours_worked}h</td>
-                  <td className="p-4 font-bold text-emerald-600">${parseFloat(p.commission_earned).toFixed(2)}</td>
+                  <td className="p-4 font-bold text-blue-600 dark:text-blue-400">{p.hours_worked}h</td>
+                  <td className="p-4 font-bold text-emerald-600 dark:text-emerald-400">${parseFloat(p.commission_earned).toFixed(2)}</td>
                   <td className="p-4 font-black text-slate-900 dark:text-slate-100 text-lg">${parseFloat(p.total_payment).toFixed(2)}</td>
                   <td className="p-4">
-                    <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2 py-1 rounded-md text-xs font-bold uppercase">
+                    <span className="inline-flex items-center gap-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 py-1 rounded-md text-xs font-bold uppercase">
                       <Check size={12} /> {p.status}
                     </span>
                   </td>

@@ -39,7 +39,7 @@ const BarcodeScreen = ({ products }: { products: Product[] }) => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#F8FAFC]">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
       <div className="bg-white dark:bg-slate-900 px-8 py-6 border-b border-slate-200 dark:border-slate-700 shrink-0 flex justify-between items-center z-10 sticky top-0">
         <div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Barcode Labels</h2>
@@ -73,7 +73,7 @@ const BarcodeScreen = ({ products }: { products: Product[] }) => {
                 <button
                   key={p.id}
                   onClick={() => addProduct(p)}
-                  className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-xl text-left transition-colors"
+                  className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 hover:bg-blue-50 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 rounded-xl text-left transition-colors"
                 >
                   <div>
                     <div className="font-bold text-slate-900 dark:text-slate-100">{p.name}</div>
@@ -120,7 +120,7 @@ const BarcodeScreen = ({ products }: { products: Product[] }) => {
                     {prod.item_number ? (
                       <Barcode value={prod.item_number} width={1.5} height={40} fontSize={12} displayValue={true} />
                     ) : (
-                      <div className="text-xs text-gray-400 italic py-4">No barcode</div>
+                      <div className="text-xs text-gray-400 dark:text-gray-500 italic py-4">No barcode</div>
                     )}
                     <div className="font-black text-lg mt-1">${(prod.price || 0).toFixed(2)}</div>
                   </div>

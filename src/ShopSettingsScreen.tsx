@@ -84,7 +84,7 @@ const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#F8FAFC] dark:bg-slate-950">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
       <div className="bg-white dark:bg-slate-900 px-8 py-6 border-b border-slate-200 dark:border-slate-800 shrink-0 flex justify-between items-center z-10 sticky top-0">
         <div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Shop Settings</h2>
@@ -145,7 +145,7 @@ const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup
                          <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 mt-2">
                            <h5 className="font-bold text-slate-900 dark:text-white mb-4">Update Passcode</h5>
                            {passcodeError && (
-                             <div className="bg-rose-50 text-rose-600 p-3 rounded-lg text-sm mb-4 border border-rose-100 flex items-center gap-2">
+                             <div className="bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 p-3 rounded-lg text-sm mb-4 border border-rose-100 flex items-center gap-2">
                                <AlertTriangle size={16} />
                                {passcodeError}
                              </div>
@@ -207,7 +207,7 @@ const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup
                      </div>
                    </div>
                    
-                   <div className="p-6 sm:p-8 bg-rose-50/50 dark:bg-rose-500/5">
+                   <div className="p-6 sm:p-8 bg-rose-50 dark:bg-rose-900/20/50 dark:bg-rose-500/5">
                      <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between">
                        <div className="flex-1">
                          <h4 className="text-base font-bold text-rose-700 dark:text-rose-400 flex items-center gap-2 mb-1">
@@ -275,7 +275,7 @@ const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup
                         <tr key={s.id} className="hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-800/50 transition-colors">
                           <td className="p-4 font-bold dark:text-white">{s.full_name}</td>
                           <td className="p-4"><span className="bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-3 py-1 rounded-full text-xs font-bold">{s.role}</span></td>
-                          <td className="p-4"><button onClick={() => deleteStaff(s.id)} className="text-red-500 hover:text-red-600 font-bold text-sm transition-colors">Remove</button></td>
+                          <td className="p-4"><button onClick={() => deleteStaff(s.id)} className="text-red-500 hover:text-red-600 dark:text-red-400 font-bold text-sm transition-colors">Remove</button></td>
                         </tr>
                       ))}
                     </tbody>
@@ -287,7 +287,7 @@ const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup
            {activeTab === 'integrations' && (
              <div className="space-y-6 max-w-xl">
                <h3 className="text-xl font-black mb-4 dark:text-white flex items-center gap-2">
-                 <Cloud className="text-blue-600" />
+                 <Cloud className="text-blue-600 dark:text-blue-400" />
                  Cloud Sync & Web
                </h3>
                

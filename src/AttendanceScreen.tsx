@@ -71,7 +71,7 @@ const AttendanceScreen = () => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#F8FAFC]">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
       <div className="bg-white dark:bg-slate-900 px-8 py-6 border-b border-slate-200 dark:border-slate-700 shrink-0 flex justify-between items-center z-10 sticky top-0">
         <div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Time Clock</h2>
@@ -103,13 +103,13 @@ const AttendanceScreen = () => {
               {records.map((r, i) => (
                 <tr key={r.id || i} className="hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 transition-colors">
                   <td className="p-4 font-bold text-slate-900 dark:text-slate-100 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-black">
+                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-black">
                       {r.staff_name.charAt(0).toUpperCase()}
                     </div>
                     {r.staff_name}
                   </td>
                   <td className="p-4 text-slate-700 dark:text-slate-300 font-medium">{format(new Date(r.clock_in), 'MMM dd, yyyy')}</td>
-                  <td className="p-4 text-emerald-600 font-bold">{format(new Date(r.clock_in), 'hh:mm a')}</td>
+                  <td className="p-4 text-emerald-600 dark:text-emerald-400 font-bold">{format(new Date(r.clock_in), 'hh:mm a')}</td>
                   <td className="p-4 text-slate-600 dark:text-slate-400 font-bold">
                     {r.clock_out ? format(new Date(r.clock_out), 'hh:mm a') : '-'}
                   </td>
@@ -120,7 +120,7 @@ const AttendanceScreen = () => {
                     {!r.clock_out && (
                       <button 
                         onClick={() => handleClockOut(r.id)}
-                        className="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-1.5 rounded-lg font-bold text-sm flex items-center justify-center gap-1 ml-auto"
+                        className="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 px-3 py-1.5 rounded-lg font-bold text-sm flex items-center justify-center gap-1 ml-auto"
                       >
                         <Square size={14} />
                         Clock Out

@@ -97,7 +97,7 @@ const CashDrawerScreen = ({ bills }: { bills: Bill[] }) => {
   if (isLoading) return <div className="p-8 font-bold">Loading...</div>;
 
   return (
-    <div className="h-full flex flex-col bg-[#F8FAFC]">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
       <div className="bg-white dark:bg-slate-900 px-8 py-6 border-b border-slate-200 dark:border-slate-700 shrink-0 flex justify-between items-center z-10 sticky top-0">
         <div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Cash Drawer</h2>
@@ -138,13 +138,13 @@ const CashDrawerScreen = ({ bills }: { bills: Bill[] }) => {
               </div>
               <div className="bg-emerald-50 dark:bg-emerald-900/10 p-6 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
                 <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-2">Cash Sales (Since Open)</p>
-                <p className="text-3xl font-black text-emerald-700 dark:text-emerald-300">
+                <p className="text-3xl font-black text-emerald-700 dark:text-emerald-400 dark:text-emerald-300">
                   + ${(expectedBalance - Number(currentShift.opening_balance)).toFixed(2)}
                 </p>
               </div>
               <div className="bg-blue-50 dark:bg-blue-900/10 p-6 rounded-2xl border border-blue-100 dark:border-blue-800/30">
                 <p className="text-sm font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-2">Expected Drawer</p>
-                <p className="text-3xl font-black text-blue-700 dark:text-blue-300">${expectedBalance.toFixed(2)}</p>
+                <p className="text-3xl font-black text-blue-700 dark:text-blue-400 dark:text-blue-300">${expectedBalance.toFixed(2)}</p>
               </div>
             </div>
           </div>
@@ -177,7 +177,7 @@ const CashDrawerScreen = ({ bills }: { bills: Bill[] }) => {
                       <td className="p-4 text-slate-700 dark:text-slate-300 font-medium">{s.closed_by}</td>
                       <td className="p-4 text-slate-700 dark:text-slate-300 font-medium text-right">${Number(s.expected_balance).toFixed(2)}</td>
                       <td className="p-4 font-black text-slate-900 dark:text-slate-100 text-right">${Number(s.closing_balance).toFixed(2)}</td>
-                      <td className={`p-4 font-black text-right ${variance > 0 ? 'text-emerald-600' : variance < 0 ? 'text-red-600' : 'text-slate-400'}`}>
+                      <td className={`p-4 font-black text-right ${variance > 0 ? 'text-emerald-600 dark:text-emerald-400' : variance < 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-400'}`}>
                         {variance > 0 ? '+' : ''}{variance.toFixed(2)}
                       </td>
                     </tr>
@@ -229,7 +229,7 @@ const CashDrawerScreen = ({ bills }: { bills: Bill[] }) => {
               
               <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl mb-6 text-center">
                 <p className="text-sm font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">Expected Balance</p>
-                <p className="text-3xl font-black text-blue-700 dark:text-blue-300">${expectedBalance.toFixed(2)}</p>
+                <p className="text-3xl font-black text-blue-700 dark:text-blue-400 dark:text-blue-300">${expectedBalance.toFixed(2)}</p>
               </div>
 
               <form onSubmit={handleCloseShift} className="space-y-4">

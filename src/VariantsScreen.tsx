@@ -37,7 +37,7 @@ const VariantsScreen = ({ products }: { products: Product[] }) => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#F8FAFC]">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
       <div className="bg-white dark:bg-slate-900 px-8 py-6 border-b border-slate-200 dark:border-slate-700 shrink-0 flex justify-between items-center z-10 sticky top-0">
         <div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Product Variants</h2>
@@ -85,7 +85,7 @@ const VariantsScreen = ({ products }: { products: Product[] }) => {
               {variants.map(v => (
                 <div key={v.id} className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
+                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center">
                       <Layers size={20} />
                     </div>
                     <div>
@@ -96,7 +96,7 @@ const VariantsScreen = ({ products }: { products: Product[] }) => {
                       </div>
                     </div>
                   </div>
-                  {v.price && <div className="font-black text-emerald-600">${v.price}</div>}
+                  {v.price && <div className="font-black text-emerald-600 dark:text-emerald-400">${v.price}</div>}
                 </div>
               ))}
             </div>

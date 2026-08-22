@@ -57,7 +57,7 @@ const GiftCardsScreen = () => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#F8FAFC]">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
       <div className="bg-white dark:bg-slate-900 px-8 py-6 border-b border-slate-200 dark:border-slate-700 shrink-0 flex justify-between items-center z-10 sticky top-0">
         <div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Gift Cards</h2>
@@ -92,7 +92,7 @@ const GiftCardsScreen = () => {
                     onClick={() => toggleActive(card.id, card.is_active)}
                     className={cn(
                       "p-2 rounded-xl transition-colors",
-                      card.is_active ? "bg-emerald-100 text-emerald-600 hover:bg-emerald-200" : "bg-slate-200 text-slate-500 hover:bg-slate-300"
+                      card.is_active ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/50" : "bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700"
                     )}
                     title={card.is_active ? "Disable" : "Enable"}
                   >
@@ -115,7 +115,7 @@ const GiftCardsScreen = () => {
                 </div>
 
                 {!isActive && Number(card.balance) <= 0 && (
-                  <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-slate-200 text-slate-600 dark:text-slate-400 text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest border border-slate-300">
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest border border-slate-300 dark:border-slate-700">
                     Empty
                   </div>
                 )}
@@ -138,7 +138,7 @@ const GiftCardsScreen = () => {
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                  <Gift size={24} className="text-indigo-600" />
+                  <Gift size={24} className="text-indigo-600 dark:text-indigo-400" />
                   Issue Gift Card
                 </h3>
                 <button onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-400"><X size={20} /></button>

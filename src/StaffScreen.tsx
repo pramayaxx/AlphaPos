@@ -73,7 +73,7 @@ const StaffScreen = () => {
       {showAdd && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
           <div className="p-6 bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center">
               <UserPlus size={20} />
             </div>
             <div>
@@ -84,7 +84,7 @@ const StaffScreen = () => {
           <form onSubmit={handleAdd} className="p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Full Name</label>
                 <input 
                   type="text" 
                   className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
@@ -94,7 +94,7 @@ const StaffScreen = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Email Address (Login)</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email Address (Login)</label>
                 <input 
                   type="email" 
                   className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
@@ -104,7 +104,7 @@ const StaffScreen = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password</label>
                 <input 
                   type="password" 
                   className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
@@ -114,7 +114,7 @@ const StaffScreen = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Role</label>
                 <select 
                   className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   value={role}
@@ -166,12 +166,12 @@ const StaffScreen = () => {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full ${member.role === 'admin' ? 'bg-amber-100 text-amber-700' : member.role === 'manager' ? 'bg-indigo-100 text-indigo-700' : 'bg-blue-100 text-blue-700'}`}>
+                <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full ${member.role === 'admin' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' : member.role === 'manager' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'}`}>
                   {member.role}
                 </span>
                 <button 
                   onClick={() => handleDelete(member.id)}
-                  className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                  className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:bg-rose-900/20 rounded-lg transition-colors"
                 >
                   <Trash2 size={16} />
                 </button>

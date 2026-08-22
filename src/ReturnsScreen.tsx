@@ -98,7 +98,7 @@ const ReturnsScreen = () => {
   );
 
   return (
-    <div className="h-full flex flex-col bg-[#F8FAFC]">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
       <div className="bg-white dark:bg-slate-900 px-8 py-6 border-b border-slate-200 dark:border-slate-700 shrink-0 flex justify-between items-center z-10 sticky top-0">
         <div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Returns & Refunds</h2>
@@ -143,7 +143,7 @@ const ReturnsScreen = () => {
                   <td className="p-4 text-blue-600 dark:text-blue-400 font-bold font-mono">
                     {r.original_bill_uuid ? r.original_bill_uuid.split('-')[0] : 'Unknown'}
                   </td>
-                  <td className="p-4 text-red-600 font-black">
+                  <td className="p-4 text-red-600 dark:text-red-400 font-black">
                     -${Number(r.refund_amount).toFixed(2)}
                   </td>
                   <td className="p-4 text-slate-600 dark:text-slate-400 font-medium">
@@ -231,7 +231,7 @@ const ReturnsScreen = () => {
                     id="restock" 
                     checked={restock} 
                     onChange={e => setRestock(e.target.checked)}
-                    className="w-5 h-5 rounded text-blue-600 focus:ring-blue-500"
+                    className="w-5 h-5 rounded text-blue-600 dark:text-blue-400 focus:ring-blue-500"
                   />
                   <label htmlFor="restock" className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2 cursor-pointer">
                     <Package size={18} />

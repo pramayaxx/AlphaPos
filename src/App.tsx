@@ -144,7 +144,7 @@ const ReceiptView = ({ bill, settings }: { bill: Bill, settings: ShopSettings })
         )}
       </div>
 
-      <div className="border-t border-dashed border-slate-300 my-4"></div>
+      <div className="border-t border-dashed border-slate-300 dark:border-slate-700 my-4"></div>
 
       <div className="text-center space-y-2 mb-4">
         {settings.receiptHeader && <p className="text-xs tracking-widest uppercase">{settings.receiptHeader}</p>}
@@ -154,10 +154,10 @@ const ReceiptView = ({ bill, settings }: { bill: Bill, settings: ShopSettings })
         </div>
       </div>
 
-      <div className="border-t border-dashed border-slate-300 my-4"></div>
+      <div className="border-t border-dashed border-slate-300 dark:border-slate-700 my-4"></div>
 
       <div className="space-y-4 mb-4">
-        <div className="flex justify-between font-bold border-b border-dashed border-slate-300 pb-2 uppercase tracking-wider text-xs">
+        <div className="flex justify-between font-bold border-b border-dashed border-slate-300 dark:border-slate-700 pb-2 uppercase tracking-wider text-xs">
           <span>Description</span>
           <span className="w-20 text-right">Total</span>
         </div>
@@ -174,7 +174,7 @@ const ReceiptView = ({ bill, settings }: { bill: Bill, settings: ShopSettings })
         ))}
       </div>
 
-      <div className="border-t border-dashed border-slate-300 my-4"></div>
+      <div className="border-t border-dashed border-slate-300 dark:border-slate-700 my-4"></div>
 
       <div className="space-y-2 text-sm">
         <div className="flex justify-between">
@@ -182,20 +182,20 @@ const ReceiptView = ({ bill, settings }: { bill: Bill, settings: ShopSettings })
           <span>{Number(bill.subtotal).toFixed(2)}</span>
         </div>
         {bill.discount > 0 && (
-          <div className="flex justify-between text-rose-600">
+          <div className="flex justify-between text-rose-600 dark:text-rose-400">
             <span>Discount</span>
             <span>-{Number(bill.discount).toFixed(2)}</span>
           </div>
         )}
         {(bill as any).pointsRedeemed > 0 && (
-          <div className="flex justify-between text-emerald-600">
+          <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
             <span>Points Discount ({(bill as any).pointsRedeemed} pts)</span>
             <span>-{Number((bill as any).pointsRedeemed * 0.01).toFixed(2)}</span>
           </div>
         )}
       </div>
 
-      <div className="border-t border-dashed border-slate-300 my-4"></div>
+      <div className="border-t border-dashed border-slate-300 dark:border-slate-700 my-4"></div>
 
       <div className="flex justify-between font-bold text-lg">
         <span className="uppercase tracking-widest">Total</span>
@@ -209,17 +209,17 @@ const ReceiptView = ({ bill, settings }: { bill: Bill, settings: ShopSettings })
         </div>
       )}
       {(bill as any).pointsEarned > 0 && (
-        <div className="flex justify-between mt-1 text-xs font-bold text-emerald-600">
+        <div className="flex justify-between mt-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
           <span>Points Earned</span>
           <span>+{(bill as any).pointsEarned} pts</span>
         </div>
       )}
 
-      <div className="border-t border-dashed border-slate-300 my-4"></div>
+      <div className="border-t border-dashed border-slate-300 dark:border-slate-700 my-4"></div>
 
       <div className="text-center mt-6 space-y-4">
         <p className="text-xs tracking-widest uppercase max-w-[200px] mx-auto leading-relaxed">{settings.receiptFooter}</p>
-        <div className="pt-2 border-t border-dashed border-slate-300">
+        <div className="pt-2 border-t border-dashed border-slate-300 dark:border-slate-700">
           <p className="text-[9px] text-slate-400 uppercase tracking-widest">Alpha Mobile POS • v2.0</p>
         </div>
       </div>
@@ -288,7 +288,7 @@ const AuthScreen = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-[#0A0A0A] flex items-center justify-center p-6 font-sans">
+    <div className="min-h-[100dvh] bg-slate-50 dark:bg-[#0A0A0A] flex items-center justify-center p-6 font-sans">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[120px] rounded-full" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-600/20 blur-[120px] rounded-full" />
@@ -303,26 +303,26 @@ const AuthScreen = () => {
           <div className="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-blue-500/40 mx-auto mb-6 rotate-3 hover:rotate-0 transition-transform duration-500">
             <ShoppingCart size={40} />
           </div>
-          <h1 className="text-4xl font-black text-white tracking-tighter mb-2">ALPHA <span className="text-blue-500">POS</span></h1>
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter mb-2">ALPHA <span className="text-blue-500">POS</span></h1>
           <p className="text-slate-500 dark:text-slate-400 font-medium">Next-gen retail management</p>
         </div>
 
         <div className="bg-white dark:bg-slate-900/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-10 shadow-2xl">
           <div className="flex gap-4 mb-10 p-1.5 bg-white dark:bg-slate-900/5 rounded-2xl">
             <button 
-              onClick={() => setIsLogin(true)}
+              onClick={() => { setIsLogin(true); setError(""); }}
               className={cn(
                 "flex-1 py-3 rounded-xl font-bold transition-all",
-                isLogin ? "bg-white dark:bg-slate-900 text-black shadow-xl" : "text-slate-400 hover:text-white"
+                isLogin ? "bg-white dark:bg-slate-900 text-black dark:text-white shadow-xl" : "text-slate-400 hover:text-slate-800 dark:hover:text-white"
               )}
             >
               Login
             </button>
             <button 
-              onClick={() => setIsLogin(false)}
+              onClick={() => { setIsLogin(false); setError(""); }}
               className={cn(
                 "flex-1 py-3 rounded-xl font-bold transition-all",
-                !isLogin ? "bg-white dark:bg-slate-900 text-black shadow-xl" : "text-slate-400 hover:text-white"
+                !isLogin ? "bg-white dark:bg-slate-900 text-black dark:text-white shadow-xl" : "text-slate-400 hover:text-slate-800 dark:hover:text-white"
               )}
             >
               Register
@@ -375,7 +375,7 @@ const AuthScreen = () => {
                 <button 
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-white transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -405,18 +405,18 @@ const AuthScreen = () => {
             </button>
             {isLogin && (
               <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-4">
-                Don't have an account? <button type="button" onClick={() => setIsLogin(false)} className="text-blue-500 font-bold hover:underline">Register here</button>
+                Don't have an account? <button type="button" onClick={() => { setIsLogin(false); setError(""); }} className="text-blue-500 font-bold hover:underline">Register here</button>
               </p>
             )}
           </form>
 
           <div className="mt-8 pt-8 border-t border-white/10 space-y-3">
             <div className="flex justify-center gap-4 text-xs text-slate-500 dark:text-slate-400 mt-4">
-              <a href="/public/terms" className="hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">Terms & Conditions</a>
+              <a href="/public/terms" className="hover:text-slate-800 dark:hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">Terms & Conditions</a>
               <span>|</span>
-              <a href="/public/privacy" className="hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+              <a href="/public/privacy" className="hover:text-slate-800 dark:hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
               <span>|</span>
-              <a href="/public/returns" className="hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">Return Policy</a>
+              <a href="/public/returns" className="hover:text-slate-800 dark:hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">Return Policy</a>
             </div>
           </div>
         </div>
@@ -524,7 +524,7 @@ const CFDScreen = () => {
             Scan QR to pay / Earn points
           </div>
           <div className="w-48 h-48 bg-white dark:bg-slate-900 rounded-2xl mt-6 p-2">
-             <div className="w-full h-full border-4 border-dashed border-slate-300 rounded-xl flex items-center justify-center text-slate-400 font-bold">QR CODE</div>
+             <div className="w-full h-full border-4 border-dashed border-slate-300 dark:border-slate-700 rounded-xl flex items-center justify-center text-slate-400 font-bold">QR CODE</div>
           </div>
         </div>
       </div>
@@ -621,7 +621,7 @@ const Dashboard = ({ bills, products, onNewSale, onPendingPrints }: { bills: Bil
           {stats.pendingPrints > 0 && (
             <button 
               onClick={onPendingPrints}
-              className="flex items-center gap-2 px-4 py-3 font-semibold text-rose-600 transition-all bg-rose-50 rounded-xl hover:bg-rose-100 border border-rose-100"
+              className="flex items-center gap-2 px-4 py-3 font-semibold text-rose-600 dark:text-rose-400 transition-all bg-rose-50 dark:bg-rose-900/20 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-900/40 border border-rose-100"
             >
               <History size={20} />
               {stats.pendingPrints} Pending Prints
@@ -665,7 +665,7 @@ const Dashboard = ({ bills, products, onNewSale, onPendingPrints }: { bills: Bil
               recentBills.map(bill => (
                 <div key={bill.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white dark:bg-slate-900 rounded-lg flex items-center justify-center text-blue-600 shadow-sm">
+                    <div className="w-10 h-10 bg-white dark:bg-slate-900 rounded-lg flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-sm">
                       <ShoppingCart size={20} />
                     </div>
                     <div>
@@ -688,7 +688,7 @@ const Dashboard = ({ bills, products, onNewSale, onPendingPrints }: { bills: Bil
               topProducts.map((tp, idx) => (
                 <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center text-blue-600 font-bold shadow-sm">
+                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold shadow-sm">
                       #{idx + 1}
                     </div>
                     <div>
@@ -708,9 +708,9 @@ const Dashboard = ({ bills, products, onNewSale, onPendingPrints }: { bills: Bil
            <div className="space-y-4">
              {lowStockProducts.length > 0 ? (
                lowStockProducts.map(product => (
-                 <div key={product.id} className="flex items-center justify-between p-3 bg-rose-50 rounded-xl border border-rose-100">
+                 <div key={product.id} className="flex items-center justify-between p-3 bg-rose-50 dark:bg-rose-900/20 rounded-xl border border-rose-100">
                    <div className="flex items-center gap-3">
-                     <div className="w-10 h-10 bg-white dark:bg-slate-900 rounded-lg flex items-center justify-center text-rose-600 shadow-sm">
+                     <div className="w-10 h-10 bg-white dark:bg-slate-900 rounded-lg flex items-center justify-center text-rose-600 dark:text-rose-400 shadow-sm">
                        <AlertCircle size={20} />
                      </div>
                      <div>
@@ -718,7 +718,7 @@ const Dashboard = ({ bills, products, onNewSale, onPendingPrints }: { bills: Bil
                        <p className="text-[10px] text-rose-500 font-bold uppercase">Low Stock</p>
                      </div>
                    </div>
-                   <p className="font-black text-rose-600">{product.stock_quantity} Left</p>
+                   <p className="font-black text-rose-600 dark:text-rose-400">{product.stock_quantity} Left</p>
                  </div>
                ))
              ) : (
@@ -826,7 +826,7 @@ const CustomerSelect = ({ customers, selectedId, onChange, onAddCustomer }: { cu
                 <div className="p-2 border-t border-slate-100 dark:border-slate-800">
                   <button 
                     onClick={() => setShowAdd(true)}
-                    className="w-full py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold flex items-center justify-center gap-2"
+                    className="w-full py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-bold flex items-center justify-center gap-2"
                   >
                     <Plus size={16} /> Add New Customer
                   </button>
@@ -1397,7 +1397,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
     return (
       <div className="max-w-md mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-emerald-600 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
              Sale Successful!
           </h2>
         </div>
@@ -1422,7 +1422,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
                  alert('Receipt sent via Email!');
                } catch(e) { alert('Failed to send receipt.'); }
              }
-          }} className="py-3 bg-blue-100 text-blue-700 font-bold rounded-xl hover:bg-blue-200 flex flex-col items-center gap-1 transition-colors">
+          }} className="py-3 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-bold rounded-xl hover:bg-blue-200 dark:hover:bg-blue-900/50 flex flex-col items-center gap-1 transition-colors">
             <Mail size={24} />
             <span>Email Receipt</span>
           </button>
@@ -1440,7 +1440,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
 
           
         
-        <button onClick={() => window.open(window.location.origin + '/#cfd', '_blank', 'width=800,height=600')} className="mr-4 text-emerald-600 hover:text-emerald-700 flex items-center gap-2 font-bold text-sm bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 rounded-xl transition-colors">
+        <button onClick={() => window.open(window.location.origin + '/#cfd', '_blank', 'width=800,height=600')} className="mr-4 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 flex items-center gap-2 font-bold text-sm bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 rounded-xl transition-colors">
           <Monitor size={18} /> Open CFD
         </button>
         <button onClick={handleReadScale}
@@ -1497,7 +1497,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
                       <div className="font-bold text-slate-900 dark:text-slate-100 dark:text-slate-100">{p.name}</div>
                       <div className="text-xs text-slate-500 dark:text-slate-400">{p.item_number}</div>
                     </div>
-                    <div className="font-bold text-blue-600">{formatCurrency(p.price)}</div>
+                    <div className="font-bold text-blue-600 dark:text-blue-400">{formatCurrency(p.price)}</div>
                   </button>
                 ))}
               </div>
@@ -1593,7 +1593,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
                   )}
                 </div>
                 <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 dark:text-slate-100 truncate">{p.name}</h4>
-                <p className="text-[10px] font-black text-blue-600 mt-1">{formatCurrency(p.price)}</p>
+                <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 mt-1">{formatCurrency(p.price)}</p>
               </button>
             ))}
             {filteredProducts.length === 0 && (
@@ -1671,7 +1671,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
 
             <div className="border-t border-slate-100 dark:border-slate-800 pt-4 flex justify-between items-end">
               <span className="text-slate-900 dark:text-slate-100 dark:text-slate-100 font-bold">Grand Total</span>
-              <span className="text-3xl font-black text-blue-600">{formatCurrency(grandTotal)}</span>
+              <span className="text-3xl font-black text-blue-600 dark:text-blue-400">{formatCurrency(grandTotal)}</span>
             </div>
           </div>
 
@@ -1738,7 +1738,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
             <button 
               disabled={cart.length === 0}
               onClick={holdCart}
-              className="col-span-2 py-3 bg-amber-50 text-amber-600 font-bold rounded-xl hover:bg-amber-100 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+              className="col-span-2 py-3 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 font-bold rounded-xl hover:bg-amber-100 dark:hover:bg-amber-900/40 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
             >
               <History size={18} />
               Hold Bill
@@ -1757,7 +1757,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
                     </div>
                     <button 
                       onClick={() => resumeCart(held)}
-                      className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-blue-600 font-bold rounded-lg text-xs hover:bg-blue-50 transition-colors"
+                      className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-blue-600 dark:text-blue-400 font-bold rounded-lg text-xs hover:bg-blue-50 dark:bg-blue-900/20 transition-colors"
                     >
                       Resume
                     </button>
@@ -1772,7 +1772,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
         <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
           <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between">
             <h3 className="font-bold text-slate-900 dark:text-slate-100 dark:text-slate-100">Cart Items</h3>
-            <span className="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">
+            <span className="text-xs font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-lg">
               {cart.length} {cart.length === 1 ? 'Item' : 'Items'}
             </span>
           </div>
@@ -1803,7 +1803,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
                             const weight = parseFloat((Math.random() * 5).toFixed(2));
                             setCart(prev => prev.map(c => c.product_id === item.product_id ? { ...c, quantity: weight } : c));
                           }} 
-                          className="text-xs bg-indigo-100 text-indigo-700 px-2 py-2 rounded-lg dark:bg-indigo-900/30 dark:text-indigo-300"
+                          className="text-xs bg-indigo-100 text-indigo-700 dark:text-indigo-400 px-2 py-2 rounded-lg dark:bg-indigo-900/30 dark:text-indigo-300"
                           title="Read from scale"
                         >
                           ⚖️ Scale
@@ -1812,14 +1812,14 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
                     <div className="flex items-center bg-slate-100 dark:bg-slate-800 dark:bg-slate-800 rounded-xl p-1 border border-slate-200 dark:border-slate-700 shadow-inner">
                       <button 
                         onClick={() => updateQuantity(item.product_id, -1)} 
-                        className="w-8 h-8 flex items-center justify-center bg-white dark:bg-slate-900 rounded-lg shadow-sm text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-all active:scale-95"
+                        className="w-8 h-8 flex items-center justify-center bg-white dark:bg-slate-900 rounded-lg shadow-sm text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:text-blue-400 transition-all active:scale-95"
                       >
                         <Minus size={14} />
                       </button>
                       <span className="w-10 text-center font-black text-sm text-slate-900 dark:text-slate-100 dark:text-slate-100">{item.quantity}</span>
                       <button 
                         onClick={() => updateQuantity(item.product_id, 1)} 
-                        className="w-8 h-8 flex items-center justify-center bg-white dark:bg-slate-900 rounded-lg shadow-sm text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-all active:scale-95"
+                        className="w-8 h-8 flex items-center justify-center bg-white dark:bg-slate-900 rounded-lg shadow-sm text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:text-blue-400 transition-all active:scale-95"
                       >
                         <Plus size={14} />
                       </button>
@@ -1827,7 +1827,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
                     </div>
                     <div className="text-right">
                       <p className="text-[10px] text-slate-400 font-bold uppercase">{formatCurrency(item.price)} each</p>
-                      <p className="font-black text-blue-600">{formatCurrency(item.price * item.quantity)}</p>
+                      <p className="font-black text-blue-600 dark:text-blue-400">{formatCurrency(item.price * item.quantity)}</p>
                     </div>
                   </div>
                 </div>
@@ -1859,7 +1859,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
               <div className="p-6 space-y-4">
                 <p className="text-sm text-slate-500 dark:text-slate-400">Barcode <span className="font-mono font-bold text-slate-900 dark:text-slate-100 dark:text-slate-100">{scannedBarcode}</span> was not found in your inventory. Would you like to add it now?</p>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Product Name</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Product Name</label>
                   <input 
                     type="text" 
                     className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
@@ -1869,7 +1869,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Selling Price</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Selling Price</label>
                   <input 
                     type="number" 
                     className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
@@ -2051,20 +2051,20 @@ const Products = ({ products }: { products: Product[] }) => {
         <table className="w-full text-left">
           <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
             <tr>
-              <th className="px-6 py-4 font-semibold cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleSort('name')}>
+              <th className="px-6 py-4 font-semibold cursor-pointer hover:text-blue-600 dark:text-blue-400 transition-colors" onClick={() => handleSort('name')}>
                 <div className="flex items-center gap-1">
                   Product
                   {sortConfig?.key === 'name' && (sortConfig.direction === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
                 </div>
               </th>
               <th className="px-6 py-4 font-semibold">Barcode/Item #</th>
-              <th className="px-6 py-4 font-semibold cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleSort('price')}>
+              <th className="px-6 py-4 font-semibold cursor-pointer hover:text-blue-600 dark:text-blue-400 transition-colors" onClick={() => handleSort('price')}>
                 <div className="flex items-center gap-1">
                   Price
                   {sortConfig?.key === 'price' && (sortConfig.direction === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
                 </div>
               </th>
-              <th className="px-6 py-4 font-semibold cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleSort('stock_quantity')}>
+              <th className="px-6 py-4 font-semibold cursor-pointer hover:text-blue-600 dark:text-blue-400 transition-colors" onClick={() => handleSort('stock_quantity')}>
                 <div className="flex items-center gap-1">
                   Stock
                   {sortConfig?.key === 'stock_quantity' && (sortConfig.direction === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
@@ -2092,7 +2092,7 @@ const Products = ({ products }: { products: Product[] }) => {
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm font-mono">{product.item_number}</td>
-                <td className="px-6 py-4 text-sm font-bold text-blue-600">{formatCurrency(product.price)}</td>
+                <td className="px-6 py-4 text-sm font-bold text-blue-600 dark:text-blue-400">{formatCurrency(product.price)}</td>
                 <td className="px-6 py-4">
                   <span className={cn(
                     "px-2 py-1 rounded-full text-xs font-bold",
@@ -2108,7 +2108,7 @@ const Products = ({ products }: { products: Product[] }) => {
                     <button onClick={(e) => {
                       e.stopPropagation();
                       handleEdit(product);
-                    }} className="text-slate-400 hover:text-blue-600 p-2">
+                    }} className="text-slate-400 hover:text-blue-600 dark:text-blue-400 p-2">
                       <Edit size={18} />
                     </button>
                     <button onClick={async (e) => {
@@ -2165,7 +2165,7 @@ const Products = ({ products }: { products: Product[] }) => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Product Name <span className="text-rose-500">*</span></label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Product Name <span className="text-rose-500">*</span></label>
                     <input 
                       type="text" 
                       placeholder="Enter product name"
@@ -2175,7 +2175,7 @@ const Products = ({ products }: { products: Product[] }) => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Item Number/Barcode (Optional)</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Item Number/Barcode (Optional)</label>
                     <input 
                       type="text" 
                       placeholder="Auto-generated if empty"
@@ -2185,7 +2185,7 @@ const Products = ({ products }: { products: Product[] }) => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Category (Optional)</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Category (Optional)</label>
                     <input 
                       type="text" 
                       placeholder="General"
@@ -2195,7 +2195,7 @@ const Products = ({ products }: { products: Product[] }) => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Price (Optional)</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Price (Optional)</label>
                     <input 
                       type="number" 
                       placeholder="0.00"
@@ -2205,7 +2205,7 @@ const Products = ({ products }: { products: Product[] }) => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Discount Amount (Optional)</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Discount Amount (Optional)</label>
                     <input 
                       type="number" 
                       placeholder="0.00"
@@ -2215,7 +2215,7 @@ const Products = ({ products }: { products: Product[] }) => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Stock Quantity (Optional)</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Stock Quantity (Optional)</label>
                     <input 
                       type="number" 
                       placeholder="0"
@@ -2225,7 +2225,7 @@ const Products = ({ products }: { products: Product[] }) => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Low Stock Alert (Optional)</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Low Stock Alert (Optional)</label>
                     <input 
                       type="number" 
                       placeholder="5"
@@ -2278,7 +2278,7 @@ const Products = ({ products }: { products: Product[] }) => {
                 <div className="grid grid-cols-2 gap-6">
                   <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Price</p>
-                    <p className="text-xl font-black text-blue-600">{formatCurrency(selectedProduct.sellingPrice)}</p>
+                    <p className="text-xl font-black text-blue-600 dark:text-blue-400">{formatCurrency(selectedProduct.sellingPrice)}</p>
                   </div>
                   <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Stock</p>
@@ -2380,7 +2380,7 @@ const PrinterSetup = ({ onBack }: { onBack: () => void }) => {
             </div>
           </div>
           {connectedDevice && (
-            <button onClick={handleDisconnect} className="text-rose-600 font-bold text-sm hover:underline">Disconnect</button>
+            <button onClick={handleDisconnect} className="text-rose-600 dark:text-rose-400 font-bold text-sm hover:underline">Disconnect</button>
           )}
         </div>
 
@@ -2392,7 +2392,7 @@ const PrinterSetup = ({ onBack }: { onBack: () => void }) => {
                 setIsScanning(true);
                 setTimeout(() => setIsScanning(false), 2000);
               }}
-              className="text-blue-600 text-sm font-bold flex items-center gap-2"
+              className="text-blue-600 dark:text-blue-400 text-sm font-bold flex items-center gap-2"
             >
               <RefreshCw size={14} className={cn(isScanning && "animate-spin")} />
               Scan for Devices
@@ -2428,7 +2428,7 @@ const PrinterSetup = ({ onBack }: { onBack: () => void }) => {
 
         <button 
           onClick={handleTestPrint}
-          className="w-full py-4 border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold rounded-xl hover:border-blue-400 hover:text-blue-600 transition-all flex items-center justify-center gap-2"
+          className="w-full py-4 border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold rounded-xl hover:border-blue-400 hover:text-blue-600 dark:text-blue-400 transition-all flex items-center justify-center gap-2"
         >
           <Printer size={20} />
           Print Test Receipt
@@ -2489,7 +2489,7 @@ const PendingPrints = ({ bills, settings, onBack, onSaleComplete }: { bills: Bil
                 <tr key={bill.id} className="hover:bg-slate-50 dark:bg-slate-800/50 transition-colors">
                   <td className="px-6 py-4 font-bold text-slate-900 dark:text-slate-100 dark:text-slate-100">{bill.uuid.slice(0, 8).toUpperCase()}</td>
                   <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{format(bill.dateTime, 'MMM dd, HH:mm')}</td>
-                  <td className="px-6 py-4 font-bold text-blue-600">{formatCurrency(bill.grandTotal)}</td>
+                  <td className="px-6 py-4 font-bold text-blue-600 dark:text-blue-400">{formatCurrency(bill.grandTotal)}</td>
                   <td className="px-6 py-4 text-right">
                     <button 
                       onClick={() => handlePrint(bill)}
@@ -2581,7 +2581,7 @@ const Transactions = ({ bills, settings, customers, onRefresh, currentUser }: { 
                 <td className="px-6 py-4 font-bold text-slate-900 dark:text-slate-100 dark:text-slate-100">
                   #{bill.uuid.slice(0, 8).toUpperCase()}
                   {bill.status === 'refunded' && (
-                    <span className="ml-2 px-2 py-0.5 bg-rose-100 text-rose-600 text-[10px] uppercase font-black rounded-full">Refunded</span>
+                    <span className="ml-2 px-2 py-0.5 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-[10px] uppercase font-black rounded-full">Refunded</span>
                   )}
                 </td>
                 <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 hidden md:table-cell">
@@ -2589,7 +2589,7 @@ const Transactions = ({ bills, settings, customers, onRefresh, currentUser }: { 
                 </td>
                 <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{format(bill.dateTime, 'MMM dd, yyyy HH:mm')}</td>
                 <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 hidden sm:table-cell">{bill.items.length} items</td>
-                <td className="px-6 py-4 font-bold text-blue-600">{formatCurrency(bill.grandTotal)}</td>
+                <td className="px-6 py-4 font-bold text-blue-600 dark:text-blue-400">{formatCurrency(bill.grandTotal)}</td>
                 <td className="px-6 py-4 text-right">
                   <button 
                     onClick={() => setSelectedBill(bill)}
@@ -2631,7 +2631,7 @@ const Transactions = ({ bills, settings, customers, onRefresh, currentUser }: { 
                   <button 
                     disabled={isRefunding}
                     onClick={() => handleRefund(selectedBill.uuid)}
-                    className="flex-1 py-4 bg-rose-50 text-rose-600 font-black rounded-2xl hover:bg-rose-100 transition-all flex items-center justify-center gap-2"
+                    className="flex-1 py-4 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 font-black rounded-2xl hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-all flex items-center justify-center gap-2"
                   >
                     <RefreshCw size={20} />
                     {isRefunding ? 'Refunding...' : 'Refund'}
@@ -2698,7 +2698,7 @@ const CustomersScreen = ({ customers, onAddCustomer, bills, settings }: { custom
   const customerBills = selectedCustomer ? bills.filter(b => b.customerId == selectedCustomer.id).sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()) : [];
 
   return (
-    <div className="h-full flex flex-col bg-[#F8FAFC]">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
       <div className="bg-white dark:bg-slate-900 px-8 py-6 border-b border-slate-200 dark:border-slate-700 shrink-0 flex justify-between items-center z-10 sticky top-0">
         <div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">{t('customers')}</h2>
@@ -2731,7 +2731,7 @@ const CustomersScreen = ({ customers, onAddCustomer, bills, settings }: { custom
                   <td className="p-4 font-bold text-slate-900 dark:text-slate-100">{c.name}</td>
                   <td className="p-4 text-slate-500 dark:text-slate-400 hidden sm:table-cell font-medium">{c.phone || '-'}</td>
                   <td className="p-4 text-slate-500 dark:text-slate-400 hidden md:table-cell font-medium">{c.email || '-'}</td>
-                  <td className="p-4 font-bold text-blue-600 hidden lg:table-cell">{c.loyalty_points || 0}</td>
+                  <td className="p-4 font-bold text-blue-600 dark:text-blue-400 hidden lg:table-cell">{c.loyalty_points || 0}</td>
      <td className="p-4 font-black text-rose-500 text-right">{c.total_debt && c.total_debt > 0 ? formatCurrency(c.total_debt) : '-'}</td>
                 </tr>
               ))}
@@ -2792,7 +2792,7 @@ const CustomersScreen = ({ customers, onAddCustomer, bills, settings }: { custom
                            }
                          }
                       }}
-                      className="mt-2 text-xs bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-1.5 rounded-lg font-bold transition-colors"
+                      className="mt-2 text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/50 px-3 py-1.5 rounded-lg font-bold transition-colors"
                     >
                       Pay Debt
                     </button>
@@ -3061,7 +3061,7 @@ const ReportsScreen = ({ bills, products, currentUser }: { bills: Bill[], produc
           </div>
           <button 
             onClick={handleExportCsv}
-            className="px-4 py-2.5 rounded-xl text-sm font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition-all flex items-center gap-1 shadow-sm"
+            className="px-4 py-2.5 rounded-xl text-sm font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all flex items-center gap-1 shadow-sm"
           >
             Export CSV
           </button>
@@ -3102,7 +3102,7 @@ const ReportsScreen = ({ bills, products, currentUser }: { bills: Bill[], produc
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm">
           <h3 className="text-lg font-black text-slate-900 dark:text-slate-100 dark:text-slate-100 mb-8 flex items-center gap-2">
-            <BarChart3 size={20} className="text-blue-600" />
+            <BarChart3 size={20} className="text-blue-600 dark:text-blue-400" />
             Revenue Over Time
           </h3>
           <div className="h-[300px] w-full">
@@ -3129,7 +3129,7 @@ const ReportsScreen = ({ bills, products, currentUser }: { bills: Bill[], produc
 
         <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm">
           <h3 className="text-lg font-black text-slate-900 dark:text-slate-100 dark:text-slate-100 mb-8 flex items-center gap-2">
-            <PieChartIcon size={20} className="text-emerald-600" />
+            <PieChartIcon size={20} className="text-emerald-600 dark:text-emerald-400" />
             Top Selling Products
           </h3>
           <div className="h-[300px] w-full flex items-center justify-center">
@@ -3251,7 +3251,7 @@ const SettingsScreen = ({ onPrinterSetup, currentUser, setCurrentUser, syncStatu
           </button>
           <button
             onClick={() => setShowPreview(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 font-bold rounded-lg hover:bg-blue-100 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-bold rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
           >
             <Eye size={20} />
             Preview Bill
@@ -3290,7 +3290,7 @@ const SettingsScreen = ({ onPrinterSetup, currentUser, setCurrentUser, syncStatu
               {settings.logoUrl && (
                 <button 
                   onClick={() => setSettings({...settings, logoUrl: undefined})}
-                  className="text-xs text-rose-600 font-bold mt-1 hover:underline"
+                  className="text-xs text-rose-600 dark:text-rose-400 font-bold mt-1 hover:underline"
                 >
                   Remove Logo
                 </button>
@@ -3300,7 +3300,7 @@ const SettingsScreen = ({ onPrinterSetup, currentUser, setCurrentUser, syncStatu
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Shop Name</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Shop Name</label>
               <input 
                 type="text" 
                 className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
@@ -3309,7 +3309,7 @@ const SettingsScreen = ({ onPrinterSetup, currentUser, setCurrentUser, syncStatu
               />
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Address</label>
               <input 
                 type="text" 
                 className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
@@ -3318,7 +3318,7 @@ const SettingsScreen = ({ onPrinterSetup, currentUser, setCurrentUser, syncStatu
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Phone</label>
               <input 
                 type="text" 
                 className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
@@ -3333,7 +3333,7 @@ const SettingsScreen = ({ onPrinterSetup, currentUser, setCurrentUser, syncStatu
           <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 dark:text-slate-100 border-b border-slate-100 dark:border-slate-800 pb-2">Tax Settings</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Tax Name</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tax Name</label>
               <input 
                 type="text" 
                 className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
@@ -3343,7 +3343,7 @@ const SettingsScreen = ({ onPrinterSetup, currentUser, setCurrentUser, syncStatu
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Tax Rate (%)</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tax Rate (%)</label>
               <input 
                 type="number" 
                 className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
@@ -3359,7 +3359,7 @@ const SettingsScreen = ({ onPrinterSetup, currentUser, setCurrentUser, syncStatu
         <section className="space-y-6">
           <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 dark:text-slate-100 border-b border-slate-100 dark:border-slate-800 pb-2">User Profile</h3>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Display Name</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Display Name</label>
             <input 
               type="text" 
               className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
@@ -3385,7 +3385,7 @@ const SettingsScreen = ({ onPrinterSetup, currentUser, setCurrentUser, syncStatu
           <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 dark:text-slate-100 border-b border-slate-100 dark:border-slate-800 pb-2">Receipt Layout & Size</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Paper Size</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Paper Size</label>
               <select 
                 className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 value={settings.receiptPaperSize}
@@ -3399,7 +3399,7 @@ const SettingsScreen = ({ onPrinterSetup, currentUser, setCurrentUser, syncStatu
             </div>
             {settings.receiptPaperSize === 'custom' && (
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Custom Width (mm)</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Custom Width (mm)</label>
                 <input 
                   type="number" 
                   className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
@@ -3409,7 +3409,7 @@ const SettingsScreen = ({ onPrinterSetup, currentUser, setCurrentUser, syncStatu
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Font Size (px)</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Font Size (px)</label>
               <input 
                 type="number" 
                 className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
@@ -3429,18 +3429,18 @@ const SettingsScreen = ({ onPrinterSetup, currentUser, setCurrentUser, syncStatu
                   type="checkbox" 
                   checked={settings.showStoreName}
                   onChange={e => setSettings({...settings, showStoreName: e.target.checked})}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-blue-600 dark:text-blue-400 rounded focus:ring-blue-500"
                 />
-                <span className="text-sm font-medium text-slate-700">Show Store Name</span>
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Show Store Name</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input 
                   type="checkbox" 
                   checked={settings.showStoreDetails}
                   onChange={e => setSettings({...settings, showStoreDetails: e.target.checked})}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-blue-600 dark:text-blue-400 rounded focus:ring-blue-500"
                 />
-                <span className="text-sm font-medium text-slate-700">Show Store Details Container</span>
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Show Store Details Container</span>
               </label>
             </div>
             <div className="flex flex-col gap-2 justify-center">
@@ -3449,18 +3449,18 @@ const SettingsScreen = ({ onPrinterSetup, currentUser, setCurrentUser, syncStatu
                   type="checkbox" 
                   checked={settings.showAddress}
                   onChange={e => setSettings({...settings, showAddress: e.target.checked})}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-blue-600 dark:text-blue-400 rounded focus:ring-blue-500"
                 />
-                <span className="text-sm font-medium text-slate-700">Show Address</span>
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Show Address</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input 
                   type="checkbox" 
                   checked={settings.showPhone}
                   onChange={e => setSettings({...settings, showPhone: e.target.checked})}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-blue-600 dark:text-blue-400 rounded focus:ring-blue-500"
                 />
-                <span className="text-sm font-medium text-slate-700">Show Phone</span>
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Show Phone</span>
               </label>
             </div>
             <div className="flex flex-col gap-2 justify-center">
@@ -3469,22 +3469,22 @@ const SettingsScreen = ({ onPrinterSetup, currentUser, setCurrentUser, syncStatu
                   type="checkbox" 
                   checked={settings.showInvoiceNumber}
                   onChange={e => setSettings({...settings, showInvoiceNumber: e.target.checked})}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-blue-600 dark:text-blue-400 rounded focus:ring-blue-500"
                 />
-                <span className="text-sm font-medium text-slate-700">Show Invoice Number</span>
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Show Invoice Number</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input 
                   type="checkbox" 
                   checked={settings.showDateTime}
                   onChange={e => setSettings({...settings, showDateTime: e.target.checked})}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-blue-600 dark:text-blue-400 rounded focus:ring-blue-500"
                 />
-                <span className="text-sm font-medium text-slate-700">Show Date & Time</span>
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Show Date & Time</span>
               </label>
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Receipt Header</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Receipt Header</label>
               <textarea 
                 className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-20"
                 value={settings.receiptHeader}
@@ -3492,7 +3492,7 @@ const SettingsScreen = ({ onPrinterSetup, currentUser, setCurrentUser, syncStatu
               />
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Receipt Footer</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Receipt Footer</label>
               <textarea 
                 className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-20"
                 value={settings.receiptFooter}
@@ -3885,8 +3885,8 @@ export default function App() {
   };
 
   if (isLoading || !settings) return (
-    <div className="min-h-[100dvh] bg-[#0A0A0A] flex items-center justify-center">
-      <RefreshCw size={40} className="animate-spin text-blue-600" />
+    <div className="min-h-[100dvh] bg-slate-50 dark:bg-[#0A0A0A] flex items-center justify-center">
+      <RefreshCw size={40} className="animate-spin text-blue-600 dark:text-blue-400" />
     </div>
   );
 
@@ -3903,16 +3903,16 @@ export default function App() {
 
   if (currentUser && !currentUser.is_superadmin && staffList.length > 0 && !currentStaff) {
     return (
-      <div className="flex h-[100dvh] bg-slate-900 items-center justify-center">
-        <div className="bg-slate-800 p-8 rounded-3xl max-w-md w-full text-center">
-          <h2 className="text-2xl font-black text-white mb-6">Staff Unlock</h2>
+      <div className="flex h-[100dvh] bg-slate-50 dark:bg-slate-900 items-center justify-center">
+        <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-200 dark:border-slate-700 max-w-md w-full text-center shadow-xl">
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-6">Staff Unlock</h2>
           <div className="grid grid-cols-2 gap-4">
             {staffList.map(s => (
               <button key={s.id} onClick={() => {
                 const pin = prompt('Enter PIN for ' + s.full_name);
                 if (pin === s.pin) setCurrentStaff(s);
                 else alert('Incorrect PIN');
-              }} className="bg-slate-700 hover:bg-slate-600 text-white font-bold p-4 rounded-2xl flex flex-col items-center gap-2">
+              }} className="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-white font-bold p-4 rounded-2xl flex flex-col items-center gap-2 transition-colors">
                  <UserCircle2 size={32} />
                  {s.full_name}
               </button>
@@ -3929,7 +3929,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-[100dvh] bg-[#F8FAFC] dark:bg-slate-950 dark:text-slate-100 text-slate-900 dark:text-slate-100 dark:text-slate-100 font-sans overflow-hidden">
+    <div className="flex flex-col md:flex-row h-[100dvh] bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans overflow-hidden">
       {/* Sidebar - Desktop */}
       <aside className="hidden md:flex w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 p-8 flex-col gap-10">
         <div className="flex items-center gap-4 px-2">
@@ -3938,7 +3938,7 @@ export default function App() {
           </div>
           <div>
             <h1 className="text-xl font-black tracking-tighter leading-none">ALPHA</h1>
-            <p className="text-[10px] font-black text-blue-600 tracking-[0.2em] uppercase">Mobile POS</p>
+            <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 tracking-[0.2em] uppercase">Mobile POS</p>
           </div>
         </div>
 
@@ -3995,7 +3995,7 @@ export default function App() {
           </button>
 
           <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-2xl mb-4">
-            <div className="w-10 h-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-blue-600 shadow-sm font-black">
+            <div className="w-10 h-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-sm font-black">
               {(currentUser.displayName || currentUser.fullName).charAt(0)}
             </div>
             <div className="flex-1 overflow-hidden">
@@ -4005,7 +4005,7 @@ export default function App() {
           </div>
           <button 
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-rose-500 hover:bg-rose-50 rounded-2xl transition-colors"
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-rose-500 hover:bg-rose-50 dark:bg-rose-900/20 rounded-2xl transition-colors"
           >
             <LogOut size={20} />
             Sign Out
@@ -4024,7 +4024,7 @@ export default function App() {
         </div>
         <div className="flex items-center gap-3">
           <SyncIndicator isOnline={isOnline} isMobile isSyncing={syncStatus === 'syncing'} />
-          <button onClick={handleLogout} className="p-2 text-rose-500 bg-rose-50 rounded-lg">
+          <button onClick={handleLogout} className="p-2 text-rose-500 bg-rose-50 dark:bg-rose-900/20 rounded-lg">
             <LogOut size={20} />
           </button>
         </div>

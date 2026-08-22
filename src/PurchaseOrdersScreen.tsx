@@ -97,7 +97,7 @@ const PurchaseOrdersScreen = ({ products }: { products: Product[] }) => {
   );
 
   return (
-    <div className="h-full flex flex-col bg-[#F8FAFC]">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
       <div className="bg-white dark:bg-slate-900 px-8 py-6 border-b border-slate-200 dark:border-slate-700 shrink-0 flex justify-between items-center z-10 sticky top-0">
         <div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Purchase Orders</h2>
@@ -146,7 +146,7 @@ const PurchaseOrdersScreen = ({ products }: { products: Product[] }) => {
                   <td className="p-4 text-slate-700 dark:text-slate-300 font-medium">{p.supplier_name}</td>
                   <td className="p-4 font-black text-slate-900 dark:text-slate-100">${Number(p.total_amount).toFixed(2)}</td>
                   <td className="p-4">
-                    <span className={`px-2 py-1 rounded-lg text-xs font-bold uppercase ${p.status === 'received' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                    <span className={`px-2 py-1 rounded-lg text-xs font-bold uppercase ${p.status === 'received' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'}`}>
                       {p.status}
                     </span>
                   </td>
@@ -154,7 +154,7 @@ const PurchaseOrdersScreen = ({ products }: { products: Product[] }) => {
                     {p.status === 'pending' && (
                       <button 
                         onClick={() => handleReceive(p.id)}
-                        className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-3 py-1.5 rounded-lg font-bold text-sm flex items-center justify-center gap-1 ml-auto transition-colors"
+                        className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 px-3 py-1.5 rounded-lg font-bold text-sm flex items-center justify-center gap-1 ml-auto transition-colors"
                       >
                         <PackageOpen size={14} /> Receive
                       </button>
@@ -177,7 +177,7 @@ const PurchaseOrdersScreen = ({ products }: { products: Product[] }) => {
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowAdd(false)} />
           <div className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl p-6 max-h-[90vh] flex flex-col">
             <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 mb-6 flex items-center gap-2 shrink-0">
-              <Truck size={24} className="text-blue-600" />
+              <Truck size={24} className="text-blue-600 dark:text-blue-400" />
               Create Purchase Order
             </h3>
             
@@ -210,7 +210,7 @@ const PurchaseOrdersScreen = ({ products }: { products: Product[] }) => {
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Order Items *</label>
-                    <button type="button" onClick={handleAddItem} className="text-blue-600 text-sm font-bold hover:underline flex items-center gap-1">
+                    <button type="button" onClick={handleAddItem} className="text-blue-600 dark:text-blue-400 text-sm font-bold hover:underline flex items-center gap-1">
                       <Plus size={16} /> Add Item
                     </button>
                   </div>
@@ -242,7 +242,7 @@ const PurchaseOrdersScreen = ({ products }: { products: Product[] }) => {
                             className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 font-medium outline-none text-sm"
                           />
                         </div>
-                        <button type="button" onClick={() => removeItem(idx)} className="text-red-500 hover:bg-red-50 p-2 rounded-lg mt-0.5">
+                        <button type="button" onClick={() => removeItem(idx)} className="text-red-500 hover:bg-red-50 dark:bg-red-900/20 p-2 rounded-lg mt-0.5">
                           X
                         </button>
                       </div>

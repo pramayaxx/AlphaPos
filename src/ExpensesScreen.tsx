@@ -49,7 +49,7 @@ const ExpensesScreen = () => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#F8FAFC]">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
       <div className="bg-white dark:bg-slate-900 px-8 py-6 border-b border-slate-200 dark:border-slate-700 shrink-0 flex justify-between items-center z-10 sticky top-0">
         <div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Expenses</h2>
@@ -83,7 +83,7 @@ const ExpensesScreen = () => {
                   <td className="p-4 text-slate-500 dark:text-slate-400 font-medium">
                     <span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg text-xs font-bold uppercase">{e.category || 'General'}</span>
                   </td>
-                  <td className="p-4 font-black text-red-600 text-right">-${Number(e.amount).toFixed(2)}</td>
+                  <td className="p-4 font-black text-red-600 dark:text-red-400 text-right">-${Number(e.amount).toFixed(2)}</td>
                 </tr>
               ))}
               {expenses.length === 0 && (

@@ -36,7 +36,7 @@ const ShiftsScreen = () => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#F8FAFC]">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
       <div className="bg-white dark:bg-slate-900 px-8 py-6 border-b border-slate-200 dark:border-slate-700 shrink-0 flex justify-between items-center z-10 sticky top-0">
         <div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Shift Management</h2>
@@ -49,7 +49,7 @@ const ShiftsScreen = () => {
           <h3 className="text-xl font-black mb-6">Current Shift</h3>
           {activeShift ? (
             <div className="space-y-4">
-              <div className="p-4 bg-emerald-50 text-emerald-700 rounded-xl font-bold flex items-center gap-2">
+              <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-xl font-bold flex items-center gap-2">
                 <CheckCircle size={20} /> Shift is OPEN
               </div>
               <div>
@@ -112,7 +112,7 @@ const ShiftsScreen = () => {
                   <td className="p-4 font-bold">
                     {isClosed ? (
                       <div>
-                         <span className="text-slate-400">${s.expected_cash.toFixed(2)}</span> / <span className="text-blue-600">${s.ending_cash.toFixed(2)}</span>
+                         <span className="text-slate-400">${s.expected_cash.toFixed(2)}</span> / <span className="text-blue-600 dark:text-blue-400">${s.ending_cash.toFixed(2)}</span>
                       </div>
                     ) : '-'}
                   </td>
@@ -124,7 +124,7 @@ const ShiftsScreen = () => {
                      ) : '-'}
                   </td>
                   <td className="p-4 font-bold text-sm">
-                    {s.status === 'OPEN' ? <span className="text-emerald-600">OPEN</span> : <span className="text-slate-500 dark:text-slate-400">CLOSED</span>}
+                    {s.status === 'OPEN' ? <span className="text-emerald-600 dark:text-emerald-400">OPEN</span> : <span className="text-slate-500 dark:text-slate-400">CLOSED</span>}
                   </td>
                 </tr>
               )})}

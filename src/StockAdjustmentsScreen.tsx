@@ -74,7 +74,7 @@ const StockAdjustmentsScreen = ({ products }: { products: Product[] }) => {
   );
 
   return (
-    <div className="h-full flex flex-col bg-[#F8FAFC]">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
       <div className="bg-white dark:bg-slate-900 px-8 py-6 border-b border-slate-200 dark:border-slate-700 shrink-0 flex justify-between items-center z-10 sticky top-0">
         <div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Stock Adjustments</h2>
@@ -111,7 +111,7 @@ const StockAdjustmentsScreen = ({ products }: { products: Product[] }) => {
                     )}
                   </td>
                   <td className="p-4 text-slate-600 dark:text-slate-400 font-medium">{r.reason}</td>
-                  <td className={`p-4 font-black text-right ${r.change_amount > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  <td className={`p-4 font-black text-right ${r.change_amount > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                     {r.change_amount > 0 ? '+' : ''}{r.change_amount}
                   </td>
                 </tr>

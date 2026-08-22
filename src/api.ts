@@ -5,7 +5,15 @@ export const api = {
     const res = await fetch('/api' + endpoint, {
       headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) }
     });
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) {
+      let errText = await res.text();
+      try {
+        const json = JSON.parse(errText);
+        if (json.message) errText = json.message;
+        else if (json.error) errText = json.error;
+      } catch (e) {}
+      throw new Error(errText);
+    }
     return res.json();
   },
   post: async (endpoint: string, data?: any) => {
@@ -18,7 +26,15 @@ export const api = {
       },
       body: JSON.stringify(data)
     });
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) {
+      let errText = await res.text();
+      try {
+        const json = JSON.parse(errText);
+        if (json.message) errText = json.message;
+        else if (json.error) errText = json.error;
+      } catch (e) {}
+      throw new Error(errText);
+    }
     return res.json();
   },
   put: async (endpoint: string, data?: any) => {
@@ -31,7 +47,15 @@ export const api = {
       },
       body: JSON.stringify(data)
     });
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) {
+      let errText = await res.text();
+      try {
+        const json = JSON.parse(errText);
+        if (json.message) errText = json.message;
+        else if (json.error) errText = json.error;
+      } catch (e) {}
+      throw new Error(errText);
+    }
     return res.json();
   },
   patch: async (endpoint: string, data?: any) => {
@@ -44,7 +68,15 @@ export const api = {
       },
       body: JSON.stringify(data)
     });
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) {
+      let errText = await res.text();
+      try {
+        const json = JSON.parse(errText);
+        if (json.message) errText = json.message;
+        else if (json.error) errText = json.error;
+      } catch (e) {}
+      throw new Error(errText);
+    }
     return res.json();
   },
   delete: async (endpoint: string) => {
@@ -53,7 +85,15 @@ export const api = {
       method: 'DELETE',
       headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) }
     });
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) {
+      let errText = await res.text();
+      try {
+        const json = JSON.parse(errText);
+        if (json.message) errText = json.message;
+        else if (json.error) errText = json.error;
+      } catch (e) {}
+      throw new Error(errText);
+    }
     return res.json();
   }
 };
