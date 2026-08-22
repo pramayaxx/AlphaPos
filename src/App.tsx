@@ -307,7 +307,7 @@ const AuthScreen = () => {
           <p className="text-slate-500 dark:text-slate-400 font-medium">Next-gen retail management</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-10 shadow-2xl">
+        <div className="bg-white dark:bg-slate-900/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-10 shadow-2xl">
           <div className="flex gap-4 mb-10 p-1.5 bg-white dark:bg-slate-900/5 rounded-2xl">
             <button 
               onClick={() => { setIsLogin(true); setError(""); }}
@@ -338,7 +338,7 @@ const AuthScreen = () => {
                   <input 
                     type="text" 
                     placeholder="John Doe"
-                    className="w-full bg-white dark:bg-slate-900/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                    className="w-full bg-white dark:bg-slate-900/5 border border-slate-200 dark:border-white/10 rounded-2xl py-4 pl-12 pr-4 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
                     value={fullName}
                     onChange={e => setFullName(e.target.value)}
                   />
@@ -354,7 +354,7 @@ const AuthScreen = () => {
                   type="email" 
                   ref={isLogin ? emailRef : undefined}
                   placeholder="admin@example.com"
-                  className="w-full bg-white dark:bg-slate-900/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                  className="w-full bg-white dark:bg-slate-900/5 border border-slate-200 dark:border-white/10 rounded-2xl py-4 pl-12 pr-4 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                 />
@@ -368,7 +368,7 @@ const AuthScreen = () => {
                 <input 
                   type={showPassword ? "text" : "password"} 
                   placeholder="password"
-                  className="w-full bg-white dark:bg-slate-900/5 border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                  className="w-full bg-white dark:bg-slate-900/5 border border-slate-200 dark:border-white/10 rounded-2xl py-4 pl-12 pr-12 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                 />
