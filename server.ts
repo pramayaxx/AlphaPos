@@ -1995,7 +1995,10 @@ app.post('/api/shop-settings', authenticateToken, async (req: any, res) => {
       const viteModule = await import(viteName /* @vite-ignore */);
       const createViteServer = viteModule.createServer;
       const vite = await createViteServer({
-        server: { middlewareMode: true },
+        server: { 
+          middlewareMode: true,
+          hmr: false
+        },
         appType: 'spa',
       });
       app.use(vite.middlewares);

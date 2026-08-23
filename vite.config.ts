@@ -12,9 +12,6 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        devOptions: {
-          enabled: true
-        },
         workbox: {
           maximumFileSizeToCacheInBytes: 10485760,
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
@@ -83,7 +80,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      hmr: process.env.DISABLE_HMR !== 'true',
+      hmr: false,
     },
   };
 });
