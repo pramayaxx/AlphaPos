@@ -6,6 +6,7 @@ import { api } from './api';
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { LogoUploader } from './components/LogoUploader';
 import ShopSettingsScreen from './ShopSettingsScreen';
 import SuperAdminScreen from './SuperAdminScreen';
 import StaffScreen from './StaffScreen';
@@ -134,6 +135,8 @@ const ReceiptView = ({ bill, settings }: { bill: Bill, settings: ShopSettings })
             alt="Store Logo" 
             className="h-20 mx-auto mb-4 object-contain grayscale"
             referrerPolicy="no-referrer"
+            loading="eager"
+            decoding="sync"
           />
         )}
         {settings.showStoreName && <h1 className="text-2xl font-bold tracking-widest uppercase">{settings.name}</h1>}
@@ -269,6 +272,17 @@ const AuthScreen = () => {
       if (isLogin) {
         const data = await api.post('/auth/login', { email: cleanEmail, password: cleanPassword });
         localStorage.setItem('token', data.token);
+        if (data.user) {
+          const userData = {
+            id: data.user.id,
+            username: data.user.email?.split('@')[0] || '',
+            email: data.user.email || cleanEmail,
+            fullName: data.user.fullName || 'User',
+            displayName: data.user.fullName || 'User',
+            role: data.user.role || 'admin'
+          };
+          localStorage.setItem('cached_user', JSON.stringify(userData));
+        }
         window.location.reload(); // Refresh to trigger auth check
       } else {
         await api.post('/auth/register', {
@@ -278,11 +292,16 @@ const AuthScreen = () => {
           role: 'admin'
         });
         setIsLogin(true);
-        setError('Registration successful! Please login.');
+        setError('');
+        alert('Registration successful! Please sign in with your credentials.');
       }
     } catch (err: any) {
       console.error('Auth error detail:', err);
-      setError(err.message || 'An error occurred during authentication');
+      let msg = err?.message || 'An error occurred during authentication';
+      if (msg === 'Failed to fetch' || msg.includes('NetworkError') || msg.includes('Network request failed')) {
+        msg = 'Unable to connect to the server. Please verify your connection and try again.';
+      }
+      setError(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -3223,17 +3242,6 @@ const SettingsScreen = ({ onPrinterSetup, currentUser, setCurrentUser, syncStatu
     }
   };
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && settings) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSettings({ ...settings, logoUrl: reader.result as string });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   if (!settings) return null;
 
   const mockBill: Bill = {
@@ -3288,33 +3296,10 @@ const SettingsScreen = ({ onPrinterSetup, currentUser, setCurrentUser, syncStatu
         <section className="space-y-6">
           <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 dark:text-slate-100 border-b border-slate-100 dark:border-slate-800 pb-2">Shop Details</h3>
           
-          <div className="flex items-center gap-6 mb-6">
-            <div className="relative group">
-              <div className="w-24 h-24 bg-slate-100 dark:bg-slate-800 dark:bg-slate-800 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden">
-                {settings.logoUrl ? (
-                  <img src={settings.logoUrl} alt="Logo" className="w-full h-full object-contain" />
-                ) : (
-                  <ImageIcon className="text-slate-300" size={32} />
-                )}
-              </div>
-              <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-2xl">
-                <Upload size={20} />
-                <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
-              </label>
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-bold text-slate-900 dark:text-slate-100 dark:text-slate-100">Shop Logo</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Upload your store logo for the receipt. Square images work best.</p>
-              {settings.logoUrl && (
-                <button 
-                  onClick={() => setSettings({...settings, logoUrl: undefined})}
-                  className="text-xs text-rose-600 dark:text-rose-400 font-bold mt-1 hover:underline"
-                >
-                  Remove Logo
-                </button>
-              )}
-            </div>
-          </div>
+          <LogoUploader 
+            logoUrl={settings.logoUrl} 
+            onLogoChange={(newLogoUrl) => setSettings({ ...settings, logoUrl: newLogoUrl })} 
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="col-span-2">
@@ -3840,26 +3825,45 @@ export default function App() {
       if (token) {
         try {
           const user = await api.get('/auth/me');
-          setCurrentUser({
+          const userData = {
             id: user.id,
             username: user.email?.split('@')[0] || '',
             email: user.email || '',
             fullName: user.fullName || 'User',
             displayName: user.fullName || 'User',
             role: user.role || 'admin'
-          });
+          };
+          setCurrentUser(userData);
+          localStorage.setItem('cached_user', JSON.stringify(userData));
           
           // Load settings only if logged in
           try {
             const s = await api.get('/settings');
-            setSettings(s);
-          } catch (err) {
+            if (s) {
+              setSettings(s);
+              localStorage.setItem('cached_settings', JSON.stringify(s));
+            }
+          } catch (err: any) {
             console.warn('Initial settings fetch error:', err?.message || err);
           }
-        } catch (err) {
+        } catch (err: any) {
           console.warn('Auth check error:', err?.message || err);
-          localStorage.removeItem('token');
-          setCurrentUser(null);
+          const isNetworkOrOffline = (typeof navigator !== 'undefined' && !navigator.onLine) || err?.message === 'Failed to fetch' || (typeof err?.message === 'string' && (err.message.includes('NetworkError') || err.message.includes('Load failed')));
+          const cachedUserStr = localStorage.getItem('cached_user');
+          if (isNetworkOrOffline && cachedUserStr) {
+            try {
+              setCurrentUser(JSON.parse(cachedUserStr));
+              const cachedSettingsStr = localStorage.getItem('cached_settings');
+              if (cachedSettingsStr) setSettings(JSON.parse(cachedSettingsStr));
+            } catch (e) {
+              localStorage.removeItem('token');
+              setCurrentUser(null);
+            }
+          } else if (!isNetworkOrOffline) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('cached_user');
+            setCurrentUser(null);
+          }
         }
       } else {
         setCurrentUser(null);

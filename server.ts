@@ -1,5 +1,5 @@
 import express from 'express';
-
+import cors from 'cors';
 
 import PDFDocument from 'pdfkit';
 import path from 'path';
@@ -10,6 +10,7 @@ import bcrypt from 'bcryptjs';
 
 const app = express();
 const PORT = 3000;
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 let dbInitialized = false;
@@ -612,6 +613,7 @@ async function initDb() {
     try { await sql`ALTER TABLE shop_settings ADD COLUMN scale_integration BOOLEAN DEFAULT false`; } catch (e) {}
     try { await sql`ALTER TABLE shop_settings ADD COLUMN barcode_scanner_mode BOOLEAN DEFAULT false`; } catch (e) {}
     try { await sql`ALTER TABLE shop_settings ADD COLUMN wipe_passcode VARCHAR(50) DEFAULT '12345'`; } catch (e) {}
+    try { await sql`ALTER TABLE shop_settings ADD COLUMN logo_url TEXT`; } catch (e) {}
     try { await sql`ALTER TABLE staff ADD COLUMN permissions JSONB DEFAULT '{}'::jsonb`; } catch (e) {}
 
     console.log('Database tables verified.');
@@ -1630,6 +1632,7 @@ app.get('/api/settings', authenticateToken, async (req: any, res) => {
       name: s.name,
       address: s.address,
       phone: s.phone,
+      logoUrl: s.logo_url || undefined,
       receiptHeader: s.receipt_header,
       receiptFooter: s.receipt_footer,
       receiptFontSize: s.receipt_font_size,
@@ -1658,12 +1661,12 @@ app.post('/api/settings', authenticateToken, async (req: any, res) => {
     const s = req.body;
     await sql`
       INSERT INTO shop_settings (
-        user_id, name, address, phone, receipt_header, receipt_footer, receipt_font_size, receipt_width, receipt_paper_size, show_store_name, show_store_details, show_address, show_phone, show_invoice_number, show_date_time, sync_provider, live_sync, tax_rate, tax_name, enable_loyalty, amount_per_point, value_per_point
+        user_id, name, address, phone, logo_url, receipt_header, receipt_footer, receipt_font_size, receipt_width, receipt_paper_size, show_store_name, show_store_details, show_address, show_phone, show_invoice_number, show_date_time, sync_provider, live_sync, tax_rate, tax_name, enable_loyalty, amount_per_point, value_per_point
       ) VALUES (
-        ${req.user.tenantId}, ${s.name}, ${s.address}, ${s.phone}, ${s.receiptHeader}, ${s.receiptFooter}, ${s.receiptFontSize}, ${s.receiptWidth}, ${s.receiptPaperSize}, ${s.showStoreName}, ${s.showStoreDetails}, ${s.showAddress}, ${s.showPhone}, ${s.showInvoiceNumber}, ${s.showDateTime}, 'cloud', true, ${s.taxRate || 0}, ${s.taxName || 'Tax'}, ${s.enableLoyalty || false}, ${s.amountPerPoint || 0}, ${s.valuePerPoint || 0}
+        ${req.user.tenantId}, ${s.name}, ${s.address}, ${s.phone}, ${s.logoUrl || null}, ${s.receiptHeader}, ${s.receiptFooter}, ${s.receiptFontSize}, ${s.receiptWidth}, ${s.receiptPaperSize}, ${s.showStoreName}, ${s.showStoreDetails}, ${s.showAddress}, ${s.showPhone}, ${s.showInvoiceNumber}, ${s.showDateTime}, 'cloud', true, ${s.taxRate || 0}, ${s.taxName || 'Tax'}, ${s.enableLoyalty || false}, ${s.amountPerPoint || 0}, ${s.valuePerPoint || 0}
       )
       ON CONFLICT (user_id) DO UPDATE SET
-        name = ${s.name}, address = ${s.address}, phone = ${s.phone}, receipt_header = ${s.receiptHeader}, receipt_footer = ${s.receiptFooter}, receipt_font_size = ${s.receiptFontSize}, receipt_width = ${s.receiptWidth}, receipt_paper_size = ${s.receiptPaperSize}, show_store_name = ${s.showStoreName}, show_store_details = ${s.showStoreDetails}, show_address = ${s.showAddress}, show_phone = ${s.showPhone}, show_invoice_number = ${s.showInvoiceNumber}, show_date_time = ${s.showDateTime}, sync_provider = 'cloud', live_sync = true, tax_rate = ${s.taxRate || 0}, tax_name = ${s.taxName || 'Tax'}, enable_loyalty = ${s.enableLoyalty || false}, amount_per_point = ${s.amountPerPoint || 0}, value_per_point = ${s.valuePerPoint || 0}
+        name = ${s.name}, address = ${s.address}, phone = ${s.phone}, logo_url = ${s.logoUrl || null}, receipt_header = ${s.receiptHeader}, receipt_footer = ${s.receiptFooter}, receipt_font_size = ${s.receiptFontSize}, receipt_width = ${s.receiptWidth}, receipt_paper_size = ${s.receiptPaperSize}, show_store_name = ${s.showStoreName}, show_store_details = ${s.showStoreDetails}, show_address = ${s.showAddress}, show_phone = ${s.showPhone}, show_invoice_number = ${s.showInvoiceNumber}, show_date_time = ${s.showDateTime}, sync_provider = 'cloud', live_sync = true, tax_rate = ${s.taxRate || 0}, tax_name = ${s.taxName || 'Tax'}, enable_loyalty = ${s.enableLoyalty || false}, amount_per_point = ${s.amountPerPoint || 0}, value_per_point = ${s.valuePerPoint || 0}
     `;
     res.json({ message: 'Settings saved' });
   } catch (err: any) {
@@ -1967,23 +1970,36 @@ app.get('/api/shop-settings', authenticateToken, async (req: any, res) => {
        await sql`INSERT INTO shop_settings (user_id, name) VALUES (${req.user.tenantId}, 'My Store')`;
        data = await sql`SELECT * FROM shop_settings WHERE user_id = ${req.user.tenantId}`;
     }
-    res.json(data[0]);
+    const item = data[0];
+    res.json({
+      ...item,
+      logoUrl: item.logo_url || undefined,
+      receiptFooter: item.receipt_footer || ''
+    });
   } catch(e: any) { res.status(500).json({message: e.message}); }
 });
 app.post('/api/shop-settings', authenticateToken, async (req: any, res) => {
   try {
-    const { name, phone, address, receipt_footer, enable_loyalty_tiers, scale_integration, barcode_scanner_mode, wipe_passcode } = req.body;
+    const { name, phone, address, logo_url, logoUrl, receipt_footer, receiptFooter, enable_loyalty_tiers, scale_integration, barcode_scanner_mode, wipe_passcode } = req.body;
+    const finalLogo = logo_url !== undefined ? logo_url : (logoUrl !== undefined ? logoUrl : null);
+    const finalFooter = receipt_footer !== undefined ? receipt_footer : (receiptFooter !== undefined ? receiptFooter : '');
     const data = await sql`UPDATE shop_settings SET 
       name = ${name}, 
       phone = ${phone}, 
       address = ${address}, 
-      receipt_footer = ${receipt_footer},
+      logo_url = ${finalLogo},
+      receipt_footer = ${finalFooter},
       enable_loyalty_tiers = ${enable_loyalty_tiers !== undefined ? enable_loyalty_tiers : false},
       scale_integration = ${scale_integration !== undefined ? scale_integration : false},
       barcode_scanner_mode = ${barcode_scanner_mode !== undefined ? barcode_scanner_mode : false},
       wipe_passcode = ${wipe_passcode || '12345'}
       WHERE user_id = ${req.user.tenantId} RETURNING *`;
-    res.json(data[0]);
+    const item = data[0];
+    res.json({
+      ...item,
+      logoUrl: item?.logo_url || undefined,
+      receiptFooter: item?.receipt_footer || ''
+    });
   } catch(e: any) { res.status(500).json({message: e.message}); }
 });
 

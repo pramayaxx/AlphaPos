@@ -1,7 +1,12 @@
 import { localDB } from './localDB';
 
 const isOfflineError = (e: any) => {
-  return !navigator.onLine || e.message === 'Failed to fetch' || e.message === 'NetworkError' || e.message.includes('Network request failed');
+  return (
+    (typeof navigator !== 'undefined' && !navigator.onLine) ||
+    e?.message === 'Failed to fetch' ||
+    e?.message === 'NetworkError' ||
+    (typeof e?.message === 'string' && (e.message.includes('Network request failed') || e.message.includes('Failed to fetch') || e.message.includes('Load failed')))
+  );
 };
 
 const handleOfflineRead = async (endpoint: string, e: any) => {
@@ -99,7 +104,6 @@ export const api = {
   },
   post: async (endpoint: string, data?: any) => {
     try {
-      if (!navigator.onLine) throw new Error('Failed to fetch');
       const token = localStorage.getItem('token');
       const res = await fetch('/api' + endpoint, {
         method: 'POST',
@@ -128,7 +132,6 @@ export const api = {
   },
   put: async (endpoint: string, data?: any) => {
     try {
-      if (!navigator.onLine) throw new Error('Failed to fetch');
       const token = localStorage.getItem('token');
       const res = await fetch('/api' + endpoint, {
         method: 'PUT',
@@ -157,7 +160,6 @@ export const api = {
   },
   patch: async (endpoint: string, data?: any) => {
     try {
-      if (!navigator.onLine) throw new Error('Failed to fetch');
       const token = localStorage.getItem('token');
       const res = await fetch('/api' + endpoint, {
         method: 'PATCH',
@@ -186,7 +188,6 @@ export const api = {
   },
   delete: async (endpoint: string) => {
     try {
-      if (!navigator.onLine) throw new Error('Failed to fetch');
       const token = localStorage.getItem('token');
       const res = await fetch('/api' + endpoint, {
         method: 'DELETE',

@@ -1,6 +1,7 @@
 import { api } from './api';
 import React, { useState, useEffect } from 'react';
 import { Store, Receipt, Users, CreditCard, ShieldCheck, AlertTriangle, KeyRound, Trash2, Globe, Cloud } from 'lucide-react';
+import { LogoUploader } from './components/LogoUploader';
 
 
 const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup }: any) => {
@@ -241,6 +242,10 @@ const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup
            {activeTab === 'receipt' && (
              <div className="space-y-6 max-w-xl">
                <h3 className="text-xl font-black mb-4 dark:text-white">Receipt Configuration</h3>
+               <LogoUploader 
+                 logoUrl={localSettings.logoUrl || localSettings.logo_url}
+                 onLogoChange={(newLogo) => setLocalSettings({ ...localSettings, logoUrl: newLogo, logo_url: newLogo })}
+               />
                <div><label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Footer Message (e.g. Thank you, come again!)</label><textarea value={localSettings.receiptFooter || ''} onChange={e=>setLocalSettings({...localSettings, receiptFooter: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 dark:text-white dark:border-slate-800 border border-transparent p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" /></div>
                <button onClick={saveSettings} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl mt-4 transition-colors">Save Receipt Settings</button>
                <hr className="my-8 border-slate-100 dark:border-slate-800" />
