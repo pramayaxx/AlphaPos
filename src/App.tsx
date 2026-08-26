@@ -1021,6 +1021,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
   // Custom Item State
   const [customItemName, setCustomItemName] = useState('');
   const [customItemPrice, setCustomItemPrice] = useState('');
+  const [saveCustomToMenu, setSaveCustomToMenu] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [heldCarts, setHeldCarts] = useState<{ id: string, items: BillItem[], time: Date }[]>([]);
@@ -1156,21 +1157,43 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
     setSearchResults([]);
   };
 
-  const addCustomItem = () => {
+  const addCustomItem = async () => {
     if (!customItemName || !customItemPrice) return;
     const price = parseFloat(customItemPrice);
     if (isNaN(price)) return;
 
-    const customId = `CUSTOM-${Date.now()}`;
-    setCart(prev => [...prev, {
-      product_id: customId,
-      item_number: customId,
-      name: customItemName,
-      quantity: 1,
-      price
-    }]);
+    if (saveCustomToMenu) {
+      try {
+        const newProd = {
+          name: customItemName,
+          price: price,
+          item_number: `CUSTOM-${Date.now()}`,
+          stock_quantity: 999,
+          low_stock_threshold: 5,
+          category: 'Custom',
+          discount_value: 0,
+          discount_type: 'amount'
+        };
+        const savedProd = await api.post('/products', newProd);
+        addToCart(savedProd as Product);
+        if (onSaleComplete) onSaleComplete(); // trigger a refresh of products in parent component
+      } catch (err: any) {
+        alert(`Error saving to menu: ${err.message || 'Unknown error'}`);
+        return;
+      }
+    } else {
+      const customId = `CUSTOM-${Date.now()}`;
+      setCart(prev => [...prev, {
+        product_id: customId,
+        item_number: customId,
+        name: customItemName,
+        quantity: 1,
+        price
+      }]);
+    }
     setCustomItemName('');
     setCustomItemPrice('');
+    setSaveCustomToMenu(false);
   };
 
   const updateQuantity = (product_id: string, delta: number) => {
@@ -1178,6 +1201,15 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
       if (item.product_id === product_id) {
         const newQty = Math.max(1, item.quantity + delta);
         return { ...item, quantity: newQty };
+      }
+      return item;
+    }));
+  };
+
+  const updateItemPrice = (product_id: string, newPrice: number) => {
+    setCart(prev => prev.map(item => {
+      if (item.product_id === product_id) {
+        return { ...item, price: Math.max(0, newPrice) };
       }
       return item;
     }));
@@ -1565,9 +1597,20 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
               onChange={(e) => setCustomItemPrice(e.target.value)}
             />
           </div>
+          <div className="flex flex-col justify-end pb-2">
+            <label className="flex items-center gap-2 cursor-pointer group">
+               <input 
+                 type="checkbox" 
+                 checked={saveCustomToMenu} 
+                 onChange={e => setSaveCustomToMenu(e.target.checked)} 
+                 className="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500 bg-slate-50 dark:bg-slate-800 transition-colors" 
+               />
+               <span className="text-xs font-bold text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">Save to Menu</span>
+            </label>
+          </div>
           <button 
             onClick={addCustomItem}
-            className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="p-2 h-[38px] bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
           >
             <Plus size={20} />
           </button>
@@ -1863,7 +1906,15 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
                     </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">{formatCurrency(item.price)} each</p>
+                      <div className="flex items-center gap-1 justify-end mb-1">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase">@</span>
+                        <input 
+                          type="number"
+                          className="w-16 px-1 py-0.5 text-xs text-right font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded focus:ring-1 focus:ring-blue-500 outline-none"
+                          value={item.price}
+                          onChange={(e) => updateItemPrice(item.product_id, parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
                       <p className="font-black text-blue-600 dark:text-blue-400">{formatCurrency(item.price * item.quantity)}</p>
                     </div>
                   </div>
