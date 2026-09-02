@@ -307,6 +307,30 @@ const ShopSettingsScreen = ({ currentUser, settings, setSettings, onPrinterSetup
 
                <hr className="my-8 border-slate-100 dark:border-slate-800" />
                
+               <h3 className="text-lg font-black mb-4 dark:text-white">Alpha POS Auto-Sync System</h3>
+               <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 rounded-2xl mb-8">
+                 <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-4">
+                   Copy the API URL below and paste it into your WhatsApp Bot's Shop Settings. This allows your bot to securely pull your latest products, prices, and inventory in real-time.
+                 </p>
+                 <div className="flex items-center gap-3">
+                   <input 
+                     type="text" 
+                     readOnly 
+                     value={`${window.location.origin}/api/external/sync/products?token=${settings?.bot_sync_token || 'generating...'}`}
+                     className="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 p-3 rounded-xl text-sm text-slate-700 dark:text-slate-300 font-mono outline-none"
+                   />
+                   <button 
+                     onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/api/external/sync/products?token=${settings?.bot_sync_token || ''}`);
+                        alert('API URL copied to clipboard!');
+                     }}
+                     className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-colors whitespace-nowrap"
+                   >
+                     Copy URL
+                   </button>
+                 </div>
+               </div>
+
                <h3 className="text-lg font-black mb-4 dark:text-white">E-commerce Integrations</h3>
                <div className="space-y-4">
                  <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">

@@ -614,6 +614,7 @@ async function initDb() {
     try { await sql`ALTER TABLE shop_settings ADD COLUMN barcode_scanner_mode BOOLEAN DEFAULT false`; } catch (e) {}
     try { await sql`ALTER TABLE shop_settings ADD COLUMN wipe_passcode VARCHAR(50) DEFAULT '12345'`; } catch (e) {}
     try { await sql`ALTER TABLE shop_settings ADD COLUMN logo_url TEXT`; } catch (e) {}
+    try { await sql`ALTER TABLE shop_settings ADD COLUMN bot_sync_token UUID DEFAULT gen_random_uuid()`; } catch (e) {}
     try { await sql`ALTER TABLE staff ADD COLUMN permissions JSONB DEFAULT '{}'::jsonb`; } catch (e) {}
 
     console.log('Database tables verified.');
@@ -803,6 +804,24 @@ app.put('/api/auth/me', authenticateToken, async (req: any, res) => {
       RETURNING id, email, full_name as "fullName", role
     `;
     res.json(users[0]);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- External Bot Sync Routes ---
+app.get('/api/external/sync/products', async (req: any, res) => {
+  try {
+    const token = req.query.token;
+    if (!token) return res.status(401).json({ error: 'Missing sync token' });
+
+    // Find the user_id based on the token
+    const shopSettings = await sql`SELECT user_id FROM shop_settings WHERE bot_sync_token = ${token}`;
+    if (shopSettings.length === 0) return res.status(401).json({ error: 'Invalid sync token' });
+
+    const tenantId = shopSettings[0].user_id;
+    const products = await sql`SELECT * FROM products WHERE user_id = ${tenantId}`;
+    res.json(products);
   } catch (err: any) {
     res.status(500).json({ message: err.message });
   }
