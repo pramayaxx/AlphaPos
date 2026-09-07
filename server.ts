@@ -324,6 +324,7 @@ async function initDb() {
     try {
       await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS is_bundle BOOLEAN DEFAULT false`;
       await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS bundle_items JSONB`;
+      await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS track_stock BOOLEAN DEFAULT true`;
     } catch(e) {}
 
     await sql.unsafe(`
@@ -399,6 +400,7 @@ async function initDb() {
 
     try { await sql`ALTER TABLE shop_settings ADD COLUMN tax_rate NUMERIC(5, 2) DEFAULT 0`; } catch (e) {}
     try { await sql`ALTER TABLE shop_settings ADD COLUMN tax_name VARCHAR(50) DEFAULT 'Tax'`; } catch (e) {}
+    try { await sql.unsafe(`ALTER TABLE shop_settings ADD COLUMN IF NOT EXISTS manager_pin VARCHAR(50) DEFAULT '1234'`); } catch (e) {}
 
     await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS customers (
@@ -653,11 +655,34 @@ const authenticateToken = (req: any, res: any, next: any) => {
 // --- Staff Routes ---
 app.get('/api/staff', authenticateToken, async (req: any, res) => {
   try {
-    if (req.user.id !== req.user.tenantId) {
-      return res.status(403).json({ message: 'Only admins can view staff' });
+    const tenantId = req.user.tenantId || req.user.id;
+    // 1. Fetch user-based staff (from users table)
+    let userStaff: any[] = [];
+    try {
+      userStaff = await sql`
+        SELECT id, email, full_name, full_name as "fullName", role, created_at 
+        FROM users 
+        WHERE owner_id = ${tenantId}
+      `;
+    } catch (e) {
+      userStaff = [];
     }
-    const staff = await sql`SELECT id, email, full_name as "fullName", role FROM users WHERE owner_id = ${req.user.id}`;
-    res.json(staff);
+
+    // 2. Fetch PIN-based staff (from staff table)
+    let pinStaff: any[] = [];
+    try {
+      pinStaff = await sql`
+        SELECT id, full_name, full_name as "fullName", phone, role, pin, created_at 
+        FROM staff 
+        WHERE user_id = ${tenantId}
+      `;
+    } catch (e) {
+      pinStaff = [];
+    }
+
+    // Merge both lists
+    const combined = [...userStaff, ...pinStaff];
+    res.json(combined);
   } catch (err: any) {
     res.status(500).json({ message: err.message });
   }
@@ -665,21 +690,30 @@ app.get('/api/staff', authenticateToken, async (req: any, res) => {
 
 app.post('/api/staff', authenticateToken, async (req: any, res) => {
   try {
-    if (req.user.id !== req.user.tenantId) {
-      return res.status(403).json({ message: 'Only admins can add staff' });
-    }
-    const { email, password, fullName, role } = req.body;
-    const existing = await sql`SELECT * FROM users WHERE email = ${email}`;
-    if (existing.length > 0) return res.status(400).json({ message: 'Email already exists' });
+    const tenantId = req.user.tenantId || req.user.id;
+    const { email, password, fullName, full_name, role, phone, pin } = req.body;
 
-    let is_superadmin = false; const adminCheck = await sql`SELECT COUNT(*) FROM users WHERE is_superadmin = true`; if (parseInt(adminCheck[0].count) === 0) { is_superadmin = true; }
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await sql`
-      INSERT INTO users (email, password, full_name, role, owner_id) 
-      VALUES (${email}, ${hashedPassword}, ${fullName}, ${role || 'cashier'}, ${req.user.id})
-      RETURNING id, email, full_name, role
+    // If an email and password are provided, create a separate user login
+    if (email && password) {
+      const existing = await sql`SELECT * FROM users WHERE email = ${email}`;
+      if (existing.length > 0) return res.status(400).json({ message: 'Email already exists' });
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const user = await sql`
+        INSERT INTO users (email, password, full_name, role, owner_id) 
+        VALUES (${email}, ${hashedPassword}, ${fullName || full_name || 'Staff'}, ${role || 'cashier'}, ${tenantId})
+        RETURNING id, email, full_name, full_name as "fullName", role
+      `;
+      return res.json(user[0]);
+    }
+
+    // Otherwise, create in staff table with PIN (for quick cashier/attendance)
+    const staffMember = await sql`
+      INSERT INTO staff (user_id, full_name, phone, role, pin) 
+      VALUES (${tenantId}, ${full_name || fullName || 'Staff'}, ${phone || ''}, ${role || 'CASHIER'}, ${pin || '1234'}) 
+      RETURNING *, full_name as "fullName"
     `;
-    res.json(user[0]);
+    res.json(staffMember[0]);
   } catch (err: any) {
     res.status(500).json({ message: err.message });
   }
@@ -687,11 +721,65 @@ app.post('/api/staff', authenticateToken, async (req: any, res) => {
 
 app.delete('/api/staff/:id', authenticateToken, async (req: any, res) => {
   try {
-    if (req.user.id !== req.user.tenantId) {
-      return res.status(403).json({ message: 'Only admins can delete staff' });
+    const tenantId = req.user.tenantId || req.user.id;
+    await sql`DELETE FROM users WHERE id = ${req.params.id} AND owner_id = ${tenantId}`;
+    await sql`DELETE FROM staff WHERE id = ${req.params.id} AND user_id = ${tenantId}`;
+    res.json({ message: 'Staff deleted', success: true });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.put('/api/staff/:id', authenticateToken, async (req: any, res) => {
+  try {
+    const tenantId = req.user.tenantId || req.user.id;
+    const { password, pin, role, full_name, fullName, phone } = req.body;
+    const name = full_name || fullName;
+
+    // 1. Check if user exists in users table (login-based staff)
+    const userMatches = await sql`SELECT * FROM users WHERE id = ${req.params.id} AND owner_id = ${tenantId}`;
+    if (userMatches.length > 0) {
+      if (password) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        if (name && role) {
+          await sql`UPDATE users SET password = ${hashedPassword}, full_name = ${name}, role = ${role} WHERE id = ${req.params.id} AND owner_id = ${tenantId}`;
+        } else if (name) {
+          await sql`UPDATE users SET password = ${hashedPassword}, full_name = ${name} WHERE id = ${req.params.id} AND owner_id = ${tenantId}`;
+        } else if (role) {
+          await sql`UPDATE users SET password = ${hashedPassword}, role = ${role} WHERE id = ${req.params.id} AND owner_id = ${tenantId}`;
+        } else {
+          await sql`UPDATE users SET password = ${hashedPassword} WHERE id = ${req.params.id} AND owner_id = ${tenantId}`;
+        }
+      } else {
+        if (name && role) {
+          await sql`UPDATE users SET full_name = ${name}, role = ${role} WHERE id = ${req.params.id} AND owner_id = ${tenantId}`;
+        } else if (name) {
+          await sql`UPDATE users SET full_name = ${name} WHERE id = ${req.params.id} AND owner_id = ${tenantId}`;
+        } else if (role) {
+          await sql`UPDATE users SET role = ${role} WHERE id = ${req.params.id} AND owner_id = ${tenantId}`;
+        }
+      }
+      return res.json({ success: true, message: 'Staff credentials updated successfully' });
     }
-    await sql`DELETE FROM users WHERE id = ${req.params.id} AND owner_id = ${req.user.id}`;
-    res.json({ message: 'Staff deleted' });
+
+    // 2. Check if user exists in staff table (PIN-based staff)
+    const staffMatches = await sql`SELECT * FROM staff WHERE id = ${req.params.id} AND user_id = ${tenantId}`;
+    if (staffMatches.length > 0) {
+      const current = staffMatches[0];
+      const updatedPin = pin || current.pin;
+      const updatedName = name || current.full_name;
+      const updatedRole = role || current.role;
+      const updatedPhone = phone !== undefined ? phone : current.phone;
+
+      await sql`
+        UPDATE staff 
+        SET pin = ${updatedPin}, full_name = ${updatedName}, role = ${updatedRole}, phone = ${updatedPhone}
+        WHERE id = ${req.params.id} AND user_id = ${tenantId}
+      `;
+      return res.json({ success: true, message: 'Staff details & PIN updated successfully' });
+    }
+
+    res.status(404).json({ message: 'Staff member not found' });
   } catch (err: any) {
     res.status(500).json({ message: err.message });
   }
@@ -809,6 +897,59 @@ app.put('/api/auth/me', authenticateToken, async (req: any, res) => {
   }
 });
 
+app.post('/api/auth/change-password', authenticateToken, async (req: any, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!newPassword || newPassword.length < 4) {
+      return res.status(400).json({ message: 'New password must be at least 4 characters long' });
+    }
+
+    const users = await sql`SELECT * FROM users WHERE id = ${req.user.id}`;
+    if (users.length === 0) return res.status(404).json({ message: 'User not found' });
+
+    const user = users[0];
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await sql`UPDATE users SET password = ${hashedPassword} WHERE id = ${req.user.id}`;
+    res.json({ success: true, message: 'Password changed successfully' });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- Public Reset / Change Password (for Login Screen recovery) ---
+app.post('/api/auth/reset-password', async (req: any, res) => {
+  try {
+    const { email, newPassword, currentPassword } = req.body;
+    if (!email || !newPassword || newPassword.length < 4) {
+      return res.status(400).json({ message: 'Valid email and new password (min 4 characters) are required' });
+    }
+    const cleanEmail = email.trim().toLowerCase();
+    const users = await sql`SELECT * FROM users WHERE email = ${cleanEmail}`;
+    if (users.length === 0) {
+      return res.status(404).json({ message: 'No registered account found with this email' });
+    }
+
+    const user = users[0];
+    if (currentPassword) {
+      const match = await bcrypt.compare(currentPassword, user.password);
+      if (!match) {
+        return res.status(400).json({ message: 'Current password does not match' });
+      }
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await sql`UPDATE users SET password = ${hashedPassword} WHERE id = ${user.id}`;
+    res.json({ success: true, message: 'Password updated successfully! You can now log in.' });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // --- External Bot Sync Routes ---
 app.get('/api/external/sync/products', async (req: any, res) => {
   try {
@@ -853,7 +994,7 @@ app.post('/api/products', authenticateToken, async (req: any, res) => {
     const products = await sql`
       INSERT INTO products (
         user_id, item_number, name, category, price, stock_quantity, 
-        low_stock_threshold, image_url, discount_value, discount_type
+        low_stock_threshold, image_url, discount_value, discount_type, track_stock
       )
       VALUES (
         ${req.user.tenantId}, 
@@ -865,7 +1006,8 @@ app.post('/api/products', authenticateToken, async (req: any, res) => {
         ${p.low_stock_threshold !== undefined && p.low_stock_threshold !== null && !isNaN(Number(p.low_stock_threshold)) ? Number(p.low_stock_threshold) : 0}, 
         ${p.image_url || null}, 
         ${p.discount_value || 0}, 
-        ${p.discount_type || 'amount'}
+        ${p.discount_type || 'amount'},
+        ${p.track_stock !== undefined ? Boolean(p.track_stock) : true}
       )
       RETURNING *
     `;
@@ -888,7 +1030,8 @@ app.put('/api/products/:id', authenticateToken, async (req: any, res) => {
         low_stock_threshold = ${p.low_stock_threshold !== undefined && p.low_stock_threshold !== null && !isNaN(Number(p.low_stock_threshold)) ? Number(p.low_stock_threshold) : 0},
         image_url = ${p.image_url || null},
         discount_value = ${p.discount_value || 0},
-        discount_type = ${p.discount_type || 'amount'}
+        discount_type = ${p.discount_type || 'amount'},
+        track_stock = ${p.track_stock !== undefined ? Boolean(p.track_stock) : true}
       WHERE id = ${req.params.id} AND user_id = ${req.user.tenantId}
       RETURNING *
     `;
@@ -987,23 +1130,26 @@ app.post('/api/bills', authenticateToken, async (req: any, res) => {
     // 1. Process cart items (reduce stock)
     for (const item of b.items) {
       if (item.product_id && !item.product_id.startsWith('CUSTOM-')) {
-        const prodRows = await sql`SELECT is_bundle, bundle_items FROM products WHERE id = ${item.product_id}`;
+        const prodRows = await sql`SELECT is_bundle, bundle_items, track_stock FROM products WHERE id = ${item.product_id}`;
         if (prodRows.length > 0) {
           const prod = prodRows[0];
+          if (prod.track_stock === false) {
+            continue;
+          }
           if (prod.is_bundle && prod.bundle_items) {
              const bundleItems = typeof prod.bundle_items === 'string' ? JSON.parse(prod.bundle_items) : prod.bundle_items;
              for (const bItem of bundleItems) {
                 await sql`
                   UPDATE products
                   SET stock_quantity = GREATEST(0, stock_quantity - (${item.quantity} * ${bItem.quantity}))
-                  WHERE id = ${bItem.product_id} AND user_id = ${req.user.tenantId}
+                  WHERE id = ${bItem.product_id} AND user_id = ${req.user.tenantId} AND (track_stock IS NOT FALSE)
                 `;
              }
           } else {
             await sql`
               UPDATE products 
               SET stock_quantity = GREATEST(0, stock_quantity - ${item.quantity})
-              WHERE id = ${item.product_id} AND user_id = ${req.user.tenantId}
+              WHERE id = ${item.product_id} AND user_id = ${req.user.tenantId} AND (track_stock IS NOT FALSE)
             `;
           }
         }
@@ -1721,18 +1867,107 @@ app.get('/api/invoices', authenticateToken, async (req: any, res) => {
 app.post('/api/verify-pin', authenticateToken, async (req: any, res) => {
   try {
     const { pin } = req.body;
-    // For simplicity, check if the pin matches the current user or any superadmin/manager
-    const users = await sql`SELECT * FROM users WHERE id = ${req.user.id}`;
-    const user = users[0];
-    
-    // Check against staff table or user table?
-    const staff = await sql`SELECT * FROM staff WHERE user_id = ${req.user.tenantId} AND pin = ${pin}`;
-    
-    if (staff.length > 0) {
-      res.json({ success: true, role: staff[0].role, user: staff[0] });
-    } else {
-      res.status(401).json({ success: false, message: 'Invalid PIN' });
+    const tenantId = req.user.tenantId || req.user.id;
+
+    // Check shop settings manager_pin
+    const settings = await sql`SELECT manager_pin FROM shop_settings WHERE user_id = ${tenantId}`;
+    const configuredManagerPin = (settings.length > 0 && settings[0].manager_pin) ? settings[0].manager_pin : '1234';
+
+    if (pin && String(pin).trim() === String(configuredManagerPin).trim()) {
+      return res.json({ 
+        success: true, 
+        role: 'manager', 
+        manager: { full_name: 'Store Manager', role: 'manager' } 
+      });
     }
+
+    // Also check against staff table with role manager or admin or cashier
+    const staff = await sql`SELECT * FROM staff WHERE user_id = ${tenantId} AND pin = ${pin}`;
+    if (staff.length > 0) {
+      return res.json({ 
+        success: true, 
+        role: staff[0].role, 
+        manager: staff[0],
+        user: staff[0] 
+      });
+    }
+
+    res.status(401).json({ success: false, message: 'Invalid Manager PIN' });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- Change Manager PIN Route ---
+app.post('/api/settings/change-manager-pin', authenticateToken, async (req: any, res) => {
+  try {
+    const tenantId = req.user.tenantId || req.user.id;
+    const { currentPin, newPin, accountPassword } = req.body;
+
+    if (!newPin || String(newPin).trim().length < 3) {
+      return res.status(400).json({ message: 'New Manager PIN must be at least 3 digits/characters' });
+    }
+
+    const settings = await sql`SELECT manager_pin FROM shop_settings WHERE user_id = ${tenantId}`;
+    const storedPin = (settings.length > 0 && settings[0].manager_pin) ? settings[0].manager_pin : '1234';
+
+    let isAuthorized = false;
+
+    // Verify either using current manager PIN or account password
+    if (currentPin && String(currentPin).trim() === String(storedPin).trim()) {
+      isAuthorized = true;
+    } else if (accountPassword) {
+      const users = await sql`SELECT password FROM users WHERE id = ${req.user.id}`;
+      if (users.length > 0 && (await bcrypt.compare(accountPassword, users[0].password))) {
+        isAuthorized = true;
+      }
+    } else if (!settings.length || !settings[0].manager_pin) {
+      if (currentPin === '1234') isAuthorized = true;
+    }
+
+    if (!isAuthorized) {
+      return res.status(400).json({ message: 'Current Manager PIN or Account Password is incorrect' });
+    }
+
+    await sql`UPDATE shop_settings SET manager_pin = ${String(newPin).trim()} WHERE user_id = ${tenantId}`;
+    res.json({ success: true, message: 'Manager PIN updated successfully!' });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- Change Wipe Passcode Route ---
+app.post('/api/settings/change-wipe-passcode', authenticateToken, async (req: any, res) => {
+  try {
+    const tenantId = req.user.tenantId || req.user.id;
+    const { currentPasscode, newPasscode, accountPassword } = req.body;
+
+    if (!newPasscode || String(newPasscode).trim().length < 4) {
+      return res.status(400).json({ message: 'New wipe passcode must be at least 4 characters long' });
+    }
+
+    const settings = await sql`SELECT wipe_passcode FROM shop_settings WHERE user_id = ${tenantId}`;
+    const storedPasscode = (settings.length > 0 && settings[0].wipe_passcode) ? settings[0].wipe_passcode : '12345';
+
+    let isAuthorized = false;
+
+    if (currentPasscode && String(currentPasscode).trim() === String(storedPasscode).trim()) {
+      isAuthorized = true;
+    } else if (accountPassword) {
+      const users = await sql`SELECT password FROM users WHERE id = ${req.user.id}`;
+      if (users.length > 0 && (await bcrypt.compare(accountPassword, users[0].password))) {
+        isAuthorized = true;
+      }
+    } else if (currentPasscode === '12345') {
+      isAuthorized = true;
+    }
+
+    if (!isAuthorized) {
+      return res.status(400).json({ message: 'Current Wipe Passcode or Account Password is incorrect' });
+    }
+
+    await sql`UPDATE shop_settings SET wipe_passcode = ${String(newPasscode).trim()} WHERE user_id = ${tenantId}`;
+    res.json({ success: true, message: 'Wipe Passcode updated successfully!' });
   } catch (err: any) {
     res.status(500).json({ message: err.message });
   }
@@ -1965,33 +2200,24 @@ app.post('/api/superadmin/tenants/:id/package', authenticateToken, requireSuperA
   } catch(e: any) { res.status(500).json({message: e.message}); }
 });
 
+app.post('/api/superadmin/tenants/:id/reset-password', authenticateToken, requireSuperAdmin, async (req: any, res) => {
+  try {
+    const { newPassword } = req.body;
+    if (!newPassword || newPassword.length < 4) {
+      return res.status(400).json({ message: 'Password must be at least 4 characters long' });
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await sql`UPDATE users SET password = ${hashedPassword} WHERE id = ${req.params.id}`;
+    res.json({ success: true, message: 'Tenant password updated successfully' });
+  } catch(e: any) { res.status(500).json({ message: e.message }); }
+});
+
 app.get('/api/superadmin/stats', authenticateToken, requireSuperAdmin, async (req: any, res) => {
   try {
     const total = await sql`SELECT COUNT(*) FROM users WHERE is_superadmin = false`;
     const active = await sql`SELECT COUNT(*) FROM users WHERE is_superadmin = false AND status = 'ACTIVE'`;
     // Dummy revenue metric
     res.json({ total: total[0].count, active: active[0].count, revenue: parseInt(active[0].count) * 50 });
-  } catch(e: any) { res.status(500).json({message: e.message}); }
-});
-
-// Staff
-app.get('/api/staff', authenticateToken, async (req: any, res) => {
-  try {
-    const data = await sql`SELECT * FROM staff WHERE user_id = ${req.user.tenantId}`;
-    res.json(data);
-  } catch(e: any) { res.status(500).json({message: e.message}); }
-});
-app.post('/api/staff', authenticateToken, async (req: any, res) => {
-  try {
-    const { full_name, phone, role, pin } = req.body;
-    const data = await sql`INSERT INTO staff (user_id, full_name, phone, role, pin) VALUES (${req.user.tenantId}, ${full_name}, ${phone}, ${role}, ${pin}) RETURNING *`;
-    res.json(data[0]);
-  } catch(e: any) { res.status(500).json({message: e.message}); }
-});
-app.delete('/api/staff/:id', authenticateToken, async (req: any, res) => {
-  try {
-    await sql`DELETE FROM staff WHERE id = ${req.params.id} AND user_id = ${req.user.tenantId}`;
-    res.json({success:true});
   } catch(e: any) { res.status(500).json({message: e.message}); }
 });
 
@@ -2006,6 +2232,7 @@ app.get('/api/shop-settings', authenticateToken, async (req: any, res) => {
     const item = data[0];
     res.json({
       ...item,
+      manager_pin: item.manager_pin || '1234',
       logoUrl: item.logo_url || undefined,
       receiptFooter: item.receipt_footer || ''
     });
@@ -2013,7 +2240,7 @@ app.get('/api/shop-settings', authenticateToken, async (req: any, res) => {
 });
 app.post('/api/shop-settings', authenticateToken, async (req: any, res) => {
   try {
-    const { name, phone, address, logo_url, logoUrl, receipt_footer, receiptFooter, enable_loyalty_tiers, scale_integration, barcode_scanner_mode, wipe_passcode } = req.body;
+    const { name, phone, address, logo_url, logoUrl, receipt_footer, receiptFooter, enable_loyalty_tiers, scale_integration, barcode_scanner_mode, wipe_passcode, manager_pin } = req.body;
     const finalLogo = logo_url !== undefined ? logo_url : (logoUrl !== undefined ? logoUrl : null);
     const finalFooter = receipt_footer !== undefined ? receipt_footer : (receiptFooter !== undefined ? receiptFooter : '');
     const data = await sql`UPDATE shop_settings SET 
@@ -2025,11 +2252,13 @@ app.post('/api/shop-settings', authenticateToken, async (req: any, res) => {
       enable_loyalty_tiers = ${enable_loyalty_tiers !== undefined ? enable_loyalty_tiers : false},
       scale_integration = ${scale_integration !== undefined ? scale_integration : false},
       barcode_scanner_mode = ${barcode_scanner_mode !== undefined ? barcode_scanner_mode : false},
-      wipe_passcode = ${wipe_passcode || '12345'}
+      wipe_passcode = ${wipe_passcode || '12345'},
+      manager_pin = ${manager_pin || '1234'}
       WHERE user_id = ${req.user.tenantId} RETURNING *`;
     const item = data[0];
     res.json({
       ...item,
+      manager_pin: item?.manager_pin || '1234',
       logoUrl: item?.logo_url || undefined,
       receiptFooter: item?.receipt_footer || ''
     });

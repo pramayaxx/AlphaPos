@@ -15,6 +15,7 @@ export type Product = {
   item_number: string | null;
   stock_quantity: number;
   low_stock_threshold: number;
+  track_stock?: boolean;
   created_at: string;
   updated_at: string;
 };

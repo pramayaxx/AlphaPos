@@ -53,6 +53,7 @@ import { Award, Mail, CreditCard, Calculator, Tag, Store, ScanBarcode, Utensils,
   AlertCircle,
   X,
   CheckCircle2,
+  Check,
   ArrowLeft,
   Bluetooth,
   History,
@@ -232,11 +233,14 @@ const ReceiptView = ({ bill, settings }: { bill: Bill, settings: ShopSettings })
 };
 
 const AuthScreen = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [authMode, setAuthMode] = useState<'login' | 'register' | 'reset'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -246,18 +250,19 @@ const AuthScreen = () => {
     if (emailRef.current) {
       emailRef.current.focus();
     }
-  }, [isLogin]);
+  }, [authMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccessMsg('');
     
     const cleanEmail = email.trim().toLowerCase();
     const cleanPassword = password.trim();
     const cleanFullName = fullName.trim();
 
-    if (!cleanEmail || !cleanPassword || (!isLogin && !cleanFullName)) {
-      setError('All fields are required');
+    if (!cleanEmail) {
+      setError('Email address is required');
       return;
     }
 
@@ -266,10 +271,39 @@ const AuthScreen = () => {
       return;
     }
 
+    if (authMode === 'login') {
+      if (!cleanPassword) {
+        setError('Password is required');
+        return;
+      }
+    } else if (authMode === 'register') {
+      if (!cleanPassword || !cleanFullName) {
+        setError('All fields are required');
+        return;
+      }
+      if (cleanPassword.length < 4) {
+        setError('Password must be at least 4 characters');
+        return;
+      }
+    } else if (authMode === 'reset') {
+      if (!cleanPassword) {
+        setError('New password is required');
+        return;
+      }
+      if (cleanPassword.length < 4) {
+        setError('New password must be at least 4 characters');
+        return;
+      }
+      if (cleanPassword !== confirmPassword.trim()) {
+        setError('Passwords do not match');
+        return;
+      }
+    }
+
     setIsSubmitting(true);
 
     try {
-      if (isLogin) {
+      if (authMode === 'login') {
         const data = await api.post('/auth/login', { email: cleanEmail, password: cleanPassword });
         localStorage.setItem('token', data.token);
         if (data.user) {
@@ -284,16 +318,27 @@ const AuthScreen = () => {
           localStorage.setItem('cached_user', JSON.stringify(userData));
         }
         window.location.reload(); // Refresh to trigger auth check
-      } else {
+      } else if (authMode === 'register') {
         await api.post('/auth/register', {
           email: cleanEmail,
           password: cleanPassword,
           fullName: cleanFullName,
           role: 'admin'
         });
-        setIsLogin(true);
+        setAuthMode('login');
         setError('');
         alert('Registration successful! Please sign in with your credentials.');
+      } else if (authMode === 'reset') {
+        await api.post('/auth/reset-password', {
+          email: cleanEmail,
+          currentPassword: currentPassword.trim() || undefined,
+          newPassword: cleanPassword
+        });
+        setSuccessMsg('Your password was updated successfully! You can now log in.');
+        setPassword('');
+        setCurrentPassword('');
+        setConfirmPassword('');
+        setAuthMode('login');
       }
     } catch (err: any) {
       console.error('Auth error detail:', err);
@@ -327,30 +372,46 @@ const AuthScreen = () => {
           <p className="text-slate-500 dark:text-slate-400 font-medium">Next-gen retail management</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-10 shadow-2xl">
-          <div className="flex gap-4 mb-10 p-1.5 bg-white dark:bg-slate-900/5 rounded-2xl">
+        <div className="bg-white dark:bg-slate-900/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 sm:p-10 shadow-2xl">
+          <div className="flex gap-2 mb-8 p-1.5 bg-slate-100 dark:bg-slate-800/60 rounded-2xl">
             <button 
-              onClick={() => { setIsLogin(true); setError(""); }}
+              onClick={() => { setAuthMode('login'); setError(''); setSuccessMsg(''); }}
               className={cn(
-                "flex-1 py-3 rounded-xl font-bold transition-all",
-                isLogin ? "bg-white dark:bg-slate-900 text-black dark:text-white shadow-xl" : "text-slate-400 hover:text-slate-800 dark:hover:text-white"
+                "flex-1 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all",
+                authMode === 'login' ? "bg-white dark:bg-slate-900 text-black dark:text-white shadow-md" : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
               )}
             >
-              Login
+              Sign In
             </button>
             <button 
-              onClick={() => { setIsLogin(false); setError(""); }}
+              onClick={() => { setAuthMode('register'); setError(''); setSuccessMsg(''); }}
               className={cn(
-                "flex-1 py-3 rounded-xl font-bold transition-all",
-                !isLogin ? "bg-white dark:bg-slate-900 text-black dark:text-white shadow-xl" : "text-slate-400 hover:text-slate-800 dark:hover:text-white"
+                "flex-1 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all",
+                authMode === 'register' ? "bg-white dark:bg-slate-900 text-black dark:text-white shadow-md" : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
               )}
             >
               Register
             </button>
+            <button 
+              onClick={() => { setAuthMode('reset'); setError(''); setSuccessMsg(''); }}
+              className={cn(
+                "flex-1 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all",
+                authMode === 'reset' ? "bg-white dark:bg-slate-900 text-black dark:text-white shadow-md" : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
+              )}
+            >
+              Password
+            </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {!isLogin && (
+          {successMsg && (
+            <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-800/40 mb-6">
+              <Check size={18} className="shrink-0" />
+              <p className="text-sm font-bold">{successMsg}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {authMode === 'register' && (
               <div className="space-y-2">
                 <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-2">Full Name</label>
                 <div className="relative">
@@ -367,12 +428,14 @@ const AuthScreen = () => {
             )}
 
             <div className="space-y-2">
-              <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-2">Email Address</label>
+              <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-2">
+                {authMode === 'reset' ? 'Your Registered Email' : 'Email Address'}
+              </label>
               <div className="relative">
                 <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" size={18} />
                 <input 
                   type="email" 
-                  ref={isLogin ? emailRef : undefined}
+                  ref={authMode === 'login' ? emailRef : undefined}
                   placeholder="admin@example.com"
                   className="w-full bg-white dark:bg-slate-900/5 border border-slate-200 dark:border-white/10 rounded-2xl py-4 pl-12 pr-4 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
                   value={email}
@@ -381,13 +444,42 @@ const AuthScreen = () => {
               </div>
             </div>
 
+            {authMode === 'reset' && (
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-2">Current Password (Optional)</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" size={18} />
+                  <input 
+                    type="password" 
+                    placeholder="Leave empty if forgotten"
+                    className="w-full bg-white dark:bg-slate-900/5 border border-slate-200 dark:border-white/10 rounded-2xl py-4 pl-12 pr-4 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                    value={currentPassword}
+                    onChange={e => setCurrentPassword(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
-              <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-2">Password</label>
+              <div className="flex items-center justify-between ml-2">
+                <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                  {authMode === 'reset' ? 'New Password' : 'Password'}
+                </label>
+                {authMode === 'login' && (
+                  <button 
+                    type="button" 
+                    onClick={() => { setAuthMode('reset'); setError(''); }}
+                    className="text-xs text-blue-500 hover:underline font-semibold"
+                  >
+                    Forgot / Change?
+                  </button>
+                )}
+              </div>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" size={18} />
                 <input 
                   type={showPassword ? "text" : "password"} 
-                  placeholder="password"
+                  placeholder={authMode === 'reset' ? "Enter new password" : "password"}
                   className="w-full bg-white dark:bg-slate-900/5 border border-slate-200 dark:border-white/10 rounded-2xl py-4 pl-12 pr-12 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
@@ -401,6 +493,22 @@ const AuthScreen = () => {
                 </button>
               </div>
             </div>
+
+            {authMode === 'reset' && (
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-2">Confirm New Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" size={18} />
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    placeholder="Repeat new password"
+                    className="w-full bg-white dark:bg-slate-900/5 border border-slate-200 dark:border-white/10 rounded-2xl py-4 pl-12 pr-4 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
 
             {error && (
               <div className="flex items-center gap-2 text-rose-500 bg-rose-500/10 p-4 rounded-2xl border border-rose-500/20 animate-shake">
@@ -417,15 +525,28 @@ const AuthScreen = () => {
               {isSubmitting ? (
                 <>
                   <RefreshCw size={20} className="animate-spin" />
-                  {isLogin ? 'Signing In...' : 'Creating Account...'}
+                  {authMode === 'login' ? 'Signing In...' : authMode === 'register' ? 'Creating Account...' : 'Updating Password...'}
                 </>
               ) : (
-                isLogin ? 'Sign In' : 'Create Account'
+                authMode === 'login' ? 'Sign In' : authMode === 'register' ? 'Create Account' : 'Change Password'
               )}
             </button>
-            {isLogin && (
+
+            {authMode === 'reset' && (
+              <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-2">
+                Remember your password? <button type="button" onClick={() => { setAuthMode('login'); setError(''); }} className="text-blue-500 font-bold hover:underline">Back to Sign In</button>
+              </p>
+            )}
+
+            {authMode === 'login' && (
               <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-4">
-                Don't have an account? <button type="button" onClick={() => { setIsLogin(false); setError(""); }} className="text-blue-500 font-bold hover:underline">Register here</button>
+                Don't have an account? <button type="button" onClick={() => { setAuthMode('register'); setError(""); }} className="text-blue-500 font-bold hover:underline">Register here</button>
+              </p>
+            )}
+
+            {authMode === 'register' && (
+              <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-4">
+                Already registered? <button type="button" onClick={() => { setAuthMode('login'); setError(""); }} className="text-blue-500 font-bold hover:underline">Sign In here</button>
               </p>
             )}
           </form>
@@ -579,7 +700,7 @@ const Dashboard = ({ bills, products, onNewSale, onPendingPrints }: { bills: Bil
       .filter(b => b.dateTime >= monthStart)
       .reduce((sum, b) => sum + b.grandTotal, 0);
     
-    const lowStockItems = products.filter(p => p.low_stock_threshold > 0 && p.stock_quantity <= p.low_stock_threshold);
+    const lowStockItems = products.filter(p => p.track_stock !== false && p.low_stock_threshold > 0 && p.stock_quantity <= p.low_stock_threshold);
     const pendingPrintsCount = bills.filter(b => !b.isPrinted).length;
 
     setStats({
@@ -2003,6 +2124,7 @@ const Products = ({ products }: { products: Product[] }) => {
     discount_value: 0,
     stock_quantity: 0,
     low_stock_threshold: 0,
+    track_stock: true,
     discount_type: 'amount'
   });
 
@@ -2046,13 +2168,19 @@ const Products = ({ products }: { products: Product[] }) => {
     }
     
     try {
+      const isTracking = newProduct.track_stock !== false;
       const finalProduct = {
         item_number: newProduct.item_number || `BC-${Date.now()}`,
         name: newProduct.name,
         category: newProduct.category || 'General',
         price: Number(newProduct.price) || 0,
-        stock_quantity: newProduct.stock_quantity !== undefined && newProduct.stock_quantity !== null && !isNaN(Number(newProduct.stock_quantity)) ? Number(newProduct.stock_quantity) : 0,
-        low_stock_threshold: newProduct.low_stock_threshold !== undefined && newProduct.low_stock_threshold !== null && !isNaN(Number(newProduct.low_stock_threshold)) ? Number(newProduct.low_stock_threshold) : 0,
+        track_stock: isTracking,
+        stock_quantity: isTracking
+          ? (newProduct.stock_quantity !== undefined && newProduct.stock_quantity !== null && !isNaN(Number(newProduct.stock_quantity)) ? Number(newProduct.stock_quantity) : 0)
+          : 0,
+        low_stock_threshold: isTracking
+          ? (newProduct.low_stock_threshold !== undefined && newProduct.low_stock_threshold !== null && !isNaN(Number(newProduct.low_stock_threshold)) ? Number(newProduct.low_stock_threshold) : 0)
+          : 0,
         image_url: newProduct.image_url || '',
         discount_value: Number(newProduct.discount_value) || 0,
         discount_type: newProduct.discount_type || 'amount'
@@ -2072,7 +2200,8 @@ const Products = ({ products }: { products: Product[] }) => {
         category: 'General',
         price: 0,
         stock_quantity: 0,
-        low_stock_threshold: 0
+        low_stock_threshold: 0,
+        track_stock: true
       });
     } catch (err: any) {
       console.error('Product save error:', err);
@@ -2081,7 +2210,11 @@ const Products = ({ products }: { products: Product[] }) => {
   };
 
   const handleEdit = (product: Product) => {
-    setNewProduct(product);
+    const isTracked = product.track_stock !== false;
+    setNewProduct({
+      ...product,
+      track_stock: isTracked
+    });
     setIsEditing(true);
     setIsAdding(true);
     setSelectedProduct(null);
@@ -2113,7 +2246,8 @@ const Products = ({ products }: { products: Product[] }) => {
               category: 'General',
               price: 0,
               stock_quantity: 0,
-              low_stock_threshold: 0
+              low_stock_threshold: 0,
+              track_stock: true
             });
             setIsAdding(true);
           }}
@@ -2183,16 +2317,22 @@ const Products = ({ products }: { products: Product[] }) => {
                 <td className="px-6 py-4 text-sm font-bold text-blue-600 dark:text-blue-400">{formatCurrency(product.price)}</td>
                 <td className="px-6 py-4">
                   <span className={cn(
-                    "px-2 py-1 rounded-full text-xs font-bold",
-                    product.low_stock_threshold > 0 && product.stock_quantity <= product.low_stock_threshold 
-                      ? "bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400" 
-                      : (product.low_stock_threshold === 0 && product.stock_quantity === 0)
-                        ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-                        : "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400"
+                    "px-2.5 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1",
+                    (product.track_stock === false || (product.low_stock_threshold === 0 && product.stock_quantity === 0))
+                      ? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                      : product.stock_quantity <= 0
+                        ? "bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400" 
+                        : (product.low_stock_threshold > 0 && product.stock_quantity <= product.low_stock_threshold)
+                          ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" 
+                          : "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400"
                   )}>
-                    {product.low_stock_threshold === 0 && product.stock_quantity === 0
-                      ? 'No stock limit'
-                      : `${product.stock_quantity} in stock`}
+                    {(product.track_stock === false || (product.low_stock_threshold === 0 && product.stock_quantity === 0))
+                      ? 'No Stock Limit (Service)'
+                      : product.stock_quantity <= 0
+                        ? 'Out of Stock (0)'
+                        : (product.low_stock_threshold > 0 && product.stock_quantity <= product.low_stock_threshold)
+                          ? `Low Stock (${product.stock_quantity} left)`
+                          : `${product.stock_quantity} in stock`}
                   </span>
                 </td>
                 <td className="px-6 py-4">
@@ -2306,32 +2446,87 @@ const Products = ({ products }: { products: Product[] }) => {
                       onChange={e => setNewProduct({...newProduct, discount_value: e.target.value !== '' ? parseFloat(e.target.value) || 0 : 0})}
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Stock Quantity (Optional - 0 for stock-less / services)
+                  <div className="col-span-2 md:col-span-4 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+                      Inventory & Stock Management
                     </label>
-                    <input 
-                      type="number" 
-                      placeholder="0"
-                      min="0"
-                      className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      value={newProduct.stock_quantity !== undefined && newProduct.stock_quantity !== null ? newProduct.stock_quantity : ''}
-                      onChange={e => setNewProduct({...newProduct, stock_quantity: e.target.value !== '' ? parseInt(e.target.value) || 0 : 0})}
-                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setNewProduct({ ...newProduct, track_stock: true })}
+                        className={cn(
+                          "py-2 px-3 rounded-lg text-xs font-bold transition-all text-left flex flex-col gap-0.5 border",
+                          newProduct.track_stock !== false
+                            ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                            : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300"
+                        )}
+                      >
+                        <span className="font-bold">📦 Track Physical Stock</span>
+                        <span className="text-[10px] opacity-80 font-normal">Count items, deduct on sales, low-stock warnings</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewProduct({ ...newProduct, track_stock: false, stock_quantity: 0, low_stock_threshold: 0 })}
+                        className={cn(
+                          "py-2 px-3 rounded-lg text-xs font-bold transition-all text-left flex flex-col gap-0.5 border",
+                          newProduct.track_stock === false
+                            ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                            : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300"
+                        )}
+                      >
+                        <span className="font-bold">⚡ No Stock / Service Item</span>
+                        <span className="text-[10px] opacity-80 font-normal">Unlimited stock, services, digital or made-to-order</span>
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Low Stock Alert Limit (Set 0 to disable alert)
-                    </label>
-                    <input 
-                      type="number" 
-                      placeholder="0"
-                      min="0"
-                      className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      value={newProduct.low_stock_threshold !== undefined && newProduct.low_stock_threshold !== null ? newProduct.low_stock_threshold : ''}
-                      onChange={e => setNewProduct({...newProduct, low_stock_threshold: e.target.value !== '' ? parseInt(e.target.value) || 0 : 0})}
-                    />
-                  </div>
+
+                  {newProduct.track_stock !== false ? (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                          Stock Quantity
+                        </label>
+                        <input 
+                          type="number" 
+                          placeholder="0"
+                          min="0"
+                          className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                          value={newProduct.stock_quantity !== undefined && newProduct.stock_quantity !== null ? newProduct.stock_quantity : ''}
+                          onChange={e => setNewProduct({...newProduct, stock_quantity: e.target.value !== '' ? parseInt(e.target.value) || 0 : 0})}
+                        />
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">Current units available</span>
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            Low Stock Alert Limit
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setNewProduct({ ...newProduct, low_stock_threshold: 0 })}
+                            className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-bold"
+                          >
+                            Set 0 (No Alert)
+                          </button>
+                        </div>
+                        <input 
+                          type="number" 
+                          placeholder="0"
+                          min="0"
+                          className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                          value={newProduct.low_stock_threshold !== undefined && newProduct.low_stock_threshold !== null ? newProduct.low_stock_threshold : ''}
+                          onChange={e => setNewProduct({...newProduct, low_stock_threshold: e.target.value !== '' ? parseInt(e.target.value) || 0 : 0})}
+                        />
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">
+                          {newProduct.low_stock_threshold === 0 ? '⚠️ 0 = Low stock alert is turned OFF' : `Alerts when stock ≤ ${newProduct.low_stock_threshold}`}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="col-span-2 md:col-span-2 p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-xl text-xs flex items-center gap-2">
+                      <span>✓ Stock tracking is disabled for this item. Low stock alert is 0 (Off). Unlimited quantities can be billed.</span>
+                    </div>
+                  )}
                 </div>
                 <button 
                   onClick={handleSave}
@@ -2376,26 +2571,34 @@ const Products = ({ products }: { products: Product[] }) => {
                 <div className="grid grid-cols-2 gap-6">
                   <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Price</p>
-                    <p className="text-xl font-black text-blue-600 dark:text-blue-400">{formatCurrency(selectedProduct.sellingPrice)}</p>
+                    <p className="text-xl font-black text-blue-600 dark:text-blue-400">{formatCurrency(selectedProduct.price)}</p>
                   </div>
                   <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Stock</p>
-                    <p className="text-xl font-black text-slate-900 dark:text-slate-100 dark:text-slate-100">{selectedProduct.stockQuantity}</p>
+                    <p className="text-xl font-black text-slate-900 dark:text-slate-100">
+                      {(selectedProduct.track_stock === false || (selectedProduct.low_stock_threshold === 0 && selectedProduct.stock_quantity === 0))
+                        ? 'No Limit'
+                        : selectedProduct.stock_quantity}
+                    </p>
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-slate-500 dark:text-slate-400 font-medium">Barcode/Item #</span>
-                    <span className="font-mono font-bold text-slate-900 dark:text-slate-100 dark:text-slate-100">{selectedProduct.item_number}</span>
+                    <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{selectedProduct.item_number}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Selling Price</span>
-                    <span className="font-bold text-slate-900 dark:text-slate-100 dark:text-slate-100">{formatCurrency(selectedProduct.price)}</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Category</span>
+                    <span className="font-bold text-slate-900 dark:text-slate-100">{selectedProduct.category || 'General'}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-slate-500 dark:text-slate-400 font-medium">Low Stock Alert</span>
-                    <span className="font-bold text-rose-500">{selectedProduct.lowStockThreshold} units</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-300">
+                      {selectedProduct.track_stock === false || selectedProduct.low_stock_threshold === 0
+                        ? 'Disabled (0)'
+                        : `${selectedProduct.low_stock_threshold} units`}
+                    </span>
                   </div>
                 </div>
 
@@ -3834,8 +4037,9 @@ export default function App() {
   const [currentStaff, setCurrentStaff] = useState<any>(null);
   const [staffList, setStaffList] = useState<any[]>([]);
   useEffect(() => {
-    if(currentUser) {
-       api.get('/staff').then(res => setStaffList(res)).catch(e => {});
+    if (currentUser) {
+      setCurrentStaff(currentUser);
+      api.get('/staff').then(res => setStaffList(res)).catch(() => {});
     }
   }, [currentUser]);
   const [isLoading, setIsLoading] = useState(true);
@@ -3981,33 +4185,6 @@ export default function App() {
     }} />;
   }
 
-  if (currentUser && !currentUser.is_superadmin && staffList.length > 0 && !currentStaff) {
-    return (
-      <div className="flex h-[100dvh] bg-slate-50 dark:bg-slate-900 items-center justify-center">
-        <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-200 dark:border-slate-700 max-w-md w-full text-center shadow-xl">
-          <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-6">Staff Unlock</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {staffList.map(s => (
-              <button key={s.id} onClick={() => {
-                const pin = prompt('Enter PIN for ' + s.full_name);
-                if (pin === s.pin) setCurrentStaff(s);
-                else alert('Incorrect PIN');
-              }} className="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-white font-bold p-4 rounded-2xl flex flex-col items-center gap-2 transition-colors">
-                 <UserCircle2 size={32} />
-                 {s.full_name}
-              </button>
-            ))}
-          </div>
-          <button onClick={() => {
-            localStorage.removeItem('token');
-            setCurrentUser(null);
-            window.location.reload();
-          }} className="mt-8 text-slate-500 dark:text-slate-400 font-bold text-sm">Logout Tenant</button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col md:flex-row h-[100dvh] bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans overflow-hidden">
       {/* Sidebar - Desktop */}
@@ -4053,11 +4230,11 @@ export default function App() {
               
               <SidebarItem icon={Store} label="Branches" active={activeTab === 'branches'} onClick={() => setActiveTab('branches')} />
               <SidebarItem icon={Tag} label="Promotions" active={activeTab === 'promotions'} onClick={() => setActiveTab('promotions')} />
-              {currentUser?.package_type !== 'BASIC' && currentStaff?.role !== 'CASHIER' && <SidebarItem icon={Calculator} label="Payroll" active={activeTab === 'payroll'} onClick={() => setActiveTab('payroll')} />}
+              {currentUser?.package_type !== 'BASIC' && currentUser.role !== 'cashier' && <SidebarItem icon={Calculator} label="Payroll" active={activeTab === 'payroll'} onClick={() => setActiveTab('payroll')} />}
 
-              {currentStaff?.role !== 'CASHIER' && <SidebarItem icon={BarChart3} label="Reports" active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} />}
+              {currentUser.role !== 'cashier' && <SidebarItem icon={BarChart3} label="Reports" active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} />}
               <SidebarItem icon={Banknote} label="Expenses" active={activeTab === 'expenses'} onClick={() => setActiveTab('expenses')} />
-              {currentStaff?.role !== 'CASHIER' && <SidebarItem icon={Settings} label="Setup" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />}
+              {currentUser.role !== 'cashier' && <SidebarItem icon={Settings} label="Setup" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />}
             </>
           )}
         </nav>
@@ -4165,10 +4342,10 @@ export default function App() {
         <SidebarItem icon={History} label="History" active={activeTab === 'transactions'} onClick={() => setActiveTab('transactions')} isMobile />
         {['admin', 'manager'].includes(currentUser.role) && (
           <>
-            {currentStaff?.role !== 'CASHIER' && <SidebarItem icon={BarChart3} label="Reports" active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} isMobile />}
+            {currentUser.role !== 'cashier' && <SidebarItem icon={BarChart3} label="Reports" active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} isMobile />}
             <SidebarItem icon={Banknote} label="Expenses" active={activeTab === 'expenses'} onClick={() => setActiveTab('expenses')} isMobile />
             <SidebarItem icon={Package} label="Items" active={activeTab === 'products'} onClick={() => setActiveTab('products')} isMobile />
-            {currentStaff?.role !== 'CASHIER' && <SidebarItem icon={Settings} label="Setup" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} isMobile />}
+            {currentUser.role !== 'cashier' && <SidebarItem icon={Settings} label="Setup" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} isMobile />}
           </>
         )}
       </nav>
