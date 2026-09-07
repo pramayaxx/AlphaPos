@@ -324,6 +324,7 @@ async function initDb() {
     try {
       await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS is_bundle BOOLEAN DEFAULT false`;
       await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS bundle_items JSONB`;
+      await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS track_stock BOOLEAN DEFAULT true`;
     } catch(e) {}
 
     await sql.unsafe(`
@@ -842,7 +843,7 @@ app.post('/api/products', authenticateToken, async (req: any, res) => {
     const p = req.body;
     
     // Check for duplicates
-    if (p.item_number) {
+    if (p.item_number && p.track_stock !== false) {
       const existingBarcode = await sql`SELECT * FROM products WHERE user_id = ${req.user.tenantId} AND item_number = ${p.item_number}`;
       if (existingBarcode.length > 0) {
         return res.status(400).json({ message: 'Product with this barcode already exists' });
@@ -850,9 +851,10 @@ app.post('/api/products', authenticateToken, async (req: any, res) => {
     }
     
 
+    const track_stock = p.track_stock !== false;
     const products = await sql`
-      INSERT INTO products (user_id, item_number, name, category, price, stock_quantity, low_stock_threshold, image_url, discount_value, discount_type)
-      VALUES (${req.user.tenantId}, ${p.item_number}, ${p.name}, ${p.category}, ${p.price}, ${p.stock_quantity}, ${p.low_stock_threshold}, ${p.image_url}, ${p.discount_value}, ${p.discount_type})
+      INSERT INTO products (user_id, item_number, name, category, price, stock_quantity, low_stock_threshold, image_url, discount_value, discount_type, track_stock)
+      VALUES (${req.user.tenantId}, ${p.item_number}, ${p.name}, ${p.category}, ${p.price}, ${p.stock_quantity}, ${p.low_stock_threshold}, ${p.image_url}, ${p.discount_value}, ${p.discount_type}, ${track_stock})
       RETURNING *
     `;
     res.json(products[0]);
@@ -874,7 +876,8 @@ app.put('/api/products/:id', authenticateToken, async (req: any, res) => {
         low_stock_threshold = ${p.low_stock_threshold},
         image_url = ${p.image_url},
         discount_value = ${p.discount_value},
-        discount_type = ${p.discount_type}
+        discount_type = ${p.discount_type},
+        track_stock = ${p.track_stock !== false}
       WHERE id = ${req.params.id} AND user_id = ${req.user.tenantId}
       RETURNING *
     `;
@@ -973,9 +976,12 @@ app.post('/api/bills', authenticateToken, async (req: any, res) => {
     // 1. Process cart items (reduce stock)
     for (const item of b.items) {
       if (item.product_id && !item.product_id.startsWith('CUSTOM-')) {
-        const prodRows = await sql`SELECT is_bundle, bundle_items FROM products WHERE id = ${item.product_id}`;
+        const prodRows = await sql`SELECT is_bundle, bundle_items, track_stock FROM products WHERE id = ${item.product_id}`;
         if (prodRows.length > 0) {
           const prod = prodRows[0];
+          if (prod.track_stock === false) {
+             continue;
+          }
           if (prod.is_bundle && prod.bundle_items) {
              const bundleItems = typeof prod.bundle_items === 'string' ? JSON.parse(prod.bundle_items) : prod.bundle_items;
              for (const bItem of bundleItems) {
