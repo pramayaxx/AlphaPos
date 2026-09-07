@@ -579,7 +579,7 @@ const Dashboard = ({ bills, products, onNewSale, onPendingPrints }: { bills: Bil
       .filter(b => b.dateTime >= monthStart)
       .reduce((sum, b) => sum + b.grandTotal, 0);
     
-    const lowStockItems = products.filter(p => p.stock_quantity <= p.low_stock_threshold);
+    const lowStockItems = products.filter(p => p.low_stock_threshold > 0 && p.stock_quantity <= p.low_stock_threshold);
     const pendingPrintsCount = bills.filter(b => !b.isPrinted).length;
 
     setStats({
@@ -2002,7 +2002,7 @@ const Products = ({ products }: { products: Product[] }) => {
     price: 0,
     discount_value: 0,
     stock_quantity: 0,
-    low_stock_threshold: 5,
+    low_stock_threshold: 0,
     discount_type: 'amount'
   });
 
@@ -2051,8 +2051,8 @@ const Products = ({ products }: { products: Product[] }) => {
         name: newProduct.name,
         category: newProduct.category || 'General',
         price: Number(newProduct.price) || 0,
-        stock_quantity: Number(newProduct.stock_quantity) || 0,
-        low_stock_threshold: Number(newProduct.low_stock_threshold) || 5,
+        stock_quantity: newProduct.stock_quantity !== undefined && newProduct.stock_quantity !== null && !isNaN(Number(newProduct.stock_quantity)) ? Number(newProduct.stock_quantity) : 0,
+        low_stock_threshold: newProduct.low_stock_threshold !== undefined && newProduct.low_stock_threshold !== null && !isNaN(Number(newProduct.low_stock_threshold)) ? Number(newProduct.low_stock_threshold) : 0,
         image_url: newProduct.image_url || '',
         discount_value: Number(newProduct.discount_value) || 0,
         discount_type: newProduct.discount_type || 'amount'
@@ -2072,7 +2072,7 @@ const Products = ({ products }: { products: Product[] }) => {
         category: 'General',
         price: 0,
         stock_quantity: 0,
-        low_stock_threshold: 5
+        low_stock_threshold: 0
       });
     } catch (err: any) {
       console.error('Product save error:', err);
@@ -2113,7 +2113,7 @@ const Products = ({ products }: { products: Product[] }) => {
               category: 'General',
               price: 0,
               stock_quantity: 0,
-              low_stock_threshold: 5
+              low_stock_threshold: 0
             });
             setIsAdding(true);
           }}
@@ -2184,11 +2184,15 @@ const Products = ({ products }: { products: Product[] }) => {
                 <td className="px-6 py-4">
                   <span className={cn(
                     "px-2 py-1 rounded-full text-xs font-bold",
-                    product.stock_quantity <= product.low_stock_threshold 
-                      ? "bg-rose-100 text-rose-600" 
-                      : "bg-emerald-100 text-emerald-600"
+                    product.low_stock_threshold > 0 && product.stock_quantity <= product.low_stock_threshold 
+                      ? "bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400" 
+                      : (product.low_stock_threshold === 0 && product.stock_quantity === 0)
+                        ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                        : "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400"
                   )}>
-                    {product.stock_quantity} in stock
+                    {product.low_stock_threshold === 0 && product.stock_quantity === 0
+                      ? 'No stock limit'
+                      : `${product.stock_quantity} in stock`}
                   </span>
                 </td>
                 <td className="px-6 py-4">
@@ -2288,8 +2292,8 @@ const Products = ({ products }: { products: Product[] }) => {
                       type="number" 
                       placeholder="0.00"
                       className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      value={newProduct.price || ''}
-                      onChange={e => setNewProduct({...newProduct, price: e.target.value ? parseFloat(e.target.value) : 0})}
+                      value={newProduct.price !== undefined && newProduct.price !== null ? newProduct.price : ''}
+                      onChange={e => setNewProduct({...newProduct, price: e.target.value !== '' ? parseFloat(e.target.value) || 0 : 0})}
                     />
                   </div>
                   <div>
@@ -2298,28 +2302,34 @@ const Products = ({ products }: { products: Product[] }) => {
                       type="number" 
                       placeholder="0.00"
                       className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      value={newProduct.discount_value || ''}
-                      onChange={e => setNewProduct({...newProduct, discount_value: e.target.value ? parseFloat(e.target.value) : 0})}
+                      value={newProduct.discount_value !== undefined && newProduct.discount_value !== null ? newProduct.discount_value : ''}
+                      onChange={e => setNewProduct({...newProduct, discount_value: e.target.value !== '' ? parseFloat(e.target.value) || 0 : 0})}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Stock Quantity (Optional)</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Stock Quantity (Optional - 0 for stock-less / services)
+                    </label>
                     <input 
                       type="number" 
                       placeholder="0"
+                      min="0"
                       className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      value={newProduct.stock_quantity || ''}
-                      onChange={e => setNewProduct({...newProduct, stock_quantity: e.target.value ? parseInt(e.target.value) : 0})}
+                      value={newProduct.stock_quantity !== undefined && newProduct.stock_quantity !== null ? newProduct.stock_quantity : ''}
+                      onChange={e => setNewProduct({...newProduct, stock_quantity: e.target.value !== '' ? parseInt(e.target.value) || 0 : 0})}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Low Stock Alert (Optional)</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Low Stock Alert Limit (Set 0 to disable alert)
+                    </label>
                     <input 
                       type="number" 
-                      placeholder="5"
+                      placeholder="0"
+                      min="0"
                       className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      value={newProduct.low_stock_threshold || ''}
-                      onChange={e => setNewProduct({...newProduct, low_stock_threshold: e.target.value ? parseInt(e.target.value) : 5})}
+                      value={newProduct.low_stock_threshold !== undefined && newProduct.low_stock_threshold !== null ? newProduct.low_stock_threshold : ''}
+                      onChange={e => setNewProduct({...newProduct, low_stock_threshold: e.target.value !== '' ? parseInt(e.target.value) || 0 : 0})}
                     />
                   </div>
                 </div>

@@ -324,7 +324,6 @@ async function initDb() {
     try {
       await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS is_bundle BOOLEAN DEFAULT false`;
       await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS bundle_items JSONB`;
-      await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS track_stock BOOLEAN DEFAULT true`;
     } catch(e) {}
 
     await sql.unsafe(`
@@ -843,7 +842,7 @@ app.post('/api/products', authenticateToken, async (req: any, res) => {
     const p = req.body;
     
     // Check for duplicates
-    if (p.item_number && p.track_stock !== false) {
+    if (p.item_number) {
       const existingBarcode = await sql`SELECT * FROM products WHERE user_id = ${req.user.tenantId} AND item_number = ${p.item_number}`;
       if (existingBarcode.length > 0) {
         return res.status(400).json({ message: 'Product with this barcode already exists' });
@@ -851,10 +850,23 @@ app.post('/api/products', authenticateToken, async (req: any, res) => {
     }
     
 
-    const track_stock = p.track_stock !== false;
     const products = await sql`
-      INSERT INTO products (user_id, item_number, name, category, price, stock_quantity, low_stock_threshold, image_url, discount_value, discount_type, track_stock)
-      VALUES (${req.user.tenantId}, ${p.item_number}, ${p.name}, ${p.category}, ${p.price}, ${p.stock_quantity}, ${p.low_stock_threshold}, ${p.image_url}, ${p.discount_value}, ${p.discount_type}, ${track_stock})
+      INSERT INTO products (
+        user_id, item_number, name, category, price, stock_quantity, 
+        low_stock_threshold, image_url, discount_value, discount_type
+      )
+      VALUES (
+        ${req.user.tenantId}, 
+        ${p.item_number || null}, 
+        ${p.name || 'Unnamed'}, 
+        ${p.category || 'General'}, 
+        ${p.price || 0}, 
+        ${p.stock_quantity !== undefined && p.stock_quantity !== null && !isNaN(Number(p.stock_quantity)) ? Number(p.stock_quantity) : 0}, 
+        ${p.low_stock_threshold !== undefined && p.low_stock_threshold !== null && !isNaN(Number(p.low_stock_threshold)) ? Number(p.low_stock_threshold) : 0}, 
+        ${p.image_url || null}, 
+        ${p.discount_value || 0}, 
+        ${p.discount_type || 'amount'}
+      )
       RETURNING *
     `;
     res.json(products[0]);
@@ -868,16 +880,15 @@ app.put('/api/products/:id', authenticateToken, async (req: any, res) => {
     const p = req.body;
     const products = await sql`
       UPDATE products SET
-        item_number = ${p.item_number},
-        name = ${p.name},
-        category = ${p.category},
-        price = ${p.price},
-        stock_quantity = ${p.stock_quantity},
-        low_stock_threshold = ${p.low_stock_threshold},
-        image_url = ${p.image_url},
-        discount_value = ${p.discount_value},
-        discount_type = ${p.discount_type},
-        track_stock = ${p.track_stock !== false}
+        item_number = ${p.item_number || null},
+        name = ${p.name || 'Unnamed'},
+        category = ${p.category || 'General'},
+        price = ${p.price || 0},
+        stock_quantity = ${p.stock_quantity !== undefined && p.stock_quantity !== null && !isNaN(Number(p.stock_quantity)) ? Number(p.stock_quantity) : 0},
+        low_stock_threshold = ${p.low_stock_threshold !== undefined && p.low_stock_threshold !== null && !isNaN(Number(p.low_stock_threshold)) ? Number(p.low_stock_threshold) : 0},
+        image_url = ${p.image_url || null},
+        discount_value = ${p.discount_value || 0},
+        discount_type = ${p.discount_type || 'amount'}
       WHERE id = ${req.params.id} AND user_id = ${req.user.tenantId}
       RETURNING *
     `;
@@ -927,7 +938,7 @@ app.post('/api/customers', authenticateToken, async (req: any, res) => {
 
     const customers = await sql`
       INSERT INTO customers (user_id, name, phone, email)
-      VALUES (${req.user.tenantId}, ${c.name}, ${c.phone}, ${c.email})
+      VALUES (${req.user.tenantId}, ${c.name || 'Unnamed'}, ${c.phone || null}, ${c.email || null})
       RETURNING *
     `;
     res.json(customers[0]);
@@ -976,12 +987,9 @@ app.post('/api/bills', authenticateToken, async (req: any, res) => {
     // 1. Process cart items (reduce stock)
     for (const item of b.items) {
       if (item.product_id && !item.product_id.startsWith('CUSTOM-')) {
-        const prodRows = await sql`SELECT is_bundle, bundle_items, track_stock FROM products WHERE id = ${item.product_id}`;
+        const prodRows = await sql`SELECT is_bundle, bundle_items FROM products WHERE id = ${item.product_id}`;
         if (prodRows.length > 0) {
           const prod = prodRows[0];
-          if (prod.track_stock === false) {
-             continue;
-          }
           if (prod.is_bundle && prod.bundle_items) {
              const bundleItems = typeof prod.bundle_items === 'string' ? JSON.parse(prod.bundle_items) : prod.bundle_items;
              for (const bItem of bundleItems) {
