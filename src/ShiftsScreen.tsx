@@ -9,11 +9,23 @@ const ShiftsScreen = () => {
   const [startingCash, setStartingCash] = useState(0);
   const [endingCash, setEndingCash] = useState(0);
 
+  const safeFormatDate = (dateVal: any, fmt: string) => {
+    try {
+      if (!dateVal) return '-';
+      const d = new Date(dateVal);
+      if (isNaN(d.getTime())) return '-';
+      return format(d, fmt);
+    } catch (e) {
+      return '-';
+    }
+  };
+
   const fetchShifts = async () => {
     try {
       const res = await api.get('/shifts');
-      setShifts(res);
-      const active = res.find((s: any) => s.status === 'OPEN');
+      const shiftList = Array.isArray(res) ? res : [];
+      setShifts(shiftList);
+      const active = shiftList.find((s: any) => String(s.status).toUpperCase() === 'OPEN');
       setActiveShift(active || null);
     } catch(err) { console.error(err); }
   };
@@ -22,17 +34,26 @@ const ShiftsScreen = () => {
 
   const openShift = async () => {
     try {
-      await api.post('/shifts/open', { starting_cash: startingCash, staff_id: 1 });
+      await api.post('/shifts/open', { 
+        starting_cash: startingCash, 
+        opening_balance: startingCash,
+        staff_id: 1 
+      });
       fetchShifts();
-    } catch(err: any) { alert(err.message); }
+    } catch(err: any) { alert(err.message || 'Failed to open shift'); }
   };
 
   const closeShift = async () => {
+    if (!activeShift) return;
     try {
-      // expected cash is just starting cash for this simple example. In reality it would be starting_cash + cash_sales - cash_refunds
-      await api.post(`/shifts/close/${activeShift.id}`, { ending_cash: endingCash, expected_cash: activeShift.starting_cash });
+      await api.post(`/shifts/${activeShift.id}/close`, { 
+        ending_cash: endingCash, 
+        closing_balance: endingCash,
+        expected_cash: activeShift.starting_cash || activeShift.opening_balance || 0,
+        expected_balance: activeShift.starting_cash || activeShift.opening_balance || 0
+      });
       fetchShifts();
-    } catch(err: any) { alert(err.message); }
+    } catch(err: any) { alert(err.message || 'Failed to close shift'); }
   };
 
   return (
@@ -54,18 +75,18 @@ const ShiftsScreen = () => {
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Opened At</label>
-                <div className="font-medium text-lg">{format(new Date(activeShift.start_time), 'hh:mm a')}</div>
+                <div className="font-medium text-lg">{safeFormatDate(activeShift.start_time || activeShift.opened_at, 'hh:mm a')}</div>
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Starting Cash</label>
-                <div className="font-medium text-lg">${activeShift.starting_cash.toFixed(2)}</div>
+                <div className="font-medium text-lg">Rs. {Number(activeShift.starting_cash || activeShift.opening_balance || 0).toLocaleString()}</div>
               </div>
               
               <div className="border-t border-slate-200 dark:border-slate-700 pt-4 mt-4">
                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Count Drawer to Close (Ending Cash)</label>
-                <input type="number" step="0.01" value={endingCash} onChange={e=>setEndingCash(parseFloat(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl p-3 mb-4" />
+                <input type="number" step="0.01" value={endingCash} onChange={e=>setEndingCash(parseFloat(e.target.value) || 0)} className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl p-3 mb-4" />
                 <button onClick={closeShift} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2">
-                  <XCircle size={18} /> Close Shift & Print Z-Report
+                  <XCircle size={18} /> Close Shift &amp; Print Z-Report
                 </button>
               </div>
             </div>
@@ -76,7 +97,7 @@ const ShiftsScreen = () => {
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Starting Cash (Float)</label>
-                <input type="number" step="0.01" value={startingCash} onChange={e=>setStartingCash(parseFloat(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl p-3 mb-4" />
+                <input type="number" step="0.01" value={startingCash} onChange={e=>setStartingCash(parseFloat(e.target.value) || 0)} className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl p-3 mb-4" />
                 <button onClick={openShift} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2">
                   <CheckCircle size={18} /> Open Shift
                 </button>
@@ -99,35 +120,38 @@ const ShiftsScreen = () => {
             </thead>
             <tbody>
               {shifts.map(s => {
-                const isClosed = s.status === 'CLOSED';
-                const variance = isClosed ? (s.ending_cash - s.expected_cash) : 0;
+                const isClosed = String(s.status).toUpperCase() === 'CLOSED';
+                const startCash = Number(s.starting_cash || s.opening_balance || 0);
+                const endCash = Number(s.ending_cash || s.closing_balance || 0);
+                const expCash = Number(s.expected_cash || s.expected_balance || startCash);
+                const variance = isClosed ? (endCash - expCash) : 0;
                 return (
                 <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50 dark:bg-slate-800">
-                  <td className="p-4 font-bold">{format(new Date(s.start_time), 'MMM d, yyyy')}</td>
+                  <td className="p-4 font-bold">{safeFormatDate(s.start_time || s.opened_at, 'MMM d, yyyy')}</td>
                   <td className="p-4 text-sm">
-                    <div>{format(new Date(s.start_time), 'hh:mm a')}</div>
-                    {isClosed && <div className="text-slate-400">{format(new Date(s.end_time), 'hh:mm a')}</div>}
+                    <div>{safeFormatDate(s.start_time || s.opened_at, 'hh:mm a')}</div>
+                    {isClosed && <div className="text-slate-400">{safeFormatDate(s.end_time || s.closed_at, 'hh:mm a')}</div>}
                   </td>
-                  <td className="p-4 font-bold">${s.starting_cash.toFixed(2)}</td>
+                  <td className="p-4 font-bold">Rs. {startCash.toLocaleString()}</td>
                   <td className="p-4 font-bold">
                     {isClosed ? (
                       <div>
-                         <span className="text-slate-400">${s.expected_cash.toFixed(2)}</span> / <span className="text-blue-600 dark:text-blue-400">${s.ending_cash.toFixed(2)}</span>
+                        <span className="text-slate-400 text-xs">Exp: Rs. {expCash.toLocaleString()}</span>
+                        <div>Act: Rs. {endCash.toLocaleString()}</div>
                       </div>
                     ) : '-'}
                   </td>
-                  <td className="p-4 font-bold">
-                     {isClosed ? (
-                        <span className={variance < 0 ? 'text-red-500' : variance > 0 ? 'text-emerald-500' : 'text-slate-400'}>
-                          {variance > 0 ? '+' : ''}{variance.toFixed(2)}
-                        </span>
-                     ) : '-'}
+                  <td className={`p-4 font-bold ${variance < 0 ? 'text-red-500' : (variance > 0 ? 'text-emerald-500' : 'text-slate-500')}`}>
+                    {isClosed ? (variance >= 0 ? `+Rs. ${variance.toLocaleString()}` : `-Rs. ${Math.abs(variance).toLocaleString()}`) : '-'}
                   </td>
-                  <td className="p-4 font-bold text-sm">
-                    {s.status === 'OPEN' ? <span className="text-emerald-600 dark:text-emerald-400">OPEN</span> : <span className="text-slate-500 dark:text-slate-400">CLOSED</span>}
+                  <td className="p-4">
+                    <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-black ${isClosed ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'}`}>
+                      {s.status}
+                    </span>
                   </td>
                 </tr>
-              )})}
+                );
+              })}
             </tbody>
            </table>
         </div>

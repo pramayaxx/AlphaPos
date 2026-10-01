@@ -1,5 +1,5 @@
 import { useSync } from "./useSync";
-import { api } from './api';
+import { api, safeStorage } from './api';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -103,6 +103,63 @@ import { cn, formatCurrency } from './lib/utils';
 import html2pdf from 'html2pdf.js';
 import html2canvas from 'html2canvas';
 import { googleSignIn, sendGmailReport } from './gmail';
+
+// --- Safe Utilities ---
+export const generateUUID = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    try {
+      return crypto.randomUUID();
+    } catch (e) {}
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
+if (typeof window !== 'undefined' && !(window as any).__toastAlertInstalled) {
+  (window as any).__toastAlertInstalled = true;
+  window.alert = (msg?: any) => {
+    try {
+      window.dispatchEvent(new CustomEvent('app-toast', { detail: { message: String(msg ?? '') } }));
+    } catch (e) {}
+    console.info('[Notice]:', msg);
+  };
+}
+
+const ToastContainer = () => {
+  const [toasts, setToasts] = useState<{ id: number, message: string }[]>([]);
+
+  useEffect(() => {
+    let nextId = 1;
+    const handleToast = (e: any) => {
+      const msg = e.detail?.message;
+      if (!msg) return;
+      const id = nextId++;
+      setToasts(prev => [...prev, { id, message: msg }]);
+      setTimeout(() => {
+        setToasts(prev => prev.filter(t => t.id !== id));
+      }, 3500);
+    };
+
+    window.addEventListener('app-toast', handleToast);
+    return () => window.removeEventListener('app-toast', handleToast);
+  }, []);
+
+  if (toasts.length === 0) return null;
+
+  return (
+    <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-2 pointer-events-none max-w-md w-full px-4">
+      {toasts.map(t => (
+        <div key={t.id} className="bg-slate-900/95 dark:bg-slate-800/95 text-white border border-slate-700/60 shadow-2xl backdrop-blur-md px-5 py-3 rounded-2xl flex items-center gap-3 text-sm font-semibold pointer-events-auto">
+          <AlertCircle size={18} className="text-blue-400 shrink-0" />
+          <span className="flex-1">{t.message}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 // --- API Utility ---
 const API_URL = '/api';
@@ -232,7 +289,7 @@ const ReceiptView = ({ bill, settings }: { bill: Bill, settings: ShopSettings })
   );
 };
 
-const AuthScreen = () => {
+const AuthScreen = ({ onLoginSuccess }: { onLoginSuccess?: (userData: any, token: string) => void }) => {
   const [authMode, setAuthMode] = useState<'login' | 'register' | 'reset'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -305,19 +362,22 @@ const AuthScreen = () => {
     try {
       if (authMode === 'login') {
         const data = await api.post('/auth/login', { email: cleanEmail, password: cleanPassword });
-        localStorage.setItem('token', data.token);
-        if (data.user) {
-          const userData = {
-            id: data.user.id,
-            username: data.user.email?.split('@')[0] || '',
-            email: data.user.email || cleanEmail,
-            fullName: data.user.fullName || 'User',
-            displayName: data.user.fullName || 'User',
-            role: data.user.role || 'admin'
-          };
-          localStorage.setItem('cached_user', JSON.stringify(userData));
+        safeStorage.setItem('token', data.token);
+        const userData = {
+          id: data.user?.id || '',
+          username: data.user?.email?.split('@')[0] || '',
+          email: data.user?.email || cleanEmail,
+          fullName: data.user?.fullName || data.user?.full_name || 'User',
+          displayName: data.user?.fullName || data.user?.full_name || 'User',
+          role: data.user?.role || 'admin',
+          is_superadmin: Boolean(data.user?.is_superadmin)
+        };
+        safeStorage.setItem('cached_user', JSON.stringify(userData));
+        if (onLoginSuccess) {
+          onLoginSuccess(userData, data.token);
+        } else {
+          window.location.reload();
         }
-        window.location.reload(); // Refresh to trigger auth check
       } else if (authMode === 'register') {
         await api.post('/auth/register', {
           email: cleanEmail,
@@ -327,7 +387,7 @@ const AuthScreen = () => {
         });
         setAuthMode('login');
         setError('');
-        alert('Registration successful! Please sign in with your credentials.');
+        setSuccessMsg('Registration successful! Please sign in with your credentials.');
       } else if (authMode === 'reset') {
         await api.post('/auth/reset-password', {
           email: cleanEmail,
@@ -609,17 +669,24 @@ const CFDScreen = () => {
   useEffect(() => {
     const handleStorage = (e: any) => {
       if (e.key === 'pos_current_cart') {
-        const parsed = JSON.parse(e.newValue || '[]');
-        setCart(parsed);
-        const t = parsed.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
-        setTotal(t);
+        try {
+          const parsed = JSON.parse(e.newValue || '[]');
+          setCart(parsed);
+          const t = parsed.reduce((sum: number, item: any) => sum + (Number(item.price || 0) * Number(item.quantity || 1)), 0);
+          setTotal(t);
+        } catch (err) {}
       }
     };
     window.addEventListener('storage', handleStorage);
     // initial load
-    const initial = JSON.parse(localStorage.getItem('pos_current_cart') || '[]');
-    setCart(initial);
-    setTotal(initial.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0));
+    try {
+      const initial = JSON.parse(safeStorage.getItem('pos_current_cart') || '[]');
+      setCart(initial);
+      setTotal(initial.reduce((sum: number, item: any) => sum + (Number(item.price || 0) * Number(item.quantity || 1)), 0));
+    } catch (err) {
+      setCart([]);
+      setTotal(0);
+    }
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
@@ -643,9 +710,9 @@ const CFDScreen = () => {
             <tbody>
               {cart.map((item: any, i) => (
                 <tr key={i} className="border-b border-slate-700/50">
-                  <td className="py-6 text-2xl font-bold">{item.product.name}</td>
+                  <td className="py-6 text-2xl font-bold">{item.product?.name || item.name}</td>
                   <td className="py-6 text-2xl font-bold text-center">x{item.quantity}</td>
-                  <td className="py-6 text-2xl font-black text-blue-400 text-right">\$\{(item.price * item.quantity).toFixed(2)}</td>
+                  <td className="py-6 text-2xl font-black text-blue-400 text-right">Rs. {(Number(item.price || 0) * Number(item.quantity || 1)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                 </tr>
               ))}
               {cart.length === 0 && (
@@ -1148,15 +1215,17 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
   const [heldCarts, setHeldCarts] = useState<{ id: string, items: BillItem[], time: Date }[]>([]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('held_carts');
-    if (saved) setHeldCarts(JSON.parse(saved).map((c: any) => ({ ...c, time: new Date(c.time) })));
+    try {
+      const saved = safeStorage.getItem('held_carts');
+      if (saved) setHeldCarts(JSON.parse(saved).map((c: any) => ({ ...c, time: new Date(c.time) })));
+    } catch (e) {}
   }, []);
 
   const holdCart = () => {
     if (cart.length === 0) return;
-    const newHeld = [...heldCarts, { id: crypto.randomUUID(), items: cart, time: new Date() }];
+    const newHeld = [...heldCarts, { id: generateUUID(), items: cart, time: new Date() }];
     setHeldCarts(newHeld);
-    localStorage.setItem('held_carts', JSON.stringify(newHeld));
+    safeStorage.setItem('held_carts', JSON.stringify(newHeld));
     setCart([]);
     setDiscountValue(0);
     setSelectedCustomerId('');
@@ -1166,7 +1235,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
     setCart(held.items);
     const newHeld = heldCarts.filter(c => c.id !== held.id);
     setHeldCarts(newHeld);
-    localStorage.setItem('held_carts', JSON.stringify(newHeld));
+    safeStorage.setItem('held_carts', JSON.stringify(newHeld));
   };
 
   useEffect(() => {
@@ -1400,7 +1469,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
 
     try {
       const savedBillData = {
-        uuid: crypto.randomUUID(),
+        uuid: generateUUID(),
         dateTime: new Date(),
         items: [...cart],
         
@@ -2110,7 +2179,7 @@ const Checkout = ({ products, settings, customers, currentUser, onBack, onAddCus
   );
 };
 
-const Products = ({ products }: { products: Product[] }) => {
+const Products = ({ products, onProductChange }: { products: Product[], onProductChange?: () => void }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -2194,6 +2263,7 @@ const Products = ({ products }: { products: Product[] }) => {
 
       setIsAdding(false);
       setIsEditing(false);
+      if (onProductChange) onProductChange();
       setNewProduct({
         item_number: '',
         name: '',
@@ -2348,6 +2418,7 @@ const Products = ({ products }: { products: Product[] }) => {
                       if (confirm('Are you sure you want to delete this product?')) {
                         try {
                           await api.delete(`/products/${product.id}`);
+                          if (onProductChange) onProductChange();
                         } catch (err) {
                           console.error('Product delete error:', err);
                         }
@@ -2632,19 +2703,19 @@ const PrinterSetup = ({ onBack }: { onBack: () => void }) => {
     { name: 'Alpha Thermal P2', address: 'AA:BB:CC:DD:EE:FF', connected: false },
   ]);
   const [isScanning, setIsScanning] = useState(false);
-  const [connectedDevice, setConnectedDevice] = useState<string | null>(localStorage.getItem('printer_name'));
+  const [connectedDevice, setConnectedDevice] = useState<string | null>(safeStorage.getItem('printer_name'));
 
   const handleConnect = (name: string) => {
     setConnectedDevice(name);
-    localStorage.setItem('printer_connected', 'true');
-    localStorage.setItem('printer_name', name);
+    safeStorage.setItem('printer_connected', 'true');
+    safeStorage.setItem('printer_name', name);
     alert(`Connected to ${name}`);
   };
 
   const handleDisconnect = () => {
     setConnectedDevice(null);
-    localStorage.setItem('printer_connected', 'false');
-    localStorage.removeItem('printer_name');
+    safeStorage.setItem('printer_connected', 'false');
+    safeStorage.removeItem('printer_name');
   };
 
   const handleTestPrint = () => {
@@ -2743,7 +2814,7 @@ const PendingPrints = ({ bills, settings, onBack, onSaleComplete }: { bills: Bil
   const pendingBills = bills.filter(b => !b.isPrinted);
 
   const handlePrint = async (bill: Bill) => {
-    const connected = localStorage.getItem('printer_connected') === 'true';
+    const connected = safeStorage.getItem('printer_connected') === 'true';
     if (!connected) {
       alert('Printer not connected. Please go to Printer Setup.');
       return;
@@ -2940,7 +3011,7 @@ const Transactions = ({ bills, settings, customers, onRefresh, currentUser }: { 
                 )}
                 <button 
                   onClick={() => {
-                    const connected = localStorage.getItem('printer_connected') === 'true';
+                    const connected = safeStorage.getItem('printer_connected') === 'true';
                     if (!connected) {
                       alert('Printer not connected. Please go to Printer Setup.');
                       return;
@@ -4030,7 +4101,7 @@ export default function App() {
   
 
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'checkout' | 'transactions' | 'products' | 'customers' | 'reports' | 'settings' | 'printer-setup' | 'pending-prints' | 'staff' | 'expenses' | 'suppliers' | 'drawer' | 'coupons' | 'attendance' | 'adjustments' | 'giftcards' | 'quotes' | 'returns' | 'po' | 'barcode'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'checkout' | 'transactions' | 'products' | 'customers' | 'reports' | 'settings' | 'printer-setup' | 'pending-prints' | 'staff' | 'expenses' | 'suppliers' | 'drawer' | 'coupons' | 'attendance' | 'adjustments' | 'giftcards' | 'quotes' | 'returns' | 'po' | 'barcode' | 'variants' | 'shifts' | 'invoices' | 'branches' | 'promotions' | 'payroll'>('dashboard');
   const { isOnline, isSyncing: isQueueSyncing, pendingCount, syncNow } = useSync();
   const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'error' | 'idle'>('idle');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -4042,10 +4113,27 @@ export default function App() {
       api.get('/staff').then(res => setStaffList(res)).catch(() => {});
     }
   }, [currentUser]);
+const DEFAULT_SHOP_SETTINGS: ShopSettings = {
+  name: 'Alpha Mobile Store',
+  address: '123 Main St, City',
+  phone: '555-0123',
+  receiptHeader: 'Welcome to Alpha Mobile Store',
+  receiptFooter: 'Thank you for shopping with us!',
+  receiptFontSize: 14,
+  receiptWidth: 58,
+  receiptPaperSize: '58mm',
+  showStoreName: true,
+  showStoreDetails: true,
+  showAddress: true,
+  showPhone: true,
+  showInvoiceNumber: true,
+  showDateTime: true
+};
+
   const [isLoading, setIsLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
   const [bills, setBills] = useState<Bill[]>([]);
-  const [settings, setSettings] = useState<ShopSettings | null>(null);
+  const [settings, setSettings] = useState<ShopSettings>(DEFAULT_SHOP_SETTINGS);
   const [customers, setCustomers] = useState<Customer[]>([]);
 
   const fetchData = async () => {
@@ -4055,18 +4143,15 @@ export default function App() {
       const [productsData, billsData, customersData] = await Promise.all([
         api.get('/products'),
         api.get('/bills'),
-        
         api.get('/customers')
       ]);
         
-      setProducts(productsData || []);
-      setBills(billsData.map((b: any) => ({...b, dateTime: new Date(b.dateTime)})) || []);
-      
-      setCustomers(customersData || []);
+      setProducts(Array.isArray(productsData) ? productsData : []);
+      setBills(Array.isArray(billsData) ? billsData.map((b: any) => ({...b, dateTime: new Date(b.dateTime)})) : []);
+      setCustomers(Array.isArray(customersData) ? customersData : []);
       setSyncStatus('synced');
     } catch (err: any) {
       if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
-        // Ignore network errors when dev server is restarting
         setSyncStatus('error');
         return;
       }
@@ -4084,102 +4169,111 @@ export default function App() {
   }, [currentUser?.id]);
 
   useEffect(() => {
+    let isMounted = true;
+
+    // Safety timeout: Never hang on spinner for more than 3.5s
+    const timeoutTimer = setTimeout(() => {
+      if (isMounted) {
+        setIsLoading(false);
+      }
+    }, 3500);
+
     const checkAuth = async () => {
-      const token = localStorage.getItem('token');
-      
-      if (token) {
-        try {
-          const user = await api.get('/auth/me');
-          const userData = {
-            id: user.id,
-            username: user.email?.split('@')[0] || '',
-            email: user.email || '',
-            fullName: user.fullName || 'User',
-            displayName: user.fullName || 'User',
-            role: user.role || 'admin'
-          };
-          setCurrentUser(userData);
-          localStorage.setItem('cached_user', JSON.stringify(userData));
-          
-          // Load settings only if logged in
+      try {
+        const token = safeStorage.getItem('token');
+        
+        if (token) {
           try {
-            const s = await api.get('/settings');
-            if (s) {
-              setSettings(s);
-              localStorage.setItem('cached_settings', JSON.stringify(s));
+            const user = await api.get('/auth/me');
+            if (!isMounted) return;
+            if (user && user.id) {
+              const userData = {
+                id: user.id,
+                username: user.email?.split('@')[0] || '',
+                email: user.email || '',
+                fullName: user.fullName || 'User',
+                displayName: user.fullName || 'User',
+                role: user.role || 'admin',
+                is_superadmin: Boolean(user.is_superadmin)
+              };
+              setCurrentUser(userData);
+              safeStorage.setItem('cached_user', JSON.stringify(userData));
+              
+              // Load settings only if logged in
+              try {
+                const s = await api.get('/settings');
+                if (isMounted && s) {
+                  setSettings(s);
+                  safeStorage.setItem('cached_settings', JSON.stringify(s));
+                }
+              } catch (err: any) {
+                console.warn('Initial settings fetch error:', err?.message || err);
+              }
+            } else {
+              safeStorage.removeItem('token');
+              if (isMounted) setCurrentUser(null);
             }
           } catch (err: any) {
-            console.warn('Initial settings fetch error:', err?.message || err);
-          }
-        } catch (err: any) {
-          console.warn('Auth check error:', err?.message || err);
-          const isNetworkOrOffline = (typeof navigator !== 'undefined' && !navigator.onLine) || err?.message === 'Failed to fetch' || (typeof err?.message === 'string' && (err.message.includes('NetworkError') || err.message.includes('Load failed')));
-          const cachedUserStr = localStorage.getItem('cached_user');
-          if (isNetworkOrOffline && cachedUserStr) {
-            try {
-              setCurrentUser(JSON.parse(cachedUserStr));
-              const cachedSettingsStr = localStorage.getItem('cached_settings');
-              if (cachedSettingsStr) setSettings(JSON.parse(cachedSettingsStr));
-            } catch (e) {
-              localStorage.removeItem('token');
-              setCurrentUser(null);
+            console.warn('Auth check error:', err?.message || err);
+            const cachedUserStr = safeStorage.getItem('cached_user');
+            if (cachedUserStr) {
+              try {
+                if (isMounted) {
+                  setCurrentUser(JSON.parse(cachedUserStr));
+                  const cachedSettingsStr = safeStorage.getItem('cached_settings');
+                  if (cachedSettingsStr) setSettings(JSON.parse(cachedSettingsStr));
+                }
+              } catch (e) {
+                safeStorage.removeItem('token');
+                if (isMounted) setCurrentUser(null);
+              }
+            } else {
+              safeStorage.removeItem('token');
+              if (isMounted) setCurrentUser(null);
             }
-          } else if (!isNetworkOrOffline) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('cached_user');
-            setCurrentUser(null);
           }
+        } else {
+          if (isMounted) setCurrentUser(null);
         }
-      } else {
-        setCurrentUser(null);
+      } catch (globalErr) {
+        console.warn('Global checkAuth error:', globalErr);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
-      
-      setSettings(prev => prev || {
-        name: 'Alpha Store',
-        address: '123 Main St, City',
-        phone: '555-0123',
-        receiptHeader: 'Welcome to Alpha Store',
-        receiptFooter: 'Thank you for shopping with us!',
-        receiptFontSize: 14,
-        receiptWidth: 58,
-        receiptPaperSize: '58mm',
-        showStoreName: true,
-        showStoreDetails: true,
-        showAddress: true,
-        showPhone: true,
-        showInvoiceNumber: true,
-        showDateTime: true
-      });
-      
-      setIsLoading(false);
     };
 
     checkAuth();
 
-    
-
     return () => {
-      
+      isMounted = false;
+      clearTimeout(timeoutTimer);
     };
   }, []);
 
   const handleLogout = async () => {
-    localStorage.removeItem('token');
+    safeStorage.removeItem('token');
+    safeStorage.removeItem('cached_user');
     setCurrentUser(null);
   };
 
-  if (isLoading || !settings) return (
+  if (isLoading) return (
     <div className="min-h-[100dvh] bg-slate-50 dark:bg-[#0A0A0A] flex items-center justify-center">
       <RefreshCw size={40} className="animate-spin text-blue-600 dark:text-blue-400" />
     </div>
   );
 
-    if (!currentUser) {
-    return <AuthScreen />;
+  if (!currentUser) {
+    return <AuthScreen onLoginSuccess={(userData) => {
+      setCurrentUser(userData);
+      fetchData();
+    }} />;
   }
   if (currentUser.is_superadmin) {
     return <SuperAdminScreen onLogout={() => {
-      localStorage.removeItem('token');
+      safeStorage.removeItem('token');
+      safeStorage.removeItem('cached_user');
       setCurrentUser(null);
       window.location.reload();
     }} />;
@@ -4302,7 +4396,7 @@ export default function App() {
             {activeTab === 'checkout' && <Checkout products={products} settings={settings} customers={customers} currentUser={currentUser} onBack={() => setActiveTab('dashboard')} onSaleComplete={fetchData} onAddCustomer={fetchData} />}
             
             {activeTab === 'transactions' && <Transactions bills={bills} settings={settings} customers={customers} onRefresh={fetchData} currentUser={currentUser} />}
-            {activeTab === 'products' && <Products products={products} />}
+            {activeTab === 'products' && <Products products={products} onProductChange={fetchData} />}
             {activeTab === 'customers' && <CustomersScreen customers={customers} onAddCustomer={fetchData} bills={bills} settings={settings} />}
             {activeTab === 'drawer' && <CashDrawerScreen bills={bills} />}
             {activeTab === 'coupons' && <CouponsScreen />}
@@ -4349,6 +4443,7 @@ export default function App() {
           </>
         )}
       </nav>
+      <ToastContainer />
     </div>
   );
 }

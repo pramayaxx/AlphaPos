@@ -83,11 +83,11 @@ const PayrollScreen = () => {
                 <tr key={p.id || i} className="hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 transition-colors">
                   <td className="p-4 font-bold text-slate-900 dark:text-slate-100">{p.staff_name || 'Staff #'+p.staff_id}</td>
                   <td className="p-4 text-slate-700 dark:text-slate-300 font-medium">
-                    {format(new Date(p.period_start), 'MMM d')} - {format(new Date(p.period_end), 'MMM d, yyyy')}
+                    {p.period_start ? format(new Date(p.period_start), 'MMM d') : '-'} - {p.period_end ? format(new Date(p.period_end), 'MMM d, yyyy') : '-'}
                   </td>
-                  <td className="p-4 font-bold text-blue-600 dark:text-blue-400">{p.hours_worked}h</td>
-                  <td className="p-4 font-bold text-emerald-600 dark:text-emerald-400">${parseFloat(p.commission_earned).toFixed(2)}</td>
-                  <td className="p-4 font-black text-slate-900 dark:text-slate-100 text-lg">${parseFloat(p.total_payment).toFixed(2)}</td>
+                  <td className="p-4 font-bold text-blue-600 dark:text-blue-400">{p.hours_worked || 0}h</td>
+                  <td className="p-4 font-bold text-emerald-600 dark:text-emerald-400">Rs. {Number(p.commission_earned || 0).toLocaleString()}</td>
+                  <td className="p-4 font-black text-slate-900 dark:text-slate-100 text-lg">Rs. {Number(p.total_payment || 0).toLocaleString()}</td>
                   <td className="p-4">
                     <span className="inline-flex items-center gap-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 py-1 rounded-md text-xs font-bold uppercase">
                       <Check size={12} /> {p.status}

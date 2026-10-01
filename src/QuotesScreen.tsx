@@ -31,9 +31,9 @@ const QuotesScreen = ({ customers }: { customers: Customer[] }) => {
     }
   };
 
-  const filteredQuotes = quotes.filter(q => 
-    q.uuid.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    (q.customer_id && customers.find(c => c.id === q.customer_id)?.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredQuotes = (quotes || []).filter(q => 
+    (q.uuid || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (q.customer_id && (customers || []).find(c => String(c.id) === String(q.customer_id))?.name?.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -69,18 +69,20 @@ const QuotesScreen = ({ customers }: { customers: Customer[] }) => {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredQuotes.map((q, i) => {
-                const cust = customers.find(c => c.id === q.customer_id);
+                const cust = (customers || []).find(c => String(c.id) === String(q.customer_id));
                 return (
                   <tr key={q.id || i} className="hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 transition-colors">
                     <td className="p-4">
                       <div className="font-black text-slate-900 dark:text-slate-100">{q.uuid}</div>
-                      <div className="text-xs font-bold text-slate-500 dark:text-slate-400">{format(new Date(q.date_time), 'MMM dd, yyyy HH:mm')}</div>
+                      <div className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                        {q.date_time ? format(new Date(q.date_time), 'MMM dd, yyyy HH:mm') : '-'}
+                      </div>
                     </td>
                     <td className="p-4 text-slate-700 dark:text-slate-300 font-medium">
                       {cust ? cust.name : <span className="text-slate-400 italic">Walk-in</span>}
                     </td>
                     <td className="p-4 font-black text-slate-900 dark:text-slate-100">
-                      ${Number(q.grand_total).toFixed(2)}
+                      Rs. {Number(q.grand_total || 0).toLocaleString()}
                     </td>
                     <td className="p-4">
                       <span className={`px-2 py-1 rounded-lg text-xs font-bold uppercase ${

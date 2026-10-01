@@ -9,8 +9,12 @@ export function useSync() {
   const [pendingCount, setPendingCount] = useState(0);
 
   const updatePendingCount = async () => {
-    const count = await localDB.syncQueue.count();
-    setPendingCount(count);
+    try {
+      const count = await localDB.syncQueue.count();
+      setPendingCount(count);
+    } catch (e) {
+      setPendingCount(0);
+    }
   };
 
   const syncNow = async () => {

@@ -103,14 +103,16 @@ const GiftCardsScreen = () => {
                 <div>
                   <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-wider font-mono">{card.code}</h3>
                   <p className="text-indigo-600 dark:text-indigo-400 font-black text-3xl mt-2">
-                    ${Number(card.balance).toFixed(2)}
+                    Rs. {Number(card.balance || 0).toLocaleString()}
                   </p>
                 </div>
 
                 <div className="space-y-2 mt-2 pt-4 border-t border-slate-100 dark:border-slate-700/50">
                   <div className="flex justify-between text-sm font-medium">
                     <span className="text-slate-500 dark:text-slate-400">Issued On</span>
-                    <span className="text-slate-900 dark:text-slate-100">{format(new Date(card.issued_at), 'MMM dd, yyyy')}</span>
+                    <span className="text-slate-900 dark:text-slate-100">
+                      {card.issued_at ? format(new Date(card.issued_at), 'MMM dd, yyyy') : '-'}
+                    </span>
                   </div>
                 </div>
 
@@ -155,8 +157,8 @@ const GiftCardsScreen = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Initial Balance ($) *</label>
-                  <input type="number" step="0.01" min="1" value={balance} onChange={e => setBalance(e.target.value)} required className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold outline-none" placeholder="50.00" />
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Initial Balance (Rs.) *</label>
+                  <input type="number" step="0.01" min="1" value={balance} onChange={e => setBalance(e.target.value)} required className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold outline-none" placeholder="1000.00" />
                 </div>
 
                 <button type="submit" disabled={isSubmitting} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl mt-4 text-lg">{isSubmitting ? 'Issuing...' : 'Issue Card'}</button>

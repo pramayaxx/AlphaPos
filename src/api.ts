@@ -1,4 +1,7 @@
 import { localDB } from './localDB';
+import { safeStorage } from './safeStorage';
+
+export { safeStorage };
 
 const isOfflineError = (e: any) => {
   return (
@@ -11,10 +14,14 @@ const isOfflineError = (e: any) => {
 
 const handleOfflineRead = async (endpoint: string, e: any) => {
   if (isOfflineError(e)) {
-    const cached = await localDB.cache.get(endpoint);
-    if (cached) {
-      console.warn(`[Offline Mode] Returning cached data for ${endpoint}`);
-      return cached.data;
+    try {
+      const cached = await localDB.cache.get(endpoint);
+      if (cached) {
+        console.warn(`[Offline Mode] Returning cached data for ${endpoint}`);
+        return cached.data;
+      }
+    } catch (dbErr) {
+      console.warn('Local cache read error:', dbErr);
     }
   }
   throw e;
@@ -22,12 +29,16 @@ const handleOfflineRead = async (endpoint: string, e: any) => {
 
 const handleOfflineMutation = async (endpoint: string, method: string, data?: any) => {
   console.warn(`[Offline Mode] Queuing ${method} ${endpoint}`);
-  await localDB.syncQueue.add({
-    endpoint,
-    method,
-    data,
-    createdAt: Date.now()
-  });
+  try {
+    await localDB.syncQueue.add({
+      endpoint,
+      method,
+      data,
+      createdAt: Date.now()
+    });
+  } catch (dbErr) {
+    console.warn('Sync queue error:', dbErr);
+  }
 
   // Provide a fake optimistic response based on endpoint
   if (endpoint === '/bills' && method === 'POST') {
@@ -51,11 +62,13 @@ const handleOfflineMutation = async (endpoint: string, method: string, data?: an
     };
     
     // Optimistically update the bills cache
-    const billsCache = await localDB.cache.get('/bills');
-    if (billsCache) {
-      billsCache.data = [fakeBill, ...(Array.isArray(billsCache.data) ? billsCache.data : [])];
-      await localDB.cache.put(billsCache);
-    }
+    try {
+      const billsCache = await localDB.cache.get('/bills');
+      if (billsCache) {
+        billsCache.data = [fakeBill, ...(Array.isArray(billsCache.data) ? billsCache.data : [])];
+        await localDB.cache.put(billsCache);
+      }
+    } catch (e) {}
     
     return fakeBill;
   }
@@ -68,11 +81,13 @@ const handleOfflineMutation = async (endpoint: string, method: string, data?: an
     };
     
     // Optimistically update the customers cache
-    const custCache = await localDB.cache.get('/customers');
-    if (custCache) {
-      custCache.data = [fakeCustomer, ...(Array.isArray(custCache.data) ? custCache.data : [])];
-      await localDB.cache.put(custCache);
-    }
+    try {
+      const custCache = await localDB.cache.get('/customers');
+      if (custCache) {
+        custCache.data = [fakeCustomer, ...(Array.isArray(custCache.data) ? custCache.data : [])];
+        await localDB.cache.put(custCache);
+      }
+    } catch (e) {}
     return fakeCustomer;
   }
 
@@ -82,7 +97,7 @@ const handleOfflineMutation = async (endpoint: string, method: string, data?: an
 export const api = {
   get: async (endpoint: string) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = safeStorage.getItem('token');
       const res = await fetch('/api' + endpoint, {
         headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) }
       });
@@ -96,7 +111,9 @@ export const api = {
         throw new Error(errText);
       }
       const data = await res.json();
-      await localDB.cache.put({ endpoint, data, timestamp: Date.now() });
+      try {
+        await localDB.cache.put({ endpoint, data, timestamp: Date.now() });
+      } catch (e) {}
       return data;
     } catch (e: any) {
       return await handleOfflineRead(endpoint, e);
@@ -104,7 +121,7 @@ export const api = {
   },
   post: async (endpoint: string, data?: any) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = safeStorage.getItem('token');
       const res = await fetch('/api' + endpoint, {
         method: 'POST',
         headers: {
@@ -132,7 +149,7 @@ export const api = {
   },
   put: async (endpoint: string, data?: any) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = safeStorage.getItem('token');
       const res = await fetch('/api' + endpoint, {
         method: 'PUT',
         headers: {
@@ -160,7 +177,7 @@ export const api = {
   },
   patch: async (endpoint: string, data?: any) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = safeStorage.getItem('token');
       const res = await fetch('/api' + endpoint, {
         method: 'PATCH',
         headers: {
@@ -188,7 +205,7 @@ export const api = {
   },
   delete: async (endpoint: string) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = safeStorage.getItem('token');
       const res = await fetch('/api' + endpoint, {
         method: 'DELETE',
         headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) }

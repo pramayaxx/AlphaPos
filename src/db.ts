@@ -5,6 +5,11 @@ export type Product = {
   description: string | null;
   price: number;
   wholesale_price?: number;
+  buying_price?: number;
+  profit_margin_percentage?: number;
+  calculated_overhead?: number;
+  calculated_profit?: number;
+  retail_price?: number;
   is_bundle?: boolean;
   bundle_items?: { product_id: string, quantity: number }[];
   commission_rate?: number;
@@ -18,6 +23,16 @@ export type Product = {
   track_stock?: boolean;
   created_at: string;
   updated_at: string;
+};
+
+export type StoreSettings = {
+  id: number;
+  rent_cost: number;
+  electricity_cost: number;
+  travel_cost: number;
+  estimated_monthly_sales: number;
+  created_at?: string;
+  updated_at?: string;
 };
 
 export type Sale = {
@@ -117,9 +132,11 @@ export interface User {
   role: 'admin' | 'cashier' | 'manager' | 'guest';
 }
 
+import { safeStorage } from './api';
+
 export async function resetDatabase(passcode: string) {
   try {
-    const token = localStorage.getItem('token');
+    const token = safeStorage.getItem('token');
     if (token) {
       const res = await fetch('/api/data/wipe', {
         method: 'DELETE',
@@ -138,7 +155,7 @@ export async function resetDatabase(passcode: string) {
     alert(e.message || 'Failed to wipe data');
     return;
   }
-  localStorage.clear();
+  safeStorage.clear();
   window.location.reload();
 }
 

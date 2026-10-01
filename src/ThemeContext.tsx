@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { safeStorage } from './api';
 
 type Theme = 'light' | 'dark';
 
@@ -11,12 +12,18 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem('theme');
-    return (saved as Theme) || 'light';
+    try {
+      const saved = safeStorage.getItem('theme');
+      return (saved as Theme) || 'light';
+    } catch (e) {
+      return 'light';
+    }
   });
 
   useEffect(() => {
-    localStorage.setItem('theme', theme);
+    try {
+      safeStorage.setItem('theme', theme);
+    } catch (e) {}
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {

@@ -229,7 +229,7 @@ const CashDrawerScreen = ({ bills }: { bills: Bill[] }) => {
               
               <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl mb-6 text-center">
                 <p className="text-sm font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">Expected Balance</p>
-                <p className="text-3xl font-black text-blue-700 dark:text-blue-400 dark:text-blue-300">${expectedBalance.toFixed(2)}</p>
+                <p className="text-3xl font-black text-blue-700 dark:text-blue-300">Rs. {expectedBalance.toLocaleString()}</p>
               </div>
 
               <form onSubmit={handleCloseShift} className="space-y-4">
@@ -241,7 +241,7 @@ const CashDrawerScreen = ({ bills }: { bills: Bill[] }) => {
                   <div className="flex justify-between items-center px-2">
                     <span className="text-sm font-bold text-slate-500 dark:text-slate-400">Variance:</span>
                     <span className={`font-black ${(parseFloat(closingBalance) - expectedBalance) === 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                      ${(parseFloat(closingBalance) - expectedBalance).toFixed(2)}
+                      {((parseFloat(closingBalance) - expectedBalance) >= 0 ? '+' : '')}Rs. {(parseFloat(closingBalance) - expectedBalance).toLocaleString()}
                     </span>
                   </div>
                 )}

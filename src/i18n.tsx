@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { safeStorage } from './api';
 
 type Language = 'en' | 'si' | 'ta';
 
@@ -78,11 +79,17 @@ const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguage] = useState<Language>(() => {
-    return (localStorage.getItem('language') as Language) || 'en';
+    try {
+      return (safeStorage.getItem('language') as Language) || 'en';
+    } catch (e) {
+      return 'en';
+    }
   });
 
   useEffect(() => {
-    localStorage.setItem('language', language);
+    try {
+      safeStorage.setItem('language', language);
+    } catch (e) {}
   }, [language]);
 
   const t = (key: keyof typeof translations.en) => {

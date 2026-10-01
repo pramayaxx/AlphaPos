@@ -78,12 +78,16 @@ const ExpensesScreen = () => {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {expenses.map((e, i) => (
                 <tr key={e.id || i} className="hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 transition-colors">
-                  <td className="p-4 font-bold text-slate-900 dark:text-slate-100">{format(new Date(e.date_time), 'MMM dd, yyyy HH:mm')}</td>
+                  <td className="p-4 font-bold text-slate-900 dark:text-slate-100">
+                    {e.date_time ? format(new Date(e.date_time), 'MMM dd, yyyy HH:mm') : '-'}
+                  </td>
                   <td className="p-4 text-slate-700 dark:text-slate-300 font-medium">{e.description}</td>
                   <td className="p-4 text-slate-500 dark:text-slate-400 font-medium">
                     <span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg text-xs font-bold uppercase">{e.category || 'General'}</span>
                   </td>
-                  <td className="p-4 font-black text-red-600 dark:text-red-400 text-right">-${Number(e.amount).toFixed(2)}</td>
+                  <td className="p-4 font-black text-red-600 dark:text-red-400 text-right">
+                    -Rs. {Number(e.amount || 0).toLocaleString()}
+                  </td>
                 </tr>
               ))}
               {expenses.length === 0 && (

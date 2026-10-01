@@ -31,10 +31,14 @@ const dbUrl = process.env.VITE_XATA_DATABASE_URL || process.env.DATABASE_URL || 
 let sql: any;
 try {
   const isLocal = dbUrl.includes('localhost') || dbUrl.includes('127.0.0.1');
-  sql = postgres(dbUrl, { ssl: isLocal ? false : 'require', connect_timeout: 15 });
+  sql = postgres(dbUrl, { 
+    ssl: isLocal ? false : 'require', 
+    connect_timeout: 15,
+    onnotice: () => {} // Suppress NOTICE logs so they don't trigger warning/error alerts
+  });
 } catch(e) {
   console.error('Invalid DB URL:', e);
-  sql = postgres('postgresql://user:pass@host/db');
+  sql = postgres('postgresql://user:pass@host/db', { onnotice: () => {} });
 }
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 
@@ -190,16 +194,17 @@ app.get('/api/public/bills/:uuid/pdf', async (req, res) => {
 });
 
 // Init DB
+let isDbInitialized = false;
 
 async function initDb() {
+  if (isDbInitialized) return;
   try {
-    
-    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN package_type VARCHAR(50) DEFAULT 'PRO'`); } catch(e) {}
-    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN status VARCHAR(50) DEFAULT 'ACTIVE'`); } catch(e) {}
-    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN next_billing_date TIMESTAMP`); } catch(e) {}
-    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN is_superadmin BOOLEAN DEFAULT false`); } catch(e) {}
+    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS package_type VARCHAR(50) DEFAULT 'PRO'`); } catch(e) {}
+    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'ACTIVE'`); } catch(e) {}
+    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS next_billing_date TIMESTAMP`); } catch(e) {}
+    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_superadmin BOOLEAN DEFAULT false`); } catch(e) {}
 
-    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN owner_id INTEGER REFERENCES users(id)`); } catch(e) {}
+    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS owner_id INTEGER REFERENCES users(id)`); } catch(e) {}
     await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -208,11 +213,100 @@ async function initDb() {
         full_name VARCHAR(255),
         role VARCHAR(50) DEFAULT 'admin',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
-    await sql.unsafe(`
-      
+      );
+
+      CREATE TABLE IF NOT EXISTS customers (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
+        name VARCHAR(255) NOT NULL,
+        phone VARCHAR(50),
+        email VARCHAR(255),
+        loyalty_points INTEGER DEFAULT 0,
+        store_credit REAL DEFAULT 0,
+        total_debt NUMERIC(10, 2) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS products (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id INTEGER REFERENCES users(id),
+        item_number VARCHAR(100),
+        name VARCHAR(255) NOT NULL,
+        category VARCHAR(100),
+        price NUMERIC(14, 2) DEFAULT 0,
+        stock_quantity INTEGER DEFAULT 0,
+        low_stock_threshold INTEGER DEFAULT 5,
+        image_url TEXT,
+        discount_value NUMERIC(10, 2) DEFAULT 0,
+        discount_type VARCHAR(20) DEFAULT 'amount',
+        is_bundle BOOLEAN DEFAULT false,
+        bundle_items JSONB,
+        track_stock BOOLEAN DEFAULT true,
+        buying_price NUMERIC(14, 2) DEFAULT 0,
+        profit_margin_percentage NUMERIC(8, 2) DEFAULT 0,
+        calculated_overhead NUMERIC(14, 2) DEFAULT 0,
+        calculated_profit NUMERIC(14, 2) DEFAULT 0,
+        retail_price NUMERIC(14, 2) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS bills (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id INTEGER REFERENCES users(id),
+        uuid VARCHAR(100) NOT NULL,
+        date_time TIMESTAMP NOT NULL,
+        subtotal NUMERIC(10, 2) DEFAULT 0,
+        discount NUMERIC(10, 2) DEFAULT 0,
+        discount_type VARCHAR(20) DEFAULT 'amount',
+        discount_value NUMERIC(10, 2) DEFAULT 0,
+        grand_total NUMERIC(10, 2) DEFAULT 0,
+        is_printed BOOLEAN DEFAULT false,
+        tax_amount NUMERIC(10, 2) DEFAULT 0,
+        tax_rate NUMERIC(10, 2) DEFAULT 0,
+        customer_id VARCHAR(100),
+        payment_method VARCHAR(50) DEFAULT 'cash',
+        status VARCHAR(50) DEFAULT 'paid',
+        points_used INTEGER DEFAULT 0,
+        points_earned INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS bill_items (
+        id SERIAL PRIMARY KEY,
+        bill_id UUID REFERENCES bills(id) ON DELETE CASCADE,
+        product_id VARCHAR(100),
+        item_number VARCHAR(100),
+        name VARCHAR(255),
+        quantity INTEGER NOT NULL,
+        price NUMERIC(10, 2) NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS shop_settings (
+        user_id INTEGER PRIMARY KEY REFERENCES users(id),
+        name VARCHAR(255),
+        address TEXT,
+        phone VARCHAR(50),
+        receipt_header TEXT,
+        receipt_footer TEXT,
+        receipt_font_size INTEGER DEFAULT 14,
+        receipt_width INTEGER DEFAULT 58,
+        receipt_paper_size VARCHAR(20) DEFAULT '58mm',
+        show_store_name BOOLEAN DEFAULT true,
+        show_store_details BOOLEAN DEFAULT true,
+        show_address BOOLEAN DEFAULT true,
+        show_phone BOOLEAN DEFAULT true,
+        show_invoice_number BOOLEAN DEFAULT true,
+        show_date_time BOOLEAN DEFAULT true,
+        sync_provider VARCHAR(50) DEFAULT 'none',
+        live_sync BOOLEAN DEFAULT false,
+        tax_rate NUMERIC(5, 2) DEFAULT 0,
+        tax_name VARCHAR(50) DEFAULT 'Tax',
+        manager_pin VARCHAR(50) DEFAULT '1234',
+        enable_loyalty BOOLEAN DEFAULT false,
+        amount_per_point NUMERIC(10, 2) DEFAULT 0,
+        value_per_point NUMERIC(10, 2) DEFAULT 0
+      );
+
       CREATE TABLE IF NOT EXISTS branches (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
@@ -223,9 +317,9 @@ async function initDb() {
       CREATE TABLE IF NOT EXISTS product_variants (
         id SERIAL PRIMARY KEY,
         product_id UUID REFERENCES products(id) ON DELETE CASCADE,
-        name VARCHAR(255) NOT NULL, -- e.g. "Size L, Red"
+        name VARCHAR(255) NOT NULL,
         sku VARCHAR(255),
-        price REAL, -- optional override
+        price REAL,
         stock_quantity INTEGER DEFAULT 0
       );
 
@@ -241,7 +335,7 @@ async function initDb() {
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
         name VARCHAR(255) NOT NULL,
-        promo_type VARCHAR(50), -- 'BOGO', 'PERCENT_OFF'
+        promo_type VARCHAR(50),
         buy_product_id INTEGER,
         get_product_id INTEGER,
         discount_percent REAL,
@@ -266,10 +360,9 @@ async function initDb() {
       CREATE TABLE IF NOT EXISTS restaurant_tables (
         id SERIAL PRIMARY KEY,
         name VARCHAR(50) NOT NULL,
-        status VARCHAR(50) DEFAULT 'AVAILABLE', -- AVAILABLE, OCCUPIED
+        status VARCHAR(50) DEFAULT 'AVAILABLE',
         capacity INTEGER DEFAULT 4
       );
-
 
       CREATE TABLE IF NOT EXISTS shifts (
         id SERIAL PRIMARY KEY,
@@ -300,136 +393,35 @@ async function initDb() {
         status VARCHAR(50) DEFAULT 'UNPAID',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-
-
-
-      CREATE TABLE IF NOT EXISTS products (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id INTEGER REFERENCES users(id),
-        item_number VARCHAR(100),
-        name VARCHAR(255) NOT NULL,
-        category VARCHAR(100),
-        price NUMERIC(10, 2) DEFAULT 0,
-        stock_quantity INTEGER DEFAULT 0,
-        low_stock_threshold INTEGER DEFAULT 5,
-        image_url TEXT,
-        discount_value NUMERIC(10, 2) DEFAULT 0,
-        discount_type VARCHAR(20) DEFAULT 'amount',
-        is_bundle BOOLEAN DEFAULT false,
-        bundle_items JSONB,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
     `);
     
     try {
       await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS is_bundle BOOLEAN DEFAULT false`;
       await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS bundle_items JSONB`;
       await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS track_stock BOOLEAN DEFAULT true`;
+      await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS buying_price NUMERIC(14, 2) DEFAULT 0`;
+      await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS profit_margin_percentage NUMERIC(8, 2) DEFAULT 0`;
+      await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS calculated_overhead NUMERIC(14, 2) DEFAULT 0`;
+      await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS calculated_profit NUMERIC(14, 2) DEFAULT 0`;
+      await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS retail_price NUMERIC(14, 2) DEFAULT 0`;
     } catch(e) {}
 
-    await sql.unsafe(`
-      CREATE TABLE IF NOT EXISTS bills (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id INTEGER REFERENCES users(id),
-        uuid VARCHAR(100) NOT NULL,
-        date_time TIMESTAMP NOT NULL,
-        subtotal NUMERIC(10, 2) DEFAULT 0,
-        discount NUMERIC(10, 2) DEFAULT 0,
-        discount_type VARCHAR(20) DEFAULT 'amount',
-        discount_value NUMERIC(10, 2) DEFAULT 0,
-        grand_total NUMERIC(10, 2) DEFAULT 0,
-        is_printed BOOLEAN DEFAULT false,
-        tax_amount NUMERIC(10, 2) DEFAULT 0,
-        tax_rate NUMERIC(10, 2) DEFAULT 0,
-        customer_id VARCHAR(100),
-        payment_method VARCHAR(50) DEFAULT 'cash',
-        status VARCHAR(50) DEFAULT 'paid',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
     // Add columns if missing (migration)
-    try { await sql.unsafe(`ALTER TABLE bills ADD COLUMN tax_amount NUMERIC(10, 2) DEFAULT 0`); } catch (e) {}
-    try { await sql`ALTER TABLE bills ADD COLUMN tax_rate NUMERIC(10, 2) DEFAULT 0`; } catch (e) {}
-    try { await sql`ALTER TABLE bills ADD COLUMN customer_id VARCHAR(100)`; } catch (e) {}
-    try { await sql`ALTER TABLE bills ADD COLUMN payment_method VARCHAR(50) DEFAULT 'cash'`; } catch (e) {}
-    try { await sql`ALTER TABLE bills ADD COLUMN status VARCHAR(50) DEFAULT 'paid'`; } catch (e) {}
+    try { await sql.unsafe(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS tax_amount NUMERIC(10, 2) DEFAULT 0`); } catch (e) {}
+    try { await sql`ALTER TABLE bills ADD COLUMN IF NOT EXISTS tax_rate NUMERIC(10, 2) DEFAULT 0`; } catch (e) {}
+    try { await sql`ALTER TABLE bills ADD COLUMN IF NOT EXISTS customer_id VARCHAR(100)`; } catch (e) {}
+    try { await sql`ALTER TABLE bills ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'cash'`; } catch (e) {}
+    try { await sql`ALTER TABLE bills ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'paid'`; } catch (e) {}
+    try { await sql.unsafe(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS points_used INTEGER DEFAULT 0`); } catch (e) {}
+    try { await sql.unsafe(`ALTER TABLE bills ADD COLUMN IF NOT EXISTS points_earned INTEGER DEFAULT 0`); } catch (e) {}
 
-    try { await sql.unsafe(`ALTER TABLE shop_settings ADD COLUMN enable_loyalty BOOLEAN DEFAULT false`); } catch (e) {}
-    try { await sql.unsafe(`ALTER TABLE shop_settings ADD COLUMN amount_per_point NUMERIC(10, 2) DEFAULT 0`); } catch (e) {}
-    try { await sql.unsafe(`ALTER TABLE shop_settings ADD COLUMN value_per_point NUMERIC(10, 2) DEFAULT 0`); } catch (e) {}
-    try { await sql.unsafe(`ALTER TABLE bills ADD COLUMN points_used INTEGER DEFAULT 0`); } catch (e) {}
-    try { await sql.unsafe(`ALTER TABLE bills ADD COLUMN points_earned INTEGER DEFAULT 0`); } catch (e) {}
-
-
-    await sql.unsafe(`
-      CREATE TABLE IF NOT EXISTS bill_items (
-        id SERIAL PRIMARY KEY,
-        bill_id UUID REFERENCES bills(id) ON DELETE CASCADE,
-        product_id VARCHAR(100),
-        item_number VARCHAR(100),
-        name VARCHAR(255),
-        quantity INTEGER NOT NULL,
-        price NUMERIC(10, 2) NOT NULL
-      )
-    `);
-
-    await sql.unsafe(`
-      CREATE TABLE IF NOT EXISTS shop_settings (
-        user_id INTEGER PRIMARY KEY REFERENCES users(id),
-        name VARCHAR(255),
-        address TEXT,
-        phone VARCHAR(50),
-        receipt_header TEXT,
-        receipt_footer TEXT,
-        receipt_font_size INTEGER DEFAULT 14,
-        receipt_width INTEGER DEFAULT 58,
-        receipt_paper_size VARCHAR(20) DEFAULT '58mm',
-        show_store_name BOOLEAN DEFAULT true,
-        show_store_details BOOLEAN DEFAULT true,
-        show_address BOOLEAN DEFAULT true,
-        show_phone BOOLEAN DEFAULT true,
-        show_invoice_number BOOLEAN DEFAULT true,
-        show_date_time BOOLEAN DEFAULT true,
-        sync_provider VARCHAR(50) DEFAULT 'none',
-        live_sync BOOLEAN DEFAULT false,
-        tax_rate NUMERIC(5, 2) DEFAULT 0,
-        tax_name VARCHAR(50) DEFAULT 'Tax'
-      )
-    `);
-
-    try { await sql`ALTER TABLE shop_settings ADD COLUMN tax_rate NUMERIC(5, 2) DEFAULT 0`; } catch (e) {}
-    try { await sql`ALTER TABLE shop_settings ADD COLUMN tax_name VARCHAR(50) DEFAULT 'Tax'`; } catch (e) {}
+    try { await sql.unsafe(`ALTER TABLE shop_settings ADD COLUMN IF NOT EXISTS enable_loyalty BOOLEAN DEFAULT false`); } catch (e) {}
+    try { await sql.unsafe(`ALTER TABLE shop_settings ADD COLUMN IF NOT EXISTS amount_per_point NUMERIC(10, 2) DEFAULT 0`); } catch (e) {}
+    try { await sql.unsafe(`ALTER TABLE shop_settings ADD COLUMN IF NOT EXISTS value_per_point NUMERIC(10, 2) DEFAULT 0`); } catch (e) {}
     try { await sql.unsafe(`ALTER TABLE shop_settings ADD COLUMN IF NOT EXISTS manager_pin VARCHAR(50) DEFAULT '1234'`); } catch (e) {}
+    try { await sql`ALTER TABLE shop_settings ADD COLUMN IF NOT EXISTS tax_rate NUMERIC(5, 2) DEFAULT 0`; } catch (e) {}
+    try { await sql`ALTER TABLE shop_settings ADD COLUMN IF NOT EXISTS tax_name VARCHAR(50) DEFAULT 'Tax'`; } catch (e) {}
 
-    await sql.unsafe(`
-      CREATE TABLE IF NOT EXISTS customers (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id),
-        name VARCHAR(255) NOT NULL,
-        phone VARCHAR(50),
-        email VARCHAR(255),
-        loyalty_points INTEGER DEFAULT 0,
-        store_credit REAL DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    try {
-      await sql`ALTER TABLE bills ADD COLUMN IF NOT EXISTS customer_id INTEGER REFERENCES customers(id)`;
-      await sql`ALTER TABLE bills ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'cash'`;
-      await sql`ALTER TABLE bills ADD COLUMN IF NOT EXISTS tax_amount NUMERIC(10, 2) DEFAULT 0`;
-      await sql`ALTER TABLE bills ADD COLUMN IF NOT EXISTS tax_rate NUMERIC(10, 2) DEFAULT 0`;
-      await sql`ALTER TABLE bills ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'paid'`;
-
-      await sql`ALTER TABLE shop_settings ADD COLUMN IF NOT EXISTS tax_rate NUMERIC(10, 2) DEFAULT 0`;
-      
-      await sql`ALTER TABLE shop_settings ADD COLUMN IF NOT EXISTS tax_name VARCHAR(50) DEFAULT 'Tax'`;
-    } catch(e) {
-      console.warn("Alter table error (ignorable if columns exist):", e);
-    }
-    
-    // Add debt to customers
     try { await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS total_debt NUMERIC(10, 2) DEFAULT 0`; } catch (e) {}
 
     await sql.unsafe(`
@@ -617,9 +609,6 @@ async function initDb() {
     try { await sql`ALTER TABLE shop_settings ADD COLUMN wipe_passcode VARCHAR(50) DEFAULT '12345'`; } catch (e) {}
     try { await sql`ALTER TABLE shop_settings ADD COLUMN logo_url TEXT`; } catch (e) {}
     try { await sql`ALTER TABLE shop_settings ADD COLUMN bot_sync_token UUID DEFAULT gen_random_uuid()`; } catch (e) {}
-    try { await sql`ALTER TABLE staff ADD COLUMN permissions JSONB DEFAULT '{}'::jsonb`; } catch (e) {}
-
-    console.log('Database tables verified.');
     await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS staff (
         id SERIAL PRIMARY KEY,
@@ -630,8 +619,129 @@ async function initDb() {
         pin VARCHAR(10) DEFAULT '1234',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-
     `);
+
+    try { await sql`ALTER TABLE staff ADD COLUMN permissions JSONB DEFAULT '{}'::jsonb`; } catch (e) {}
+
+    await sql.unsafe(`
+      CREATE TABLE IF NOT EXISTS store_settings (
+        id SERIAL PRIMARY KEY,
+        rent_cost NUMERIC(14, 2) DEFAULT 0,
+        electricity_cost NUMERIC(14, 2) DEFAULT 0,
+        travel_cost NUMERIC(14, 2) DEFAULT 0,
+        estimated_monthly_sales NUMERIC(14, 2) DEFAULT 0,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+
+      ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS rent_cost NUMERIC(14, 2) DEFAULT 0;
+      ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS electricity_cost NUMERIC(14, 2) DEFAULT 0;
+      ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS travel_cost NUMERIC(14, 2) DEFAULT 0;
+      ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS estimated_monthly_sales NUMERIC(14, 2) DEFAULT 0;
+
+      INSERT INTO store_settings (id, rent_cost, electricity_cost, travel_cost, estimated_monthly_sales)
+      VALUES (1, 0, 0, 0, 1000)
+      ON CONFLICT (id) DO NOTHING;
+
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS buying_price NUMERIC(14, 2) DEFAULT 0;
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS profit_margin_percentage NUMERIC(8, 2) DEFAULT 0;
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS calculated_overhead NUMERIC(14, 2) DEFAULT 0;
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS calculated_profit NUMERIC(14, 2) DEFAULT 0;
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS retail_price NUMERIC(14, 2) DEFAULT 0;
+
+      CREATE OR REPLACE FUNCTION trg_calculate_product_retail_price()
+      RETURNS TRIGGER AS $$
+      DECLARE
+          v_rent_cost NUMERIC := 0;
+          v_electricity_cost NUMERIC := 0;
+          v_travel_cost NUMERIC := 0;
+          v_estimated_monthly_sales NUMERIC := 0;
+          v_total_overheads NUMERIC := 0;
+          v_overhead_per_item NUMERIC := 0;
+          v_buying_price NUMERIC := 0;
+          v_profit_margin NUMERIC := 0;
+          v_base_cost NUMERIC := 0;
+          v_profit_amount NUMERIC := 0;
+      BEGIN
+          -- 1. Select overhead values from store_settings (assume ID = 1)
+          SELECT 
+              COALESCE(rent_cost, 0),
+              COALESCE(electricity_cost, 0),
+              COALESCE(travel_cost, 0),
+              COALESCE(estimated_monthly_sales, 0)
+          INTO 
+              v_rent_cost,
+              v_electricity_cost,
+              v_travel_cost,
+              v_estimated_monthly_sales
+          FROM store_settings
+          WHERE id = 1;
+
+          -- If store_settings row with ID = 1 is missing, fallback safely to 0
+          IF NOT FOUND THEN
+              v_rent_cost := 0;
+              v_electricity_cost := 0;
+              v_travel_cost := 0;
+              v_estimated_monthly_sales := 0;
+          END IF;
+
+          -- 2. Calculates total_overheads = rent_cost + electricity_cost + travel_cost
+          v_total_overheads := v_rent_cost + v_electricity_cost + v_travel_cost;
+
+          -- 3. Calculates overhead_per_item = total_overheads / NULLIF(estimated_monthly_sales, 0)
+          IF v_estimated_monthly_sales > 0 THEN
+              v_overhead_per_item := v_total_overheads / v_estimated_monthly_sales;
+          ELSE
+              v_overhead_per_item := 0;
+          END IF;
+
+          -- 4. Sets NEW.calculated_overhead = COALESCE(overhead_per_item, 0)
+          NEW.calculated_overhead := ROUND(COALESCE(v_overhead_per_item, 0), 2);
+
+          -- 5. Safe handling for buying_price & profit_margin_percentage
+          v_buying_price := COALESCE(NEW.buying_price, 0);
+          v_profit_margin := COALESCE(NEW.profit_margin_percentage, 0);
+
+          NEW.buying_price := v_buying_price;
+          NEW.profit_margin_percentage := v_profit_margin;
+
+          -- 6. Calculates base_cost = NEW.buying_price + NEW.calculated_overhead
+          v_base_cost := v_buying_price + NEW.calculated_overhead;
+
+          -- 7. Calculates profit_amount = base_cost * (NEW.profit_margin_percentage / 100)
+          v_profit_amount := v_base_cost * (v_profit_margin / 100.0);
+
+          -- 8. Sets NEW.calculated_profit = profit_amount
+          NEW.calculated_profit := ROUND(v_profit_amount, 2);
+
+          -- 9. Sets NEW.retail_price = ROUND(base_cost + profit_amount) (Round to nearest whole LKR amount)
+          IF (v_buying_price > 0 OR v_profit_margin > 0) THEN
+              NEW.retail_price := ROUND(v_base_cost + v_profit_amount);
+              NEW.price := NEW.retail_price;
+          ELSIF NEW.retail_price IS NOT NULL AND NEW.retail_price > 0 THEN
+              NEW.price := NEW.retail_price;
+          ELSIF NEW.price IS NOT NULL AND NEW.price > 0 THEN
+              NEW.retail_price := ROUND(NEW.price);
+          ELSE
+              NEW.retail_price := ROUND(v_base_cost + v_profit_amount);
+              NEW.price := NEW.retail_price;
+          END IF;
+
+          -- 10. Returns NEW
+          RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql;
+
+      DROP TRIGGER IF EXISTS trg_calculate_product_retail_price ON products;
+
+      CREATE TRIGGER trg_calculate_product_retail_price
+      BEFORE INSERT OR UPDATE ON products
+      FOR EACH ROW
+      EXECUTE FUNCTION trg_calculate_product_retail_price();
+    `);
+
+    isDbInitialized = true;
+    console.log('Database tables verified.');
   } catch (err) {
     console.error('Error initializing database:', err);
   }
@@ -823,7 +933,7 @@ app.post('/api/auth/login', async (req, res) => {
     if (!valid) return res.status(400).json({ message: 'Invalid credentials' });
 
     const token = jwt.sign({ id: user.id, email: user.email, tenantId: user.owner_id || user.id }, JWT_SECRET);
-    res.json({ token, user: { id: user.id, email: user.email, fullName: user.full_name, role: user.role } });
+    res.json({ token, user: { id: user.id, email: user.email, fullName: user.full_name, role: user.role, is_superadmin: Boolean(user.is_superadmin) } });
   } catch (err: any) {
     res.status(500).json({ message: err.message });
   }
@@ -971,8 +1081,21 @@ app.get('/api/external/sync/products', async (req: any, res) => {
 // --- Products Routes ---
 app.get('/api/products', authenticateToken, async (req: any, res) => {
   try {
-    const products = await sql`SELECT * FROM products WHERE user_id = ${req.user.tenantId}`;
-    res.json(products);
+    const products = await sql`SELECT * FROM products WHERE user_id = ${req.user.tenantId} ORDER BY name ASC`;
+    const mapped = products.map((p: any) => ({
+      ...p,
+      price: Number(p.price || p.retail_price || 0),
+      retail_price: Number(p.retail_price || p.price || 0),
+      buying_price: Number(p.buying_price || 0),
+      profit_margin_percentage: Number(p.profit_margin_percentage || 0),
+      calculated_overhead: Number(p.calculated_overhead || 0),
+      calculated_profit: Number(p.calculated_profit || 0),
+      discount_value: Number(p.discount_value || 0),
+      stock_quantity: Number(p.stock_quantity || 0),
+      low_stock_threshold: Number(p.low_stock_threshold || 0),
+      track_stock: p.track_stock !== false
+    }));
+    res.json(mapped);
   } catch (err: any) {
     res.status(500).json({ message: err.message });
   }
@@ -994,20 +1117,24 @@ app.post('/api/products', authenticateToken, async (req: any, res) => {
     const products = await sql`
       INSERT INTO products (
         user_id, item_number, name, category, price, stock_quantity, 
-        low_stock_threshold, image_url, discount_value, discount_type, track_stock
+        low_stock_threshold, image_url, discount_value, discount_type, track_stock,
+        buying_price, profit_margin_percentage, retail_price
       )
       VALUES (
         ${req.user.tenantId}, 
         ${p.item_number || null}, 
         ${p.name || 'Unnamed'}, 
         ${p.category || 'General'}, 
-        ${p.price || 0}, 
+        ${p.price || p.retail_price || 0}, 
         ${p.stock_quantity !== undefined && p.stock_quantity !== null && !isNaN(Number(p.stock_quantity)) ? Number(p.stock_quantity) : 0}, 
         ${p.low_stock_threshold !== undefined && p.low_stock_threshold !== null && !isNaN(Number(p.low_stock_threshold)) ? Number(p.low_stock_threshold) : 0}, 
         ${p.image_url || null}, 
         ${p.discount_value || 0}, 
         ${p.discount_type || 'amount'},
-        ${p.track_stock !== undefined ? Boolean(p.track_stock) : true}
+        ${p.track_stock !== undefined ? Boolean(p.track_stock) : true},
+        ${p.buying_price !== undefined ? Number(p.buying_price) : 0},
+        ${p.profit_margin_percentage !== undefined ? Number(p.profit_margin_percentage) : 0},
+        ${p.retail_price !== undefined ? Number(p.retail_price) : 0}
       )
       RETURNING *
     `;
@@ -1025,13 +1152,16 @@ app.put('/api/products/:id', authenticateToken, async (req: any, res) => {
         item_number = ${p.item_number || null},
         name = ${p.name || 'Unnamed'},
         category = ${p.category || 'General'},
-        price = ${p.price || 0},
+        price = ${p.price !== undefined ? Number(p.price) : 0},
         stock_quantity = ${p.stock_quantity !== undefined && p.stock_quantity !== null && !isNaN(Number(p.stock_quantity)) ? Number(p.stock_quantity) : 0},
         low_stock_threshold = ${p.low_stock_threshold !== undefined && p.low_stock_threshold !== null && !isNaN(Number(p.low_stock_threshold)) ? Number(p.low_stock_threshold) : 0},
         image_url = ${p.image_url || null},
         discount_value = ${p.discount_value || 0},
         discount_type = ${p.discount_type || 'amount'},
-        track_stock = ${p.track_stock !== undefined ? Boolean(p.track_stock) : true}
+        track_stock = ${p.track_stock !== undefined ? Boolean(p.track_stock) : true},
+        buying_price = ${p.buying_price !== undefined ? Number(p.buying_price) : 0},
+        profit_margin_percentage = ${p.profit_margin_percentage !== undefined ? Number(p.profit_margin_percentage) : 0},
+        retail_price = ${p.retail_price !== undefined ? Number(p.retail_price) : 0}
       WHERE id = ${req.params.id} AND user_id = ${req.user.tenantId}
       RETURNING *
     `;
@@ -1041,9 +1171,61 @@ app.put('/api/products/:id', authenticateToken, async (req: any, res) => {
   }
 });
 
+// --- Store Settings Routes (Overhead & Pricing Settings) ---
+app.get('/api/store-settings', authenticateToken, async (req: any, res) => {
+  try {
+    let settings = await sql`SELECT * FROM store_settings WHERE id = 1`;
+    if (settings.length === 0) {
+      await sql`
+        INSERT INTO store_settings (id, rent_cost, electricity_cost, travel_cost, estimated_monthly_sales)
+        VALUES (1, 0, 0, 0, 1000)
+        ON CONFLICT (id) DO NOTHING
+      `;
+      settings = await sql`SELECT * FROM store_settings WHERE id = 1`;
+    }
+    res.json(settings[0]);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.put('/api/store-settings', authenticateToken, async (req: any, res) => {
+  try {
+    const { rent_cost, electricity_cost, travel_cost, estimated_monthly_sales } = req.body;
+    const updated = await sql`
+      INSERT INTO store_settings (id, rent_cost, electricity_cost, travel_cost, estimated_monthly_sales, updated_at)
+      VALUES (
+        1, 
+        ${Number(rent_cost) || 0}, 
+        ${Number(electricity_cost) || 0}, 
+        ${Number(travel_cost) || 0}, 
+        ${Number(estimated_monthly_sales) || 0},
+        CURRENT_TIMESTAMP
+      )
+      ON CONFLICT (id) DO UPDATE SET
+        rent_cost = EXCLUDED.rent_cost,
+        electricity_cost = EXCLUDED.electricity_cost,
+        travel_cost = EXCLUDED.travel_cost,
+        estimated_monthly_sales = EXCLUDED.estimated_monthly_sales,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING *
+    `;
+    res.json(updated[0]);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 app.delete('/api/products/:id', authenticateToken, async (req: any, res) => {
   try {
-    await sql`DELETE FROM products WHERE id = ${req.params.id} AND user_id = ${req.user.tenantId}`;
+    const prodId = req.params.id;
+    const tenantId = req.user.tenantId;
+    try { await sql`DELETE FROM product_variants WHERE product_id = ${prodId}`; } catch (e) {}
+    try { await sql`DELETE FROM product_batches WHERE product_id = ${prodId}`; } catch (e) {}
+    try { await sql`DELETE FROM stock_adjustments WHERE product_id = ${prodId} AND user_id = ${tenantId}`; } catch (e) {}
+    try { await sql`DELETE FROM recipes WHERE product_id = ${prodId} OR raw_material_product_id = ${prodId}`; } catch (e) {}
+    try { await sql`DELETE FROM purchases WHERE product_id = ${prodId} AND user_id = ${tenantId}`; } catch (e) {}
+    await sql`DELETE FROM products WHERE id = ${prodId} AND user_id = ${tenantId}`;
     res.json({ message: 'Deleted' });
   } catch (err: any) {
     res.status(500).json({ message: err.message });
@@ -1609,9 +1791,18 @@ app.post('/api/coupons/validate', authenticateToken, async (req: any, res) => {
 // --- Cash Shifts Routes ---
 app.get('/api/shifts/current', authenticateToken, async (req: any, res) => {
   try {
-    const shifts = await sql`SELECT * FROM cash_shifts WHERE user_id = ${req.user.tenantId} AND status = 'open' ORDER BY opened_at DESC LIMIT 1`;
+    const shifts = await sql`SELECT * FROM cash_shifts WHERE user_id = ${req.user.tenantId} AND LOWER(status) = 'open' ORDER BY opened_at DESC LIMIT 1`;
     if (shifts.length > 0) {
-      res.json(shifts[0]);
+      const s = shifts[0];
+      res.json({
+        ...s,
+        start_time: s.opened_at,
+        end_time: s.closed_at,
+        starting_cash: Number(s.opening_balance || 0),
+        ending_cash: s.closing_balance !== null ? Number(s.closing_balance) : null,
+        expected_cash: s.expected_balance !== null ? Number(s.expected_balance) : null,
+        status: (s.status || 'OPEN').toUpperCase()
+      });
     } else {
       res.json(null);
     }
@@ -1623,7 +1814,16 @@ app.get('/api/shifts/current', authenticateToken, async (req: any, res) => {
 app.get('/api/shifts', authenticateToken, async (req: any, res) => {
   try {
     const shifts = await sql`SELECT * FROM cash_shifts WHERE user_id = ${req.user.tenantId} ORDER BY opened_at DESC LIMIT 50`;
-    res.json(shifts);
+    const formatted = shifts.map((s: any) => ({
+      ...s,
+      start_time: s.opened_at,
+      end_time: s.closed_at,
+      starting_cash: Number(s.opening_balance || 0),
+      ending_cash: s.closing_balance !== null ? Number(s.closing_balance) : null,
+      expected_cash: s.expected_balance !== null ? Number(s.expected_balance) : null,
+      status: (s.status || 'OPEN').toUpperCase()
+    }));
+    res.json(formatted);
   } catch (err: any) {
     res.status(500).json({ message: err.message });
   }
@@ -1631,38 +1831,69 @@ app.get('/api/shifts', authenticateToken, async (req: any, res) => {
 
 app.post('/api/shifts/open', authenticateToken, async (req: any, res) => {
   try {
-    const { opening_balance, notes } = req.body;
+    const openingBalance = Number(req.body.opening_balance ?? req.body.starting_cash ?? 0);
+    const notes = req.body.notes || null;
+    const operator = req.user.email?.split('@')[0] || req.user.fullName || req.user.username || 'Admin';
+
     const newShift = await sql`
       INSERT INTO cash_shifts (user_id, opened_by, opening_balance, notes, status)
-      VALUES (${req.user.tenantId}, ${req.user.username}, ${opening_balance}, ${notes}, 'open')
+      VALUES (${req.user.tenantId}, ${operator}, ${openingBalance}, ${notes}, 'open')
       RETURNING *
     `;
-    res.json(newShift[0]);
+    const s = newShift[0];
+    res.json({
+      ...s,
+      start_time: s.opened_at,
+      end_time: s.closed_at,
+      starting_cash: Number(s.opening_balance || 0),
+      ending_cash: null,
+      expected_cash: null,
+      status: 'OPEN'
+    });
   } catch (err: any) {
     res.status(500).json({ message: err.message });
   }
 });
 
-app.post('/api/shifts/:id/close', authenticateToken, async (req: any, res) => {
+const handleCloseShift = async (req: any, res: any) => {
   try {
-    const { closing_balance, expected_balance, notes } = req.body;
+    const closingBalance = Number(req.body.closing_balance ?? req.body.ending_cash ?? 0);
+    const expectedBalance = Number(req.body.expected_balance ?? req.body.expected_cash ?? 0);
+    const notes = req.body.notes || null;
     const shiftId = req.params.id;
+    const operator = req.user.email?.split('@')[0] || req.user.fullName || req.user.username || 'Admin';
+
     const closedShift = await sql`
       UPDATE cash_shifts
       SET status = 'closed',
-          closed_by = ${req.user.username},
+          closed_by = ${operator},
           closed_at = CURRENT_TIMESTAMP,
-          closing_balance = ${closing_balance},
-          expected_balance = ${expected_balance},
+          closing_balance = ${closingBalance},
+          expected_balance = ${expectedBalance},
           notes = ${notes}
       WHERE id = ${shiftId} AND user_id = ${req.user.tenantId}
       RETURNING *
     `;
-    res.json(closedShift[0]);
+    if (closedShift.length === 0) {
+      return res.status(404).json({ message: 'Shift not found' });
+    }
+    const s = closedShift[0];
+    res.json({
+      ...s,
+      start_time: s.opened_at,
+      end_time: s.closed_at,
+      starting_cash: Number(s.opening_balance || 0),
+      ending_cash: Number(s.closing_balance || 0),
+      expected_cash: Number(s.expected_balance || 0),
+      status: 'CLOSED'
+    });
   } catch (err: any) {
     res.status(500).json({ message: err.message });
   }
-});
+};
+
+app.post('/api/shifts/:id/close', authenticateToken, handleCloseShift);
+app.post('/api/shifts/close/:id', authenticateToken, handleCloseShift);
 
 // --- Suppliers Routes ---
 app.get('/api/suppliers', authenticateToken, async (req: any, res) => {
@@ -1973,17 +2204,11 @@ app.post('/api/settings/change-wipe-passcode', authenticateToken, async (req: an
   }
 });
 
-export default app;
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
-
-
-async function startServer() {
-  if (process.env.VERCEL) return;
-  if (process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.STORAGE_URL || process.env.DATABASE) {
-    await initDb();
-  }
-
-  app.post('/api/bills/:uuid/send-receipt', authenticateToken, async (req: any, res) => {
+app.post('/api/bills/:uuid/send-receipt', authenticateToken, async (req: any, res) => {
   const { uuid } = req.params;
   const { email, phone } = req.body;
   try {
@@ -2265,7 +2490,11 @@ app.post('/api/shop-settings', authenticateToken, async (req: any, res) => {
   } catch(e: any) { res.status(500).json({message: e.message}); }
 });
 
-
+async function startServer() {
+  if (process.env.VERCEL) return;
+  if (process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.STORAGE_URL || process.env.DATABASE) {
+    await initDb();
+  }
 
   if (process.env.NODE_ENV !== 'production') {
     try {
@@ -2297,3 +2526,5 @@ app.post('/api/shop-settings', authenticateToken, async (req: any, res) => {
 }
 
 if (!process.env.VERCEL) { startServer().catch(console.error); }
+
+export default app;

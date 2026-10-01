@@ -25,7 +25,7 @@ const VariantsScreen = ({ products }: { products: Product[] }) => {
     if (!selectedProduct) return;
     try {
       await api.post('/variants', {
-        product_id: parseInt(selectedProduct),
+        product_id: selectedProduct,
         name: newVariant.name,
         sku: newVariant.sku,
         price: newVariant.price ? parseFloat(newVariant.price) : null,

@@ -104,12 +104,16 @@ const AttendanceScreen = () => {
                 <tr key={r.id || i} className="hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 transition-colors">
                   <td className="p-4 font-bold text-slate-900 dark:text-slate-100 flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-black">
-                      {r.staff_name.charAt(0).toUpperCase()}
+                      {(r.staff_name || 'Staff').charAt(0).toUpperCase()}
                     </div>
-                    {r.staff_name}
+                    {r.staff_name || 'Staff Member'}
                   </td>
-                  <td className="p-4 text-slate-700 dark:text-slate-300 font-medium">{format(new Date(r.clock_in), 'MMM dd, yyyy')}</td>
-                  <td className="p-4 text-emerald-600 dark:text-emerald-400 font-bold">{format(new Date(r.clock_in), 'hh:mm a')}</td>
+                  <td className="p-4 text-slate-700 dark:text-slate-300 font-medium">
+                    {r.clock_in ? format(new Date(r.clock_in), 'MMM dd, yyyy') : '-'}
+                  </td>
+                  <td className="p-4 text-emerald-600 dark:text-emerald-400 font-bold">
+                    {r.clock_in ? format(new Date(r.clock_in), 'hh:mm a') : '-'}
+                  </td>
                   <td className="p-4 text-slate-600 dark:text-slate-400 font-bold">
                     {r.clock_out ? format(new Date(r.clock_out), 'hh:mm a') : '-'}
                   </td>
