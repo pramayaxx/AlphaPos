@@ -194,17 +194,16 @@ app.get('/api/public/bills/:uuid/pdf', async (req, res) => {
 });
 
 // Init DB
-let isDbInitialized = false;
 
 async function initDb() {
-  if (isDbInitialized) return;
   try {
-    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS package_type VARCHAR(50) DEFAULT 'PRO'`); } catch(e) {}
-    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'ACTIVE'`); } catch(e) {}
-    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS next_billing_date TIMESTAMP`); } catch(e) {}
-    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_superadmin BOOLEAN DEFAULT false`); } catch(e) {}
+    
+    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN package_type VARCHAR(50) DEFAULT 'PRO'`); } catch(e) {}
+    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN status VARCHAR(50) DEFAULT 'ACTIVE'`); } catch(e) {}
+    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN next_billing_date TIMESTAMP`); } catch(e) {}
+    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN is_superadmin BOOLEAN DEFAULT false`); } catch(e) {}
 
-    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS owner_id INTEGER REFERENCES users(id)`); } catch(e) {}
+    try { await sql.unsafe(`ALTER TABLE users ADD COLUMN owner_id INTEGER REFERENCES users(id)`); } catch(e) {}
     await sql.unsafe(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -740,7 +739,6 @@ async function initDb() {
       EXECUTE FUNCTION trg_calculate_product_retail_price();
     `);
 
-    isDbInitialized = true;
     console.log('Database tables verified.');
   } catch (err) {
     console.error('Error initializing database:', err);

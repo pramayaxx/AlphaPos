@@ -4,7 +4,6 @@ import App from './App.tsx';
 import './index.css';
 import { ThemeProvider } from './ThemeContext.tsx';
 import { I18nProvider } from './i18n.tsx';
-import { safeStorage } from './safeStorage';
 import { registerSW } from 'virtual:pwa-register';
 
 interface ErrorBoundaryProps {
@@ -33,10 +32,8 @@ class RootErrorBoundary extends (React.Component as any) {
 
   handleReset = () => {
     try {
-      safeStorage.clear();
-      if (typeof window !== 'undefined' && 'sessionStorage' in window) {
-        sessionStorage.clear();
-      }
+      localStorage.clear();
+      sessionStorage.clear();
     } catch (e) {}
     window.location.reload();
   };

@@ -4113,27 +4113,10 @@ export default function App() {
       api.get('/staff').then(res => setStaffList(res)).catch(() => {});
     }
   }, [currentUser]);
-const DEFAULT_SHOP_SETTINGS: ShopSettings = {
-  name: 'Alpha Mobile Store',
-  address: '123 Main St, City',
-  phone: '555-0123',
-  receiptHeader: 'Welcome to Alpha Mobile Store',
-  receiptFooter: 'Thank you for shopping with us!',
-  receiptFontSize: 14,
-  receiptWidth: 58,
-  receiptPaperSize: '58mm',
-  showStoreName: true,
-  showStoreDetails: true,
-  showAddress: true,
-  showPhone: true,
-  showInvoiceNumber: true,
-  showDateTime: true
-};
-
   const [isLoading, setIsLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
   const [bills, setBills] = useState<Bill[]>([]);
-  const [settings, setSettings] = useState<ShopSettings>(DEFAULT_SHOP_SETTINGS);
+  const [settings, setSettings] = useState<ShopSettings | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
 
   const fetchData = async () => {
@@ -4143,6 +4126,7 @@ const DEFAULT_SHOP_SETTINGS: ShopSettings = {
       const [productsData, billsData, customersData] = await Promise.all([
         api.get('/products'),
         api.get('/bills'),
+        
         api.get('/customers')
       ]);
         
@@ -4152,6 +4136,7 @@ const DEFAULT_SHOP_SETTINGS: ShopSettings = {
       setSyncStatus('synced');
     } catch (err: any) {
       if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+        // Ignore network errors when dev server is restarting
         setSyncStatus('error');
         return;
       }
@@ -4169,15 +4154,6 @@ const DEFAULT_SHOP_SETTINGS: ShopSettings = {
   }, [currentUser?.id]);
 
   useEffect(() => {
-    let isMounted = true;
-
-    // Safety timeout: Never hang on spinner for more than 3.5s
-    const timeoutTimer = setTimeout(() => {
-      if (isMounted) {
-        setIsLoading(false);
-      }
-    }, 3500);
-
     const checkAuth = async () => {
       try {
         const token = safeStorage.getItem('token');
@@ -4185,7 +4161,6 @@ const DEFAULT_SHOP_SETTINGS: ShopSettings = {
         if (token) {
           try {
             const user = await api.get('/auth/me');
-            if (!isMounted) return;
             if (user && user.id) {
               const userData = {
                 id: user.id,
@@ -4202,7 +4177,7 @@ const DEFAULT_SHOP_SETTINGS: ShopSettings = {
               // Load settings only if logged in
               try {
                 const s = await api.get('/settings');
-                if (isMounted && s) {
+                if (s) {
                   setSettings(s);
                   safeStorage.setItem('cached_settings', JSON.stringify(s));
                 }
@@ -4211,44 +4186,55 @@ const DEFAULT_SHOP_SETTINGS: ShopSettings = {
               }
             } else {
               safeStorage.removeItem('token');
-              if (isMounted) setCurrentUser(null);
+              setCurrentUser(null);
             }
           } catch (err: any) {
             console.warn('Auth check error:', err?.message || err);
             const cachedUserStr = safeStorage.getItem('cached_user');
             if (cachedUserStr) {
               try {
-                if (isMounted) {
-                  setCurrentUser(JSON.parse(cachedUserStr));
-                  const cachedSettingsStr = safeStorage.getItem('cached_settings');
-                  if (cachedSettingsStr) setSettings(JSON.parse(cachedSettingsStr));
-                }
+                setCurrentUser(JSON.parse(cachedUserStr));
+                const cachedSettingsStr = safeStorage.getItem('cached_settings');
+                if (cachedSettingsStr) setSettings(JSON.parse(cachedSettingsStr));
               } catch (e) {
                 safeStorage.removeItem('token');
-                if (isMounted) setCurrentUser(null);
+                setCurrentUser(null);
               }
             } else {
               safeStorage.removeItem('token');
-              if (isMounted) setCurrentUser(null);
+              setCurrentUser(null);
             }
           }
         } else {
-          if (isMounted) setCurrentUser(null);
+          setCurrentUser(null);
         }
       } catch (globalErr) {
         console.warn('Global checkAuth error:', globalErr);
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        setSettings(prev => prev || {
+          name: 'Alpha Mobile Store',
+          address: '123 Main St, City',
+          phone: '555-0123',
+          receiptHeader: 'Welcome to Alpha Mobile Store',
+          receiptFooter: 'Thank you for shopping with us!',
+          receiptFontSize: 14,
+          receiptWidth: 58,
+          receiptPaperSize: '58mm',
+          showStoreName: true,
+          showStoreDetails: true,
+          showAddress: true,
+          showPhone: true,
+          showInvoiceNumber: true,
+          showDateTime: true
+        });
+        setIsLoading(false);
       }
     };
 
     checkAuth();
 
     return () => {
-      isMounted = false;
-      clearTimeout(timeoutTimer);
+      
     };
   }, []);
 
@@ -4258,7 +4244,7 @@ const DEFAULT_SHOP_SETTINGS: ShopSettings = {
     setCurrentUser(null);
   };
 
-  if (isLoading) return (
+  if (isLoading || !settings) return (
     <div className="min-h-[100dvh] bg-slate-50 dark:bg-[#0A0A0A] flex items-center justify-center">
       <RefreshCw size={40} className="animate-spin text-blue-600 dark:text-blue-400" />
     </div>
